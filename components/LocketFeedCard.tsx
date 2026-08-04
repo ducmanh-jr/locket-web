@@ -187,10 +187,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
       }`}
     >
-      {/* 1:1 Perfect Square Photo Card Container */}
+      {/* 1:1 Guaranteed Exact Square Photo Card Container (Fixed 300px/330px width and height) */}
       <div
         onDoubleClick={handleDoubleTap}
-        className="relative w-full max-w-[310px] sm:max-w-[330px] aspect-square rounded-[2.5rem] overflow-hidden bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0"
+        className="relative w-[300px] h-[300px] sm:w-[330px] sm:h-[330px] min-w-[300px] min-h-[300px] sm:min-w-[330px] sm:min-h-[330px] rounded-[2.5rem] overflow-hidden bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0 my-auto"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -217,13 +217,12 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               duration: 0.28,
               ease: [0.32, 0.72, 0, 1],
             }}
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-            className="w-full h-full overflow-hidden"
+            className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.5rem]"
           >
             <img
               src={moment.media_url}
               alt={moment.caption || 'Khoảnh khắc Locket'}
-              className="w-full h-full object-cover select-none pointer-events-none"
+              className="w-full h-full object-cover select-none pointer-events-none rounded-[2.5rem]"
             />
 
             {/* Floating Emoji Reaction Particles */}
