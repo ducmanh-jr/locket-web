@@ -1,29 +1,39 @@
 import { NextResponse } from 'next/server';
 
-interface Profile {
-  id: string;
-  username: string;
-  display_name: string;
-  avatar_url: string;
+const JSONBLOB_STORE_URL = 'https://jsonblob.com/api/jsonBlob/019fcc1e-0de5-7e25-bd85-bd9756144094';
+
+// Backup in-memory cache for ultra-fast response
+let memoryProfiles: any[] = [];
+let memoryMoments: any[] = [];
+
+async function fetchFromGlobalStore() {
+  try {
+    const res = await fetch(JSONBLOB_STORE_URL, {
+      cache: 'no-store',
+      headers: { 'Accept': 'application/json' },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.profiles)) memoryProfiles = data.profiles;
+      if (Array.isArray(data.moments)) memoryMoments = data.moments;
+    }
+  } catch (e) {}
 }
 
-interface Moment {
-  id: string;
-  sender_id: string;
-  sender?: Profile;
-  media_url: string;
-  caption: string;
-  created_at: string;
-  reactions: any[];
+async function saveToGlobalStore(profiles: any[], moments: any[]) {
+  try {
+    await fetch(JSONBLOB_STORE_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profiles, moments }),
+    });
+  } catch (e) {}
 }
-
-// In-memory store for Next.js Serverless runtime
-let globalProfiles: Profile[] = [];
-let globalMoments: Moment[] = [];
 
 export async function GET() {
+  await fetchFromGlobalStore();
   return NextResponse.json(
-    { profiles: globalProfiles, moments: globalMoments },
+    { profiles: memoryProfiles, moments: memoryMoments },
     {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate',
@@ -35,33 +45,36 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    await fetchFromGlobalStore();
     const body = await request.json();
     const { action, profile, moment } = body;
 
     if (action === 'push_profile' && profile?.id) {
-      const idx = globalProfiles.findIndex(
+      const idx = memoryProfiles.findIndex(
         (p) => p.id === profile.id || p.username === profile.username
       );
       if (idx >= 0) {
-        globalProfiles[idx] = { ...globalProfiles[idx], ...profile };
+        memoryProfiles[idx] = { ...memoryProfiles[idx], ...profile };
       } else {
-        globalProfiles.push(profile);
+        memoryProfiles.push(profile);
       }
     }
 
     if (action === 'push_moment' && moment?.id && moment?.media_url) {
-      const exists = globalMoments.some((m) => m.id === moment.id);
+      const exists = memoryMoments.some((m) => m.id === moment.id);
       if (!exists) {
-        globalMoments.unshift(moment);
-        // Keep max 50 recent compressed moments (~15KB each)
-        if (globalMoments.length > 50) {
-          globalMoments = globalMoments.slice(0, 50);
+        memoryMoments.unshift(moment);
+        if (memoryMoments.length > 50) {
+          memoryMoments = memoryMoments.slice(0, 50);
         }
       }
     }
 
+    // Persist to serverless persistent global JSON blob store asynchronously
+    saveToGlobalStore(memoryProfiles, memoryMoments);
+
     return NextResponse.json(
-      { success: true, profiles: globalProfiles, moments: globalMoments },
+      { success: true, profiles: memoryProfiles, moments: memoryMoments },
       {
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate',
