@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { LocketHeader } from '@/components/LocketHeader';
 import { LocketDock } from '@/components/LocketDock';
 import { LocketFeedCard } from '@/components/LocketFeedCard';
@@ -33,7 +33,6 @@ export default function HomePage() {
   const { userProfile, loading: authLoading } = useAuth();
   const [moments, setMoments] = useState<Moment[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const viewingMomentIdRef = React.useRef<string | null>(null);
   const [currentView, setCurrentView] = useState<'feed' | 'grid' | 'chat'>('feed');
   const [selectedFriendFilter, setSelectedFriendFilter] = useState<string | null>(null);
   const [selectedFriendForModal, setSelectedFriendForModal] = useState<Profile | null>(null);
@@ -43,7 +42,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [friendsList, setFriendsList] = useState<Profile[]>([]);
   const [lastReaction, setLastReaction] = useState<{ emoji: string; timestamp: number } | null>(null);
-  const broadcastChannelRef = React.useRef<any>(null);
+  const broadcastChannelRef = useRef<any>(null);
 
   const currentUser = userProfile || DEMO_CURRENT_USER;
 
@@ -86,16 +85,11 @@ export default function HomePage() {
       saveStoredDemoMoments(updated);
       return updated;
     });
-    // Clamp currentIndex to stay in bounds after deletion
-    setCurrentIndex((prev) => {
-      const maxIdx = filteredMoments.length - 2; // -2 because one is being removed
-      return Math.max(0, Math.min(prev, maxIdx));
-    });
+    setCurrentIndex((prev) => Math.max(0, prev - 1));
   };
 
   // Fetch real friends from Global Cloud + Supabase + push current user profile
   const loadFriends = async () => {
-    // 1. Push current user to Global Cloud so other accounts see them
     try {
       await pushProfileToGlobalCloud({
         id: currentUser.id,
@@ -105,7 +99,6 @@ export default function HomePage() {
       });
     } catch (e) {}
 
-    // 2. Fetch all profiles from Global Cloud
     let cloudProfiles: Profile[] = [];
     try {
       const rawCloud = await fetchGlobalCloudProfiles();
@@ -117,7 +110,6 @@ export default function HomePage() {
       }));
     } catch (e) {}
 
-    // 3. Fetch from Supabase (may return 0 due to RLS)
     let supabaseProfiles: Profile[] = [];
     if (isSupabaseConfigured()) {
       try {
@@ -128,17 +120,14 @@ export default function HomePage() {
       } catch (e) {}
     }
 
-    // 4. Merge all sources: Cloud + Supabase + Default 3 friends
     const allProfiles = [...cloudProfiles, ...supabaseProfiles, ...DEFAULT_3_FRIENDS];
 
-    // Filter out current user strictly by ID and Username (never by display_name)
     const others = allProfiles.filter(
       (p) =>
         p.id !== currentUser.id &&
         p.username !== currentUser.username
     );
 
-    // Deduplicate by username
     const unique = others.filter(
       (user, index, self) => index === self.findIndex((u) => u.username === user.username)
     );
@@ -170,7 +159,6 @@ export default function HomePage() {
 
     const combined = [...cloudMoments, ...validSupabaseMoments, ...demoMoments];
 
-    // Ensure every moment has a valid sender object
     const sanitized = combined.map((m) => {
       if (!m.sender) {
         if (m.sender_id === currentUser.id || m.sender_id === 'user-me') {
@@ -183,29 +171,31 @@ export default function HomePage() {
       return m;
     });
 
-    // Deduplicate by moment id
     const unique = sanitized.filter(
       (m, i, self) => i === self.findIndex((x) => x.id === m.id)
     );
 
-    // Sort strictly by newest date first
     unique.sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
 
     const targetMoments = unique.length > 0 ? unique : demoMoments;
-    setMoments((prev) => {
-      if (areMomentsEqual(prev, targetMoments)) return prev;
-      // When data refreshes, keep viewing the same moment by adjusting currentIndex
-      const viewingId = viewingMomentIdRef.current;
-      if (viewingId) {
-        const newIdx = targetMoments.findIndex((m) => m.id === viewingId);
-        if (newIdx !== -1) {
-          setCurrentIndex(newIdx);
+
+    // Save currently viewed moment ID before updating list
+    setMoments((prevMoments) => {
+      if (areMomentsEqual(prevMoments, targetMoments)) return prevMoments;
+
+      // Adjust currentIndex safely outside reducer if needed
+      const currentViewingId = prevMoments[currentIndex]?.id;
+      if (currentViewingId) {
+        const foundIdx = targetMoments.findIndex((m) => m.id === currentViewingId);
+        if (foundIdx !== -1 && foundIdx !== currentIndex) {
+          setTimeout(() => setCurrentIndex(foundIdx), 0);
         }
       }
       return targetMoments;
     });
+
     setLoading(false);
   };
 
@@ -221,7 +211,6 @@ export default function HomePage() {
     }, 12000);
 
     if (isSupabaseConfigured()) {
-      // 1. Supabase Postgres DB Changes Channel
       const dbChannel = supabase
         .channel('public:moments-feed')
         .on(
@@ -234,7 +223,6 @@ export default function HomePage() {
         )
         .subscribe();
 
-      // 2. Instant Realtime Broadcast Channel between accounts
       const broadcastChannel = supabase.channel('locket-live-broadcast');
       broadcastChannel
         .on('broadcast', { event: 'new_moment' }, ({ payload }) => {
@@ -245,12 +233,6 @@ export default function HomePage() {
               const updated = [payload, ...prev];
               updated.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
               addDemoMoment(payload);
-              // Keep viewing the same moment after broadcast insert
-              const viewingId = viewingMomentIdRef.current;
-              if (viewingId) {
-                const newIdx = updated.findIndex((m) => m.id === viewingId);
-                if (newIdx !== -1) setCurrentIndex(newIdx);
-              }
               return updated;
             });
           }
@@ -304,26 +286,21 @@ export default function HomePage() {
       })
     : moments;
 
-  const currentMoment = filteredMoments[currentIndex] || filteredMoments[0];
-  const nextMoment = filteredMoments[currentIndex + 1];
-  const prevMoment = filteredMoments[currentIndex - 1];
-
-  // Always track which moment the user is currently viewing by ID
-  React.useEffect(() => {
-    if (currentMoment) {
-      viewingMomentIdRef.current = currentMoment.id;
-    }
-  }, [currentMoment?.id]);
+  // Safe Index Bounds Guard
+  const safeIndex = Math.max(0, Math.min(currentIndex, filteredMoments.length - 1));
+  const currentMoment = filteredMoments[safeIndex] || filteredMoments[0];
+  const nextMoment = filteredMoments[safeIndex + 1];
+  const prevMoment = filteredMoments[safeIndex - 1];
 
   const handleNext = () => {
-    if (currentIndex < filteredMoments.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
+    if (safeIndex < filteredMoments.length - 1) {
+      setCurrentIndex(safeIndex + 1);
     }
   };
 
   const handlePrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1);
+    if (safeIndex > 0) {
+      setCurrentIndex(safeIndex - 1);
     }
   };
 
@@ -425,7 +402,6 @@ export default function HomePage() {
         await pushMomentToGlobalCloud(createdMoment);
       } catch (e) {}
 
-      // Instant Realtime WebSocket Broadcast to all online accounts (< 50ms)
       if (broadcastChannelRef.current) {
         try {
           broadcastChannelRef.current.send({
@@ -540,8 +516,8 @@ export default function HomePage() {
                   currentUser={currentUser}
                   onNext={handleNext}
                   onPrev={handlePrev}
-                  hasPrev={currentIndex > 0}
-                  hasNext={currentIndex < filteredMoments.length - 1}
+                  hasPrev={safeIndex > 0}
+                  hasNext={safeIndex < filteredMoments.length - 1}
                   onDeleteMoment={handleDeleteMoment}
                   nextMomentUrl={nextMoment?.media_url}
                   prevMomentUrl={prevMoment?.media_url}
