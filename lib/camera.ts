@@ -81,7 +81,7 @@ export async function captureSquarePhoto(
 
 /**
  * Helper to record a video clip from MediaStream up to maxDurationMs (5000ms max).
- * Prioritizes iOS Safari supported MIME types (video/mp4) so videos play on iPhone!
+ * Uses Blob Object URLs for native, butter-smooth video playback with zero black screen errors!
  */
 export function createVideoRecorder(stream: MediaStream): {
   start: () => void;
@@ -90,7 +90,6 @@ export function createVideoRecorder(stream: MediaStream): {
   let mediaRecorder: MediaRecorder | null = null;
   const chunks: Blob[] = [];
 
-  // Prioritize MIME types for iOS Safari & Android Chrome compatibility
   const candidateTypes = [
     'video/mp4;codecs=avc1,mp4a.40.2',
     'video/mp4',
@@ -143,13 +142,8 @@ export function createVideoRecorder(stream: MediaStream): {
         mediaRecorder.onstop = () => {
           const finalMime = mediaRecorder?.mimeType || selectedType || 'video/mp4';
           const blob = new Blob(chunks, { type: finalMime });
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const dataUrl = reader.result as string;
-            resolve({ type: 'video', dataUrl, blob });
-          };
-          reader.onerror = () => reject(new Error('Failed to read video blob'));
-          reader.readAsDataURL(blob);
+          const videoObjectUrl = URL.createObjectURL(blob);
+          resolve({ type: 'video', dataUrl: videoObjectUrl, blob });
         };
 
         if (mediaRecorder.state !== 'inactive') {

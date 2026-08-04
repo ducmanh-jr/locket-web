@@ -133,30 +133,40 @@ export const CameraView: React.FC<CameraViewProps> = ({
   };
 
   const lastTapTimeRef = useRef<number>(0);
-  const lastTouchTimeRef = useRef<number>(0);
+  const isTouchHandledRef = useRef<boolean>(false);
 
-  // Double Tap on Viewfinder to Flip Camera (Desktop & Mobile)
+  const triggerCameraFlip = () => {
+    toggleFacingMode();
+    triggerHaptic(50);
+  };
+
+  // Double Tap on Viewfinder to Flip Camera (Desktop Click)
   const handleViewfinderTap = () => {
     if (capturedMedia || isRecording) return;
+    if (isTouchHandledRef.current) {
+      isTouchHandledRef.current = false;
+      return; // Ignore synthesized mouse click from mobile touch
+    }
     const now = Date.now();
-    if (now - lastTapTimeRef.current < 380) {
-      toggleFacingMode();
-      triggerHaptic(45);
+    if (now - lastTapTimeRef.current > 60 && now - lastTapTimeRef.current < 380) {
+      triggerCameraFlip();
       lastTapTimeRef.current = 0;
     } else {
       lastTapTimeRef.current = now;
     }
   };
 
+  // Double Tap on Viewfinder to Flip Camera (Mobile Touch)
   const handleTouchEndViewfinder = (e: React.TouchEvent) => {
     if (capturedMedia || isRecording) return;
     const now = Date.now();
-    if (now - lastTouchTimeRef.current > 50 && now - lastTouchTimeRef.current < 380) {
-      toggleFacingMode();
-      triggerHaptic(50);
-      lastTouchTimeRef.current = 0;
+    if (now - lastTapTimeRef.current > 60 && now - lastTapTimeRef.current < 380) {
+      e.preventDefault();
+      isTouchHandledRef.current = true;
+      triggerCameraFlip();
+      lastTapTimeRef.current = 0;
     } else {
-      lastTouchTimeRef.current = now;
+      lastTapTimeRef.current = now;
     }
   };
 
