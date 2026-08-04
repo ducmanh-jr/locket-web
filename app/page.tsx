@@ -187,11 +187,8 @@ export default function HomePage() {
     loadFriends();
     loadMoments();
 
-    const syncTimer = setInterval(() => {
-      if (document.hidden) return;
-      loadFriends();
-      loadMoments();
-    }, 12000);
+    // NO polling timer! Sync only on page load.
+    // Live updates come through Supabase Realtime broadcast only.
 
     if (isSupabaseConfigured()) {
       const dbChannel = supabase
@@ -199,9 +196,16 @@ export default function HomePage() {
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'moments' },
-          () => {
-            loadFriends();
-            loadMoments();
+          (payload) => {
+            // Silently prepend the new moment without disrupting current view
+            if (payload?.new) {
+              const newMoment = payload.new as Moment;
+              setMoments((prev) => {
+                const exists = prev.some((m) => m.id === newMoment.id);
+                if (exists) return prev;
+                return [newMoment, ...prev];
+              });
+            }
           }
         )
         .subscribe();
@@ -214,7 +218,6 @@ export default function HomePage() {
               const exists = prev.some((m) => m.id === payload.id);
               if (exists) return prev;
               const updated = [payload, ...prev];
-              updated.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
               addDemoMoment(payload);
               return updated;
             });
@@ -227,15 +230,12 @@ export default function HomePage() {
         });
 
       return () => {
-        clearInterval(syncTimer);
         supabase.removeChannel(dbChannel);
         supabase.removeChannel(broadcastChannel);
       };
     }
 
-    return () => {
-      clearInterval(syncTimer);
-    };
+    return () => {};
   }, [currentUser.id]);
 
   if (authLoading) {
