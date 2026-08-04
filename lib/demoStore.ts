@@ -89,30 +89,6 @@ const PHOTO_DATASET = [
   { file: "1785829400531_567716528849713056_g276929852367586455_261f5f986f1964cf559f0bc556387985.jpg", caption: "📸✨" },
 ];
 
-const SAMPLE_TRACKS = [
-  {
-    id: 'itunes-1734543789',
-    title: 'APT.',
-    artist: 'ROSÉ & Bruno Mars',
-    cover_url: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/bf/13/be/bf13be02-4ec4-51e9-9fa9-fae26c117b4c/5054197992928.jpg/100x100bb.jpg',
-    preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/6b/c4/88/6bc4882e-60f2-b88d-7fb7-e21544a0e28b/mzaf_1003463991206103004.plus.aac.p.m4a',
-  },
-  {
-    id: 'itunes-1763782910',
-    title: 'Die With A Smile',
-    artist: 'Lady Gaga & Bruno Mars',
-    cover_url: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/d9/39/33/d93933c0-e717-380d-85e8-54c30294e7ed/24UMGIM88005.rgb.jpg/100x100bb.jpg',
-    preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/e5/22/df/e522df14-722a-f886-f6b0-ee0b4c73f5a8/mzaf_6380963162791771146.plus.aac.p.m4a',
-  },
-  {
-    id: 'itunes-1736173001',
-    title: 'Chúng Ta Của Tương Lai',
-    artist: 'Sơn Tùng M-TP',
-    cover_url: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/ca/8f/c9/ca8fc99c-29b1-ec06-8d18-97e3a2db77df/840391487679.jpg/100x100bb.jpg',
-    preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/58/b7/66/58b7661b-91c9-6f94-6d9b-73599e52e5a7/mzaf_4079815049386348126.plus.aac.p.m4a',
-  },
-];
-
 // Generate 47 unique moments using accurate context-matched captions & images
 export const DEMO_50_MOMENTS: Moment[] = PHOTO_DATASET.map((item, index) => {
   const sender = DEFAULT_3_FRIENDS[index % 3];
@@ -130,34 +106,83 @@ export const DEMO_50_MOMENTS: Moment[] = PHOTO_DATASET.map((item, index) => {
   };
 });
 
-const CACHE_KEY = 'locket_demo_moments_v8';
+// Dedicated Permanent Storage Key for User Captured Moments (NEVER WIPED ACROSS UPDATES!)
+const PERMANENT_USER_MOMENTS_KEY = 'locket_user_moments_permanent_v1';
+const ALL_KEYS_TO_MIGRATE = [
+  'locket_user_moments_permanent_v1',
+  'locket_demo_moments_v8',
+  'locket_demo_moments_v7',
+  'locket_demo_moments_v6',
+  'locket_demo_moments_v5',
+  'locket_demo_moments_v4',
+  'locket_demo_moments_v3',
+];
 
+/**
+ * Gets all user-captured moments permanently stored on this device.
+ * Migrates any user moments found in older cache keys so ZERO captured moments are ever lost!
+ */
 export function getStoredDemoMoments(): Moment[] {
   if (typeof window === 'undefined') return DEMO_50_MOMENTS;
-  try {
-    const stored = localStorage.getItem(CACHE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
-    }
-  } catch (e) {}
 
-  // Overwrite any old cache key with fresh DEMO_50_MOMENTS
-  saveStoredDemoMoments(DEMO_50_MOMENTS);
-  return DEMO_50_MOMENTS;
+  const userMoments: Moment[] = [];
+
+  // 1. Scan & migrate user captured moments from ALL current & previous cache keys
+  for (const key of ALL_KEYS_TO_MIGRATE) {
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          for (const m of parsed) {
+            // Identify user-captured moments (IDs not belonging to standard 47 sample photos)
+            const isUserCaptured =
+              m &&
+              m.id &&
+              !m.id.startsWith('m-photo-v5-') &&
+              !m.media_url?.includes('178582939');
+
+            if (isUserCaptured) {
+              const exists = userMoments.some((x) => x.id === m.id);
+              if (!exists) {
+                userMoments.push(m);
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 2. Save all recovered user-captured moments back to PERMANENT storage key
+  if (userMoments.length > 0) {
+    try {
+      localStorage.setItem(PERMANENT_USER_MOMENTS_KEY, JSON.stringify(userMoments));
+    } catch (e) {}
+  }
+
+  // 3. Merge user-captured moments at HIGHEST priority on top of default sample dataset
+  return [...userMoments, ...DEMO_50_MOMENTS];
 }
 
 export function saveStoredDemoMoments(moments: Moment[]): void {
   if (typeof window === 'undefined') return;
+
+  // Extract user-captured moments only for permanent local storage
+  const userMoments = moments.filter(
+    (m) =>
+      m &&
+      m.id &&
+      !m.id.startsWith('m-photo-v5-') &&
+      !m.media_url?.includes('178582939')
+  );
+
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(moments));
+    localStorage.setItem(PERMANENT_USER_MOMENTS_KEY, JSON.stringify(userMoments));
   } catch (e) {
-    // LocalStorage quota exceeded (e.g. large video DataURLs) -> keep recent 20 moments
     try {
-      const recent = moments.slice(0, 20);
-      localStorage.setItem(CACHE_KEY, JSON.stringify(recent));
+      // Fallback: keep top 15 user moments if storage space is tight
+      localStorage.setItem(PERMANENT_USER_MOMENTS_KEY, JSON.stringify(userMoments.slice(0, 15)));
     } catch (err) {}
   }
 }
