@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { LayoutGrid, MoreHorizontal, Smile, Send } from 'lucide-react';
+import { LayoutGrid, MoreHorizontal, Smile, Send, Sparkles } from 'lucide-react';
 
 interface LocketDockProps {
   currentView: 'feed' | 'grid' | 'chat';
@@ -10,6 +10,7 @@ interface LocketDockProps {
   onOpenMenu: () => void;
   onSendDirectMessage?: (text: string) => void;
   onReactEmoji?: (emoji: string) => void;
+  isMyMoment?: boolean;
 }
 
 export const LocketDock: React.FC<LocketDockProps> = ({
@@ -19,6 +20,7 @@ export const LocketDock: React.FC<LocketDockProps> = ({
   onOpenMenu,
   onSendDirectMessage,
   onReactEmoji,
+  isMyMoment = false,
 }) => {
   const [messageText, setMessageText] = useState('');
   const [showEmojiQuickBar, setShowEmojiQuickBar] = useState(false);
@@ -54,20 +56,27 @@ export const LocketDock: React.FC<LocketDockProps> = ({
       {/* Quick Message & Emoji Bar (Visible in Feed View - Matching Screenshot 3) */}
       {currentView === 'feed' && (
         <div className="w-full max-w-sm flex items-center space-x-2 bg-[#262626] border border-zinc-800 rounded-full px-4 py-2 shadow-lg">
-          <form onSubmit={handleSendMessage} className="flex-1 flex items-center">
-            <input
-              type="text"
-              value={messageText}
-              onChange={(e) => setMessageText(e.target.value)}
-              placeholder="Gửi tin nhắn..."
-              className="w-full bg-transparent text-white text-xs font-medium placeholder-zinc-400 focus:outline-none"
-            />
-            {messageText.trim() && (
-              <button type="submit" className="text-[#FFC700] hover:text-[#FFD633] p-1">
-                <Send className="w-4 h-4 stroke-[2.5]" />
-              </button>
-            )}
-          </form>
+          {!isMyMoment ? (
+            <form onSubmit={handleSendMessage} className="flex-1 flex items-center">
+              <input
+                type="text"
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                placeholder="Gửi tin nhắn..."
+                className="w-full bg-transparent text-white text-xs font-medium placeholder-zinc-400 focus:outline-none"
+              />
+              {messageText.trim() && (
+                <button type="submit" className="text-[#FFC700] hover:text-[#FFD633] p-1">
+                  <Send className="w-4 h-4 stroke-[2.5]" />
+                </button>
+              )}
+            </form>
+          ) : (
+            <div className="flex-1 flex items-center space-x-1.5 text-zinc-300 text-xs font-semibold px-1">
+              <Sparkles className="w-3.5 h-3.5 text-[#FFC700]" />
+              <span>Khoảnh khắc của bạn</span>
+            </div>
+          )}
 
           {/* Quick Reaction Emojis matching Screenshot 3: 💛 😂 💖 ☺ */}
           <div className="flex items-center space-x-1.5 border-l border-zinc-700/60 pl-2">

@@ -420,6 +420,16 @@ export default function HomePage() {
           onReactEmoji={(emoji) => {
             if (currentMoment) handleReact(currentMoment.id, emoji);
           }}
+          isMyMoment={
+            currentMoment
+              ? currentMoment.sender_id === currentUser.id ||
+                currentMoment.sender_id === 'user-me' ||
+                currentMoment.sender_id === 'user-dm' ||
+                currentMoment.sender?.id === currentUser.id ||
+                currentMoment.sender?.username === currentUser.username ||
+                currentMoment.sender?.username === 'dm'
+              : false
+          }
         />
       )}
 
