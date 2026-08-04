@@ -67,9 +67,11 @@ export default function HomePage() {
     setFriendsList(DEFAULT_3_FRIENDS);
   };
 
-  // Fetch moments
+  // Fetch moments & guarantee 50 moments dataset is always loaded
   const loadMoments = async () => {
     setLoading(true);
+    const demoMoments = getStoredDemoMoments();
+
     if (isSupabaseConfigured()) {
       try {
         const { data, error } = await supabase
@@ -77,16 +79,24 @@ export default function HomePage() {
           .select('*, sender:profiles(*), reactions(*, user:profiles(*))')
           .order('created_at', { ascending: false });
 
-        if (!error && data && data.length > 0) {
-          setMoments(data as Moment[]);
+        if (!error && data) {
+          // Filter out old test rows that used avatar image
+          const validSupabaseMoments = (data as Moment[]).filter(
+            (m) => !m.media_url?.includes('1785829393992_')
+          );
+          const combined = [...validSupabaseMoments, ...demoMoments];
+          const unique = combined.filter(
+            (m, i, self) => i === self.findIndex((x) => x.id === m.id)
+          );
+          setMoments(unique.length > 0 ? unique : demoMoments);
         } else {
-          setMoments(getStoredDemoMoments());
+          setMoments(demoMoments);
         }
       } catch (e) {
-        setMoments(getStoredDemoMoments());
+        setMoments(demoMoments);
       }
     } else {
-      setMoments(getStoredDemoMoments());
+      setMoments(demoMoments);
     }
     setLoading(false);
   };
@@ -231,7 +241,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-full flex flex-col justify-between bg-black selection:bg-[#FFC700] selection:text-black overflow-hidden relative">
+    <div className="h-full flex flex-col justify-between bg-black selection:bg-[#FFC700] selection:text-black overflow-hidden relative">
       {/* Header */}
       {currentView !== 'chat' && (
         <LocketHeader
@@ -292,7 +302,7 @@ export default function HomePage() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ duration: 0.2 }}
-              className="w-full flex-1 flex flex-col justify-between items-center overflow-hidden p-1"
+              className="w-full flex-1 flex flex-col justify-center items-center overflow-hidden p-1"
             >
               <div className="w-full px-2 pt-1">
                 <SupabaseConfigNotice />
@@ -300,7 +310,7 @@ export default function HomePage() {
               </div>
 
               {loading ? (
-                <div className="w-[85vw] max-w-[310px] aspect-square my-auto rounded-[2.5rem] bg-[#18181C] border border-zinc-800 flex items-center justify-center animate-pulse">
+                <div className="w-[310px] h-[310px] my-auto rounded-[2.5rem] bg-[#18181C] border border-zinc-800 flex items-center justify-center animate-pulse">
                   <div className="w-10 h-10 rounded-full border-4 border-[#FFC700] border-t-transparent animate-spin" />
                 </div>
               ) : filteredMoments.length > 0 && currentMoment ? (
@@ -315,7 +325,7 @@ export default function HomePage() {
                   prevMomentUrl={prevMoment?.media_url}
                 />
               ) : (
-                <div className="w-[85vw] max-w-[310px] aspect-square my-auto rounded-[2.5rem] bg-[#18181C] border border-[#FFC700]/30 p-8 flex flex-col items-center justify-center text-center">
+                <div className="w-[310px] h-[310px] my-auto rounded-[2.5rem] bg-[#18181C] border border-[#FFC700]/30 p-8 flex flex-col items-center justify-center text-center">
                   <div className="w-14 h-14 rounded-full bg-[#FFC700]/20 text-[#FFC700] flex items-center justify-center mb-3 border border-[#FFC700]/40">
                     <Camera className="w-7 h-7" />
                   </div>
@@ -325,7 +335,7 @@ export default function HomePage() {
                   </p>
                   <button
                     onClick={() => setShowCamera(true)}
-                    className="py-2.5 px-5 bg-[#FFC700] text-black font-bold text-xs rounded-xl shadow-locket-glow active:scale-95 transition-transform"
+                    className="py-2.5 px-5 bg-[#FFC700] text-[#000000] font-bold text-xs rounded-xl shadow-locket-glow active:scale-95 transition-transform"
                   >
                     Chụp ảnh ngay 📸
                   </button>
