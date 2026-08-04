@@ -78,7 +78,7 @@ export default function HistoryPage() {
 
       {/* Lightbox Modal */}
       {selectedMoment && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+        <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
           <div className="relative w-full max-w-sm bg-[#18181C] border border-[#2C2C34] rounded-3xl overflow-hidden shadow-2xl flex flex-col">
             {/* Close button */}
             <button

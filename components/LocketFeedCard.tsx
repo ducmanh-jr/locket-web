@@ -324,7 +324,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
               initial={{ y: 80, scale: 0.95 }}
