@@ -46,6 +46,13 @@ export default function HomePage() {
 
   const currentUser = userProfile || DEMO_CURRENT_USER;
 
+  // Require Login: Redirect unauthenticated sessions to Google Login screen (/login)
+  useEffect(() => {
+    if (!authLoading && !userProfile) {
+      router.push('/login');
+    }
+  }, [authLoading, userProfile, router]);
+
   // Register PWA Service Worker
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -156,7 +163,7 @@ export default function HomePage() {
       } catch (e) {}
     }
 
-    const combined = [...cloudMoments, ...validSupabaseMoments, ...demoMoments];
+    const combined = [...demoMoments, ...cloudMoments, ...validSupabaseMoments];
 
     const sanitized = combined.map((m) => {
       if (!m.sender) {
@@ -238,10 +245,11 @@ export default function HomePage() {
     return () => {};
   }, [currentUser.id]);
 
-  if (authLoading) {
+  if (authLoading || !userProfile) {
     return (
-      <div className="min-h-full flex items-center justify-center bg-black">
+      <div className="min-h-full flex flex-col items-center justify-center bg-black text-white space-y-4">
         <div className="w-10 h-10 rounded-full border-4 border-[#FFC700] border-t-transparent animate-spin" />
+        <p className="text-xs font-semibold text-zinc-400">Đang kiểm tra tài khoản Google...</p>
       </div>
     );
   }

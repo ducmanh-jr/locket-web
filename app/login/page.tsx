@@ -6,9 +6,17 @@ import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { Camera, Sparkles, ShieldCheck, ArrowRight, Zap, Image as ImageIcon, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+import { saveStoredProfile } from '@/lib/auth';
+import { DEMO_CURRENT_USER } from '@/lib/demoStore';
+
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
+
+  const handleDemoLogin = () => {
+    saveStoredProfile(DEMO_CURRENT_USER);
+    router.push('/');
+  };
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -24,10 +32,7 @@ export default function LoginPage() {
         setLoading(false);
       }
     } else {
-      // Fallback redirect for Demo Mode
-      setTimeout(() => {
-        router.push('/');
-      }, 400);
+      handleDemoLogin();
     }
   };
 
@@ -121,7 +126,7 @@ export default function LoginPage() {
 
           {/* Quick Demo Mode Entry */}
           <button
-            onClick={() => router.push('/')}
+            onClick={handleDemoLogin}
             className="w-full py-3 px-4 bg-[#18181C] hover:bg-[#222228] text-zinc-300 hover:text-white font-bold text-xs rounded-2xl border border-zinc-800 flex items-center justify-center space-x-2 transition-all active:scale-95"
           >
             <Sparkles className="w-3.5 h-3.5 text-[#FFC700]" />

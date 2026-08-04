@@ -126,11 +126,11 @@ export const DEMO_50_MOMENTS: Moment[] = PHOTO_DATASET.map((item, index) => {
     caption: item.caption,
     created_at: new Date(Date.now() - 1000 * 60 * timeOffsetMinutes).toISOString(),
     reactions: [],
-    music: index % 3 === 0 ? SAMPLE_TRACKS[(index / 3) % SAMPLE_TRACKS.length] : undefined,
+    music: undefined,
   };
 });
 
-const CACHE_KEY = 'locket_demo_moments_v5';
+const CACHE_KEY = 'locket_demo_moments_v6';
 
 export function getStoredDemoMoments(): Moment[] {
   if (typeof window === 'undefined') return DEMO_50_MOMENTS;

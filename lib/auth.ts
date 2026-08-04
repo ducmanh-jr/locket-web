@@ -4,11 +4,9 @@ import { Profile } from './types';
 import { useRouter, usePathname } from 'next/navigation';
 import { DEMO_CURRENT_USER } from './demoStore';
 
-function getOrCreateDeviceProfile(): Profile {
-  if (typeof window === 'undefined') {
-    return DEMO_CURRENT_USER;
-  }
-  const stored = localStorage.getItem('locket_device_profile');
+function getStoredProfile(): Profile | null {
+  if (typeof window === 'undefined') return null;
+  const stored = localStorage.getItem('locket_user_session_v1');
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
@@ -17,19 +15,12 @@ function getOrCreateDeviceProfile(): Profile {
       }
     } catch (e) {}
   }
+  return null;
+}
 
-  // Generate a unique device profile for each browser tab/device
-  const randNum = Math.floor(100 + Math.random() * 900);
-  const deviceProfile: Profile = {
-    id: `user_dev_${Date.now()}_${randNum}`,
-    username: `user_${randNum}`,
-    display_name: `Tài khoản ${randNum}`,
-    avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=user_${randNum}`,
-    created_at: new Date().toISOString(),
-  };
-
-  localStorage.setItem('locket_device_profile', JSON.stringify(deviceProfile));
-  return deviceProfile;
+export function saveStoredProfile(profile: Profile): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('locket_user_session_v1', JSON.stringify(profile));
 }
 
 export function useAuth() {
@@ -41,8 +32,8 @@ export function useAuth() {
   useEffect(() => {
     async function checkUserSession() {
       if (!isSupabaseConfigured()) {
-        const fallbackProfile = getOrCreateDeviceProfile();
-        setUserProfile(fallbackProfile);
+        const stored = getStoredProfile();
+        setUserProfile(stored);
         setLoading(false);
         return;
       }
@@ -53,9 +44,9 @@ export function useAuth() {
         } = await supabase.auth.getUser();
 
         if (!user) {
-          // Check if there is a local session profile or create fallback
-          const localProfile = getOrCreateDeviceProfile();
-          setUserProfile(localProfile);
+          // Check local session or return null so user is prompted to login via Google
+          const stored = getStoredProfile();
+          setUserProfile(stored);
         } else {
           // Logged in Google/Supabase user
           const name =
@@ -84,11 +75,12 @@ export function useAuth() {
             await supabase.from('profiles').upsert(newProfile);
           } catch (e) {}
 
+          saveStoredProfile(newProfile);
           setUserProfile(newProfile);
         }
       } catch (e) {
         console.error('Auth error:', e);
-        setUserProfile(getOrCreateDeviceProfile());
+        setUserProfile(getStoredProfile());
       } finally {
         setLoading(false);
       }
@@ -103,7 +95,7 @@ export function useAuth() {
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           checkUserSession();
         } else if (event === 'SIGNED_OUT') {
-          localStorage.removeItem('locket_device_profile');
+          localStorage.removeItem('locket_user_session_v1');
           setUserProfile(null);
           router.push('/login');
         }
