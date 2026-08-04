@@ -153,7 +153,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
         className="w-9 h-9 rounded-full bg-[#262626] hover:bg-[#333333] text-white flex items-center justify-center border border-zinc-800/80 active:scale-95 transition-all flex-shrink-0"
         title="Tin nhắn"
       >
-        <MessageCircle className="w-4.5 h-4.5 stroke-[2]" />
+        <MessageCircle className="w-5 h-5 stroke-[2]" />
       </button>
     </div>
   );

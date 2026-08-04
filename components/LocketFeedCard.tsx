@@ -306,7 +306,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         transition={{ duration: 0.2, delay: 0.05 }}
         className="w-full flex items-center justify-center space-x-2 mt-2.5 mb-1 text-center flex-shrink-0 z-10"
       >
-        <div className="w-5.5 h-5.5 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700 flex-shrink-0">
+        <div className="w-6 h-6 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700 flex-shrink-0">
           <img
             src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
             alt={sender.display_name}

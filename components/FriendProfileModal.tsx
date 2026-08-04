@@ -40,7 +40,7 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
             onClick={onClose}
             className="absolute top-4 right-4 w-8 h-8 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center hover:text-white z-20"
           >
-            <X className="w-4.5 h-4.5" />
+            <X className="w-5 h-5" />
           </button>
 
           {/* Profile Header Info */}

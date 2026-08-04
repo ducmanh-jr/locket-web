@@ -107,7 +107,7 @@ export default function ProfilePage() {
 
         {/* Minimalist Authentic Profile Card */}
         <div className="flex flex-col items-center text-center my-6">
-          <div className="relative w-22 h-22 rounded-full overflow-hidden border-2 border-zinc-700 bg-zinc-900 mb-3 shadow-xl">
+          <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-zinc-700 bg-zinc-900 mb-3 shadow-xl">
             <img
               src={user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`}
               alt={user.display_name}
@@ -175,7 +175,7 @@ export default function ProfilePage() {
           >
             <div className="flex items-center space-x-3">
               <div className="w-9 h-9 rounded-full bg-zinc-800 text-[#FFC700] flex items-center justify-center">
-                <Users className="w-4.5 h-4.5 stroke-[2.2]" />
+                <Users className="w-5 h-5 stroke-[2.2]" />
               </div>
               <div className="text-left">
                 <h4 className="text-white text-xs font-bold">Bạn bè & Gợi ý kết bạn</h4>
@@ -192,7 +192,7 @@ export default function ProfilePage() {
           >
             <div className="flex items-center space-x-3">
               <div className="w-9 h-9 rounded-full bg-zinc-800 text-[#FFC700] flex items-center justify-center">
-                <Grid className="w-4.5 h-4.5 stroke-[2.2]" />
+                <Grid className="w-5 h-5 stroke-[2.2]" />
               </div>
               <div className="text-left">
                 <h4 className="text-white text-xs font-bold">Lịch sử Khoảnh khắc</h4>
@@ -206,7 +206,7 @@ export default function ProfilePage() {
           <div className="w-full bg-[#18181C] border border-zinc-800/80 rounded-2xl p-3.5 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-9 h-9 rounded-full bg-zinc-800 text-green-400 flex items-center justify-center">
-                <Smartphone className="w-4.5 h-4.5 stroke-[2.2]" />
+                <Smartphone className="w-5 h-5 stroke-[2.2]" />
               </div>
               <div className="text-left">
                 <h4 className="text-white text-xs font-bold">Ứng dụng PWA Widget</h4>
@@ -222,7 +222,7 @@ export default function ProfilePage() {
           <div className="w-full bg-[#18181C] border border-zinc-800/80 rounded-2xl p-3.5 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-9 h-9 rounded-full bg-zinc-800 text-blue-400 flex items-center justify-center">
-                <ShieldCheck className="w-4.5 h-4.5 stroke-[2.2]" />
+                <ShieldCheck className="w-5 h-5 stroke-[2.2]" />
               </div>
               <div className="text-left">
                 <h4 className="text-white text-xs font-bold">Bảo mật & Quyền riêng tư</h4>
