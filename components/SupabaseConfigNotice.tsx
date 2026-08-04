@@ -2,11 +2,14 @@
 
 import React, { useState } from 'react';
 import { isSupabaseConfigured } from '@/lib/supabaseClient';
-import { Database, CheckCircle2, AlertCircle, Terminal, X } from 'lucide-react';
+import { Database, CheckCircle2, AlertCircle, Terminal, X, RefreshCw } from 'lucide-react';
 
 export const SupabaseConfigNotice: React.FC = () => {
   const isConnected = isSupabaseConfigured();
   const [showModal, setShowModal] = useState(false);
+
+  const urlEnv = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const keyEnv = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   return (
     <>
@@ -18,7 +21,7 @@ export const SupabaseConfigNotice: React.FC = () => {
             <AlertCircle className="w-4 h-4 text-[#FFC700]" />
           )}
           <span className="text-zinc-300 font-medium">
-            {isConnected ? 'Supabase Live Connected' : 'Chế độ Demo Tương Tác ($0 Backend)'}
+            {isConnected ? '🟢 Supabase Live Connected' : '⚡ Chế độ Demo Tương Tác ($0 Server)'}
           </span>
         </div>
 
@@ -26,7 +29,7 @@ export const SupabaseConfigNotice: React.FC = () => {
           onClick={() => setShowModal(true)}
           className="text-[#FFC700] hover:underline font-semibold text-[11px]"
         >
-          {isConnected ? 'Chi tiết DB' : 'Kết nối Supabase'}
+          {isConnected ? 'Chi tiết DB' : 'Cấu hình Supabase'}
         </button>
       </div>
 
@@ -47,7 +50,7 @@ export const SupabaseConfigNotice: React.FC = () => {
               <div>
                 <h3 className="text-white text-base font-bold">Trạng thái Cấu hình Supabase</h3>
                 <p className="text-zinc-400 text-xs">
-                  {isConnected ? 'Dữ liệu được lưu trực tiếp trên Cloud Supabase' : 'Đang chạy Demo offline mượt mà'}
+                  {isConnected ? 'Dữ liệu lưu trực tiếp Cloud Supabase' : 'Đang chạy Demo offline mượt mà'}
                 </p>
               </div>
             </div>
@@ -56,36 +59,22 @@ export const SupabaseConfigNotice: React.FC = () => {
               <div className="flex items-center justify-between py-1 border-b border-zinc-700/50">
                 <span className="text-zinc-400">SUPABASE_URL:</span>
                 <span className="font-mono text-zinc-200">
-                  {process.env.NEXT_PUBLIC_SUPABASE_URL ? '✓ Đã cấu hình' : 'Chưa nhập (.env.local)'}
+                  {urlEnv ? '✓ Đã kết nối' : 'Chưa nhận trên Vercel'}
                 </span>
               </div>
               <div className="flex items-center justify-between py-1">
                 <span className="text-zinc-400">SUPABASE_ANON_KEY:</span>
                 <span className="font-mono text-zinc-200">
-                  {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✓ Đã cấu hình' : 'Chưa nhập (.env.local)'}
+                  {keyEnv ? '✓ Đã kết nối' : 'Chưa nhận trên Vercel'}
                 </span>
               </div>
             </div>
 
-            <div className="space-y-3 mb-6 text-xs text-zinc-300">
-              <p className="font-semibold text-white flex items-center gap-1.5">
-                <Terminal className="w-4 h-4 text-[#FFC700]" /> Hướng dẫn kết nối Supabase thật:
-              </p>
-              <ol className="list-decimal list-inside space-y-1.5 text-zinc-400 pl-1">
-                <li>
-                  Tạo file <code className="text-[#FFC700] bg-black/40 px-1 py-0.5 rounded">.env.local</code> ở thư mục gốc project.
-                </li>
-                <li>Dán 2 dòng biến môi trường từ Supabase Dashboard:</li>
-                <pre className="bg-black/60 p-2 rounded-lg text-[10px] text-zinc-300 overflow-x-auto mt-1 font-mono">
-                  NEXT_PUBLIC_SUPABASE_URL=https://xyz.supabase.co
-                  <br />
-                  NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
-                </pre>
-                <li>
-                  Chạy script <code className="text-[#FFC700]">supabase/schema.sql</code> trong Supabase SQL Editor.
-                </li>
-              </ol>
-            </div>
+            {!isConnected && (
+              <div className="bg-[#FFC700]/10 border border-[#FFC700]/30 p-3 rounded-xl mb-4 text-xs text-[#FFC700]">
+                💡 <strong>Mẹo:</strong> Nếu bạn vừa điền Biến môi trường trên Vercel, hãy vào Vercel Dashboard ➔ Deployments ➔ Bấm <strong>Redeploy</strong> để Vercel cập nhật chìa khóa mới!
+              </div>
+            )}
 
             <button
               onClick={() => setShowModal(false)}
