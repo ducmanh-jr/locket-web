@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Profile } from '@/lib/types';
-import { ChevronDown, ChevronUp, MessageCircle, Users, User } from 'lucide-react';
+import { ChevronDown, ChevronUp, MessageCircle, Users, User, Info } from 'lucide-react';
 
 interface LocketHeaderProps {
   currentUser: Profile;
@@ -11,6 +11,7 @@ interface LocketHeaderProps {
   onSelectFilter: (friendId: string | null) => void;
   onOpenChat: () => void;
   onOpenProfile: () => void;
+  onViewFriendProfile?: (friend: Profile) => void;
 }
 
 export const LocketHeader: React.FC<LocketHeaderProps> = ({
@@ -20,6 +21,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
   onSelectFilter,
   onOpenChat,
   onOpenProfile,
+  onViewFriendProfile,
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -32,7 +34,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
       <button
         onClick={onOpenProfile}
         className="w-9 h-9 rounded-full overflow-hidden border border-zinc-800 bg-zinc-900 flex items-center justify-center active:scale-95 transition-transform flex-shrink-0"
-        title="Trang cá nhân"
+        title="Trang cá nhân của tôi"
       >
         {currentUser.avatar_url ? (
           <img
@@ -45,7 +47,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
         )}
       </button>
 
-      {/* Center: Filter Pill Dropdown matching Screenshot 2 */}
+      {/* Center: Filter Pill Dropdown */}
       <div className="relative">
         <button
           onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -70,7 +72,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
               }}
               className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold transition-all ${
                 selectedFriendFilter === null
-                  ? 'bg-zinc-700/80 text-white'
+                  ? 'bg-[#FFC700]/20 text-[#FFC700] border border-[#FFC700]/30'
                   : 'text-zinc-300 hover:bg-zinc-700/40'
               }`}
             >
@@ -85,38 +87,54 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
 
             <div className="my-1 border-t border-zinc-700/50" />
 
-            {/* Individual Friends */}
-            <div className="space-y-0.5 max-h-48 overflow-y-auto custom-scrollbar">
+            {/* Individual Friends (dm, system32, admin) */}
+            <div className="space-y-0.5 max-h-56 overflow-y-auto custom-scrollbar">
               {friends.map((friend) => (
-                <button
+                <div
                   key={friend.id}
-                  onClick={() => {
-                    onSelectFilter(friend.id);
-                    setDropdownOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold transition-all ${
                     selectedFriendFilter === friend.id
-                      ? 'bg-zinc-700/80 text-white'
+                      ? 'bg-[#FFC700]/20 text-[#FFC700] border border-[#FFC700]/30'
                       : 'text-zinc-300 hover:bg-zinc-700/40'
                   }`}
                 >
-                  <div className="flex items-center space-x-2.5">
+                  <button
+                    onClick={() => {
+                      onSelectFilter(friend.id);
+                      setDropdownOpen(false);
+                    }}
+                    className="flex-1 flex items-center space-x-2.5 text-left"
+                  >
                     <img
                       src={friend.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${friend.username}`}
                       alt={friend.display_name}
-                      className="w-7 h-7 rounded-full object-cover border border-zinc-600"
+                      className="w-7 h-7 rounded-full object-cover border border-zinc-600 flex-shrink-0"
                     />
-                    <span className="truncate max-w-[120px]">{friend.display_name}</span>
-                  </div>
-                  <span className="text-zinc-400 text-[10px]">&gt;</span>
-                </button>
+                    <span className="truncate max-w-[110px]">{friend.display_name}</span>
+                  </button>
+
+                  {/* View Friend Profile Icon */}
+                  {onViewFriendProfile && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDropdownOpen(false);
+                        onViewFriendProfile(friend);
+                      }}
+                      className="p-1 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-600 transition-colors"
+                      title="Xem trang cá nhân bạn bè"
+                    >
+                      <Info className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
           </div>
         )}
       </div>
 
-      {/* Right: Message / Chat Icon matching Screenshot 2 */}
+      {/* Right: Message / Chat Icon */}
       <button
         onClick={onOpenChat}
         className="w-9 h-9 rounded-full bg-[#262626] hover:bg-[#333333] text-white flex items-center justify-center border border-zinc-800/80 active:scale-95 transition-all flex-shrink-0"

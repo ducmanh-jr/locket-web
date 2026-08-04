@@ -6,11 +6,13 @@ import { LocketDock } from '@/components/LocketDock';
 import { LocketFeedCard } from '@/components/LocketFeedCard';
 import { LocketHistoryGrid } from '@/components/LocketHistoryGrid';
 import { LocketChatView } from '@/components/LocketChatView';
+import { FriendProfileModal } from '@/components/FriendProfileModal';
 import { CameraView } from '@/components/CameraView';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 import { SupabaseConfigNotice } from '@/components/SupabaseConfigNotice';
 import {
   DEMO_CURRENT_USER,
+  DEFAULT_3_FRIENDS,
   DEMO_SUGGESTED_USERS,
   getStoredDemoMoments,
   addDemoMoment,
@@ -31,6 +33,7 @@ export default function HomePage() {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [currentView, setCurrentView] = useState<'feed' | 'grid' | 'chat'>('feed');
   const [selectedFriendFilter, setSelectedFriendFilter] = useState<string | null>(null);
+  const [selectedFriendForModal, setSelectedFriendForModal] = useState<Profile | null>(null);
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [showMenuModal, setShowMenuModal] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -52,7 +55,7 @@ export default function HomePage() {
         const { data, error } = await supabase.from('profiles').select('*');
         if (!error && data && data.length > 0) {
           const realOthers = data.filter((p: Profile) => p.id !== currentUser.id);
-          const combined = [...realOthers, ...DEMO_SUGGESTED_USERS];
+          const combined = [...realOthers, ...DEFAULT_3_FRIENDS];
           const unique = combined.filter(
             (user, index, self) => index === self.findIndex((u) => u.username === user.username)
           );
@@ -61,7 +64,7 @@ export default function HomePage() {
         }
       } catch (e) {}
     }
-    setFriendsList(DEMO_SUGGESTED_USERS);
+    setFriendsList(DEFAULT_3_FRIENDS);
   };
 
   // Fetch moments
@@ -118,9 +121,16 @@ export default function HomePage() {
     );
   }
 
-  // Filter moments
+  // Filter moments by selected friend (dm, system32, admin)
   const filteredMoments = selectedFriendFilter
-    ? moments.filter((m) => m.sender_id === selectedFriendFilter)
+    ? moments.filter((m) => {
+        const sender = m.sender;
+        return (
+          m.sender_id === selectedFriendFilter ||
+          sender?.username === selectedFriendFilter ||
+          sender?.id === selectedFriendFilter
+        );
+      })
     : moments;
 
   const currentMoment = filteredMoments[currentIndex] || filteredMoments[0];
@@ -234,10 +244,11 @@ export default function HomePage() {
           }}
           onOpenChat={() => setCurrentView('chat')}
           onOpenProfile={() => router.push('/profile')}
+          onViewFriendProfile={(friend) => setSelectedFriendForModal(friend)}
         />
       )}
 
-      {/* Main Views Container with Smooth Framer Motion Slide Transitions */}
+      {/* Main Views Container */}
       <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden w-full">
         <AnimatePresence mode="wait">
           {currentView === 'chat' ? (
@@ -289,7 +300,7 @@ export default function HomePage() {
               </div>
 
               {loading ? (
-                <div className="w-[85vw] max-w-[320px] aspect-square my-auto rounded-[2.5rem] bg-[#18181C] border border-zinc-800 flex items-center justify-center animate-pulse">
+                <div className="w-[85vw] max-w-[310px] aspect-square my-auto rounded-[2.5rem] bg-[#18181C] border border-zinc-800 flex items-center justify-center animate-pulse">
                   <div className="w-10 h-10 rounded-full border-4 border-[#FFC700] border-t-transparent animate-spin" />
                 </div>
               ) : filteredMoments.length > 0 && currentMoment ? (
@@ -304,7 +315,7 @@ export default function HomePage() {
                   prevMomentUrl={prevMoment?.media_url}
                 />
               ) : (
-                <div className="w-[85vw] max-w-[320px] aspect-square my-auto rounded-[2.5rem] bg-[#18181C] border border-[#FFC700]/30 p-8 flex flex-col items-center justify-center text-center">
+                <div className="w-[85vw] max-w-[310px] aspect-square my-auto rounded-[2.5rem] bg-[#18181C] border border-[#FFC700]/30 p-8 flex flex-col items-center justify-center text-center">
                   <div className="w-14 h-14 rounded-full bg-[#FFC700]/20 text-[#FFC700] flex items-center justify-center mb-3 border border-[#FFC700]/40">
                     <Camera className="w-7 h-7" />
                   </div>
@@ -335,6 +346,25 @@ export default function HomePage() {
           onSendDirectMessage={handleSendDirectMessage}
           onReactEmoji={(emoji) => {
             if (currentMoment) handleReact(currentMoment.id, emoji);
+          }}
+        />
+      )}
+
+      {/* Friend Profile Modal */}
+      {selectedFriendForModal && (
+        <FriendProfileModal
+          friend={selectedFriendForModal}
+          friendMoments={moments.filter(
+            (m) =>
+              m.sender_id === selectedFriendForModal.id ||
+              m.sender?.username === selectedFriendForModal.username
+          )}
+          onClose={() => setSelectedFriendForModal(null)}
+          onOpenChatWithFriend={(friend) => setCurrentView('chat')}
+          onSelectMoment={(moment) => {
+            const idx = filteredMoments.findIndex((m) => m.id === moment.id);
+            if (idx !== -1) setCurrentIndex(idx);
+            setCurrentView('feed');
           }}
         />
       )}
