@@ -144,7 +144,7 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
         const exists = moments.some((m: any) => m.id === compressedMoment.id);
         if (!exists) {
           moments.unshift(compressedMoment);
-          if (moments.length > 30) moments.splice(30);
+          if (moments.length > 200) moments.splice(200);
           data.moments = moments;
           await fetch(JSONBLOB_STORE_URL, {
             method: 'PUT',
@@ -162,28 +162,35 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
 }
 
 /**
- * Fetches all moments posted across accounts from Global Cloud.
+ * Fetches all moments posted across all accounts from Global Cloud.
  */
 export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
+  const allMoments: Moment[] = [];
+
   try {
-    // 1. Try Serverless API first
+    // 1. Fetch from Serverless API
     const res = await fetch('/api/sync', { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data.moments) && data.moments.length > 0) {
-        return data.moments;
+      if (Array.isArray(data.moments)) {
+        allMoments.push(...data.moments);
       }
     }
+  } catch (e) {}
 
-    // 2. Fallback to JSONBlob
+  try {
+    // 2. Fetch from JSONBlob Store
     const jsonRes = await fetch(JSONBLOB_STORE_URL, { cache: 'no-store' });
     if (jsonRes.ok) {
       const data = await jsonRes.json();
-      if (Array.isArray(data.moments)) return data.moments;
+      if (Array.isArray(data.moments)) {
+        allMoments.push(...data.moments);
+      }
     }
+  } catch (e) {}
 
-    return [];
-  } catch (e) {
-    return [];
-  }
+  // Deduplicate by moment ID
+  return allMoments.filter(
+    (m, i, self) => m && m.id && i === self.findIndex((x) => x && x.id === m.id)
+  );
 }

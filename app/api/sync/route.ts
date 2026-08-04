@@ -64,8 +64,8 @@ export async function POST(request: Request) {
       const exists = memoryMoments.some((m) => m.id === moment.id);
       if (!exists) {
         memoryMoments.unshift(moment);
-        if (memoryMoments.length > 50) {
-          memoryMoments = memoryMoments.slice(0, 50);
+        if (memoryMoments.length > 200) {
+          memoryMoments = memoryMoments.slice(0, 200);
         }
       }
     }
