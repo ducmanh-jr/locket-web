@@ -14,14 +14,7 @@ export default function FriendsPage() {
   const [suggestedUsers, setSuggestedUsers] = useState<Profile[]>(DEMO_SUGGESTED_USERS.slice(3));
   const [sentRequestIds, setSentRequestIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [pendingRequests, setPendingRequests] = useState<Profile[]>([
-    {
-      id: 'user-quang',
-      username: 'quang_huy',
-      display_name: 'Quang Huy 🎧',
-      avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80',
-    },
-  ]);
+  const [pendingRequests, setPendingRequests] = useState<Profile[]>([]);
 
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);

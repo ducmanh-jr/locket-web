@@ -288,8 +288,14 @@ export default function HomePage() {
               <LocketHistoryGrid
                 moments={filteredMoments}
                 onSelectMoment={(moment) => {
-                  const idx = filteredMoments.findIndex((m) => m.id === moment.id);
-                  if (idx !== -1) setCurrentIndex(idx);
+                  const filteredIdx = filteredMoments.findIndex((m) => m.id === moment.id);
+                  if (filteredIdx !== -1) {
+                    setCurrentIndex(filteredIdx);
+                  } else {
+                    setSelectedFriendFilter(null);
+                    const globalIdx = moments.findIndex((m) => m.id === moment.id);
+                    if (globalIdx !== -1) setCurrentIndex(globalIdx);
+                  }
                   setCurrentView('feed');
                 }}
                 onOpenCamera={() => setShowCamera(true)}
@@ -372,8 +378,14 @@ export default function HomePage() {
           onClose={() => setSelectedFriendForModal(null)}
           onOpenChatWithFriend={(friend) => setCurrentView('chat')}
           onSelectMoment={(moment) => {
-            const idx = filteredMoments.findIndex((m) => m.id === moment.id);
-            if (idx !== -1) setCurrentIndex(idx);
+            const filteredIdx = filteredMoments.findIndex((m) => m.id === moment.id);
+            if (filteredIdx !== -1) {
+              setCurrentIndex(filteredIdx);
+            } else {
+              setSelectedFriendFilter(null);
+              const globalIdx = moments.findIndex((m) => m.id === moment.id);
+              if (globalIdx !== -1) setCurrentIndex(globalIdx);
+            }
             setCurrentView('feed');
           }}
         />
