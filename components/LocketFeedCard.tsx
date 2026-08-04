@@ -110,19 +110,20 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       onTouchEnd={handleTouchEnd}
       className="w-full flex-1 flex flex-col items-center justify-center select-none cursor-grab active:cursor-grabbing px-2 py-1 my-auto overflow-hidden relative"
     >
-      {/* Strictly Constrained 1:1 Photo Card Container */}
+      {/* 1:1 Photo Card Container with Forced Absolute Positioning for Framer Motion */}
       <div
         onDoubleClick={handleDoubleTap}
-        className="relative w-[88vw] max-w-[340px] sm:max-w-[350px] aspect-square rounded-[2.5rem] overflow-hidden bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0"
+        className="relative w-[85vw] max-w-[320px] sm:max-w-[340px] h-[85vw] max-h-[320px] sm:max-h-[340px] aspect-square rounded-[2.5rem] overflow-hidden bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={moment.id}
-            initial={{ opacity: 0, y: direction === 'up' ? 60 : -60 }}
+            initial={{ opacity: 0, y: direction === 'up' ? 80 : -80 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: direction === 'up' ? -60 : 60 }}
+            exit={{ opacity: 0, y: direction === 'up' ? -80 : 80 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="w-full h-full absolute inset-0 overflow-hidden"
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+            className="w-full h-full overflow-hidden"
           >
             <img
               src={moment.media_url}
@@ -168,7 +169,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       </div>
 
       {/* Sender Avatar & Name Tag Centered DIRECTLY Below Card */}
-      <div className="w-full flex items-center justify-center space-x-2 mt-2.5 mb-1 text-center flex-shrink-0">
+      <div className="w-full flex items-center justify-center space-x-2 mt-2.5 mb-1 text-center flex-shrink-0 z-10">
         <div className="w-5.5 h-5.5 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700 flex-shrink-0">
           <img
             src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
