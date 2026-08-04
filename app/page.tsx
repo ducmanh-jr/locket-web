@@ -25,6 +25,7 @@ import { Camera, X, UserPlus } from 'lucide-react';
 import { CapturedImage } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { pushMomentToGlobalCloud, fetchGlobalCloudMoments } from '@/lib/cloudSync';
 
 export default function HomePage() {
   const router = useRouter();
@@ -78,11 +79,12 @@ export default function HomePage() {
     setFriendsList(DEFAULT_3_FRIENDS);
   };
 
-  // Fetch moments & guarantee 50 moments dataset is always loaded
+  // Fetch moments & guarantee 50 moments dataset + global multi-account moments are loaded
   const loadMoments = async () => {
-    setLoading(true);
     const demoMoments = getStoredDemoMoments();
+    const cloudMoments = await fetchGlobalCloudMoments();
 
+    let validSupabaseMoments: Moment[] = [];
     if (isSupabaseConfigured()) {
       try {
         const { data, error } = await supabase
@@ -91,50 +93,50 @@ export default function HomePage() {
           .order('created_at', { ascending: false });
 
         if (!error && data) {
-          const validSupabaseMoments = (data as Moment[]).filter(
+          validSupabaseMoments = (data as Moment[]).filter(
             (m) => !m.media_url?.includes('1785829393992_')
           );
-          const combined = [...demoMoments, ...validSupabaseMoments];
-
-          // Ensure every moment has a valid sender object
-          const sanitized = combined.map((m) => {
-            if (!m.sender) {
-              if (m.sender_id === currentUser.id || m.sender_id === 'user-me') {
-                return { ...m, sender: currentUser };
-              }
-              const match = DEFAULT_3_FRIENDS.find((f) => f.id === m.sender_id);
-              if (match) return { ...m, sender: match };
-              return { ...m, sender: currentUser };
-            }
-            return m;
-          });
-
-          // Deduplicate by moment id
-          const unique = sanitized.filter(
-            (m, i, self) => i === self.findIndex((x) => x.id === m.id)
-          );
-
-          // Sort strictly by newest date first
-          unique.sort(
-            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          );
-
-          setMoments(unique.length > 0 ? unique : demoMoments);
-        } else {
-          setMoments(demoMoments);
         }
-      } catch (e) {
-        setMoments(demoMoments);
-      }
-    } else {
-      setMoments(demoMoments);
+      } catch (e) {}
     }
+
+    const combined = [...cloudMoments, ...validSupabaseMoments, ...demoMoments];
+
+    // Ensure every moment has a valid sender object
+    const sanitized = combined.map((m) => {
+      if (!m.sender) {
+        if (m.sender_id === currentUser.id || m.sender_id === 'user-me') {
+          return { ...m, sender: currentUser };
+        }
+        const match = DEFAULT_3_FRIENDS.find((f) => f.id === m.sender_id);
+        if (match) return { ...m, sender: match };
+        return { ...m, sender: currentUser };
+      }
+      return m;
+    });
+
+    // Deduplicate by moment id
+    const unique = sanitized.filter(
+      (m, i, self) => i === self.findIndex((x) => x.id === m.id)
+    );
+
+    // Sort strictly by newest date first
+    unique.sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
+    setMoments(unique.length > 0 ? unique : demoMoments);
     setLoading(false);
   };
 
   useEffect(() => {
     loadFriends();
     loadMoments();
+
+    // 4s polling timer so Account B automatically gets Account A's photos without reloading
+    const syncTimer = setInterval(() => {
+      loadMoments();
+    }, 4000);
 
     if (isSupabaseConfigured()) {
       // 1. Supabase Postgres DB Changes Channel
@@ -143,7 +145,7 @@ export default function HomePage() {
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'moments' },
-          (payload) => {
+          () => {
             loadMoments();
           }
         )
@@ -166,10 +168,15 @@ export default function HomePage() {
         .subscribe();
 
       return () => {
+        clearInterval(syncTimer);
         supabase.removeChannel(dbChannel);
         supabase.removeChannel(broadcastChannel);
       };
     }
+
+    return () => {
+      clearInterval(syncTimer);
+    };
   }, [currentUser.id]);
 
   if (authLoading) {
