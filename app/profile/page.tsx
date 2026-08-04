@@ -1,28 +1,58 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { CameraView } from '@/components/CameraView';
-import { DEMO_CURRENT_USER, DEMO_FRIENDS, addDemoMoment } from '@/lib/demoStore';
+import { DEMO_CURRENT_USER, DEMO_SUGGESTED_USERS, addDemoMoment } from '@/lib/demoStore';
 import { Profile } from '@/lib/types';
 import { User, Edit3, Smartphone, Database, LogOut, Check, Sparkles } from 'lucide-react';
 import { CapturedImage } from '@/lib/camera';
-import { isSupabaseConfigured } from '@/lib/supabaseClient';
+import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
+import { useAuth } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<Profile>(DEMO_CURRENT_USER);
+  const router = useRouter();
+  const { userProfile, loading: authLoading } = useAuth();
+  const [user, setUser] = useState<Profile>(userProfile || DEMO_CURRENT_USER);
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [displayName, setDisplayName] = useState<string>(user.display_name);
+  const [displayName, setDisplayName] = useState<string>('');
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (userProfile) {
+      setUser(userProfile);
+      setDisplayName(userProfile.display_name);
+    }
+  }, [userProfile]);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!displayName.trim()) return;
+
+    if (isSupabaseConfigured() && userProfile) {
+      try {
+        await supabase
+          .from('profiles')
+          .update({ display_name: displayName })
+          .eq('id', userProfile.id);
+      } catch (e) {
+        console.error('Failed to update profile:', e);
+      }
+    }
+
     setUser((prev) => ({ ...prev, display_name: displayName }));
     setIsEditing(false);
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2000);
+  };
+
+  const handleSignOut = async () => {
+    if (isSupabaseConfigured()) {
+      await supabase.auth.signOut();
+    }
+    router.push('/login');
   };
 
   const handleSendMoment = async (
@@ -42,8 +72,16 @@ export default function ProfilePage() {
     addDemoMoment(newMoment);
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-full flex items-center justify-center bg-black">
+        <div className="w-10 h-10 rounded-full border-4 border-[#FFC700] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-full flex flex-col justify-between p-4 pb-28">
+    <div className="min-h-full flex flex-col justify-between p-4 pb-28 bg-black">
       <div>
         {/* Header */}
         <div className="flex items-center space-x-2 mb-6">
@@ -52,10 +90,10 @@ export default function ProfilePage() {
         </div>
 
         {/* Profile Card */}
-        <div className="bg-[#18181C] border border-[#2C2C34] rounded-3xl p-6 flex flex-col items-center text-center shadow-xl mb-6">
+        <div className="bg-[#18181C] border border-zinc-800 rounded-3xl p-6 flex flex-col items-center text-center shadow-xl mb-6">
           <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-[#FFC700] mb-4 shadow-locket-glow">
             <img
-              src={user.avatar_url}
+              src={user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`}
               alt={user.display_name}
               className="w-full h-full object-cover"
             />
@@ -66,8 +104,12 @@ export default function ProfilePage() {
               <h2 className="text-white text-lg font-bold flex items-center justify-center gap-1.5">
                 {user.display_name}
                 <button
-                  onClick={() => setIsEditing(true)}
+                  onClick={() => {
+                    setDisplayName(user.display_name);
+                    setIsEditing(true);
+                  }}
                   className="p-1 rounded-full text-zinc-400 hover:text-[#FFC700]"
+                  title="Đổi tên hiển thị"
                 >
                   <Edit3 className="w-4 h-4" />
                 </button>
@@ -92,7 +134,7 @@ export default function ProfilePage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-[#FFC700] text-[#0E0E10] text-xs font-bold rounded-xl flex items-center justify-center space-x-1"
+                  className="flex-1 py-2 bg-[#FFC700] text-black text-xs font-bold rounded-xl flex items-center justify-center space-x-1"
                 >
                   <Check className="w-3.5 h-3.5" />
                   <span>Lưu</span>
@@ -108,9 +150,9 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Account Details & PWA Status */}
+        {/* Account Details & Status */}
         <div className="space-y-3">
-          <div className="bg-[#18181C] border border-[#2C2C34] rounded-2xl p-4 flex items-center justify-between">
+          <div className="bg-[#18181C] border border-zinc-800 rounded-2xl p-4 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Smartphone className="w-5 h-5 text-[#FFC700]" />
               <div>
@@ -123,25 +165,25 @@ export default function ProfilePage() {
             </span>
           </div>
 
-          <div className="bg-[#18181C] border border-[#2C2C34] rounded-2xl p-4 flex items-center justify-between">
+          <div className="bg-[#18181C] border border-zinc-800 rounded-2xl p-4 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Database className="w-5 h-5 text-[#FFC700]" />
               <div>
-                <h4 className="text-white text-xs font-bold">Supabase Backend</h4>
+                <h4 className="text-white text-xs font-bold">Supabase Cloud Auth</h4>
                 <p className="text-zinc-400 text-[11px]">
-                  {isSupabaseConfigured() ? 'Đã kết nối Database Cloud' : 'Chế độ Demo Tương Tác ($0 Server)'}
+                  {isSupabaseConfigured() ? 'Tài khoản Google / Cloud của bạn' : 'Chế độ Demo Tương Tác ($0 Server)'}
                 </p>
               </div>
             </div>
           </div>
 
-          <a
-            href="/login"
+          <button
+            onClick={handleSignOut}
             className="w-full bg-[#18181C] border border-red-500/30 hover:border-red-500 rounded-2xl p-4 flex items-center justify-center space-x-2 text-red-400 text-xs font-bold transition-all mt-4"
           >
             <LogOut className="w-4 h-4" />
             <span>Đăng xuất tài khoản</span>
-          </a>
+          </button>
         </div>
       </div>
 
@@ -149,7 +191,7 @@ export default function ProfilePage() {
 
       {showCamera && (
         <CameraView
-          friends={DEMO_FRIENDS}
+          friends={DEMO_SUGGESTED_USERS.slice(0, 5)}
           onClose={() => setShowCamera(false)}
           onSendMoment={handleSendMoment}
         />

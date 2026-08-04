@@ -11,19 +11,21 @@ import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 import { SupabaseConfigNotice } from '@/components/SupabaseConfigNotice';
 import {
   DEMO_CURRENT_USER,
-  DEMO_FRIENDS,
+  DEMO_SUGGESTED_USERS,
   getStoredDemoMoments,
   addDemoMoment,
   addDemoReaction,
 } from '@/lib/demoStore';
 import { Moment, Profile } from '@/lib/types';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
-import { Camera, RefreshCw, X, UserPlus } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
+import { Camera, X, UserPlus } from 'lucide-react';
 import { CapturedImage } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
   const router = useRouter();
+  const { userProfile, loading: authLoading } = useAuth();
   const [moments, setMoments] = useState<Moment[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [currentView, setCurrentView] = useState<'feed' | 'grid' | 'chat'>('feed');
@@ -32,16 +34,16 @@ export default function HomePage() {
   const [showMenuModal, setShowMenuModal] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const currentUser = userProfile || DEMO_CURRENT_USER;
+
   // Register PWA Service Worker
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch((err) => {
-        console.log('Service Worker registration failed:', err);
-      });
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
   }, []);
 
-  // Fetch moments (Cloud Supabase or Client Demo Store)
+  // Fetch moments
   const loadMoments = async () => {
     setLoading(true);
     if (isSupabaseConfigured()) {
@@ -68,7 +70,6 @@ export default function HomePage() {
   useEffect(() => {
     loadMoments();
 
-    // Supabase Realtime WebSocket Subscription
     if (isSupabaseConfigured()) {
       const channel = supabase
         .channel('public:moments-feed')
@@ -87,14 +88,21 @@ export default function HomePage() {
     }
   }, []);
 
-  // Filter moments by selected friend dropdown
+  if (authLoading) {
+    return (
+      <div className="min-h-full flex items-center justify-center bg-black">
+        <div className="w-10 h-10 rounded-full border-4 border-[#FFC700] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  // Filter moments
   const filteredMoments = selectedFriendFilter
     ? moments.filter((m) => m.sender_id === selectedFriendFilter)
     : moments;
 
   const currentMoment = filteredMoments[currentIndex] || filteredMoments[0];
 
-  // Carousel controls
   const handleNext = () => {
     if (currentIndex < filteredMoments.length - 1) {
       setCurrentIndex((prev) => prev + 1);
@@ -107,7 +115,6 @@ export default function HomePage() {
     }
   };
 
-  // Direct Message & Emoji Reaction Handler
   const handleSendDirectMessage = (text: string) => {
     if (currentMoment) {
       handleReact(currentMoment.id, '💬');
@@ -115,22 +122,19 @@ export default function HomePage() {
   };
 
   const handleReact = async (momentId: string, emoji: string) => {
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && userProfile) {
       try {
         await supabase.from('reactions').insert({
           moment_id: momentId,
-          user_id: DEMO_CURRENT_USER.id,
+          user_id: userProfile.id,
           emoji: emoji,
         });
-      } catch (e) {
-        console.error('Error inserting reaction:', e);
-      }
+      } catch (e) {}
     }
-    const updated = addDemoReaction(momentId, emoji, DEMO_CURRENT_USER);
+    const updated = addDemoReaction(momentId, emoji, currentUser);
     setMoments(updated);
   };
 
-  // Send newly captured moment
   const handleSendMoment = async (
     image: CapturedImage,
     caption: string,
@@ -139,9 +143,9 @@ export default function HomePage() {
     const newMomentId = `moment-${Date.now()}`;
     let mediaUrl = image.dataUrl;
 
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && userProfile) {
       try {
-        const filePath = `${DEMO_CURRENT_USER.id}/${newMomentId}.jpg`;
+        const filePath = `${userProfile.id}/${newMomentId}.jpg`;
         const { error: uploadError } = await supabase.storage
           .from('moments')
           .upload(filePath, image.blob, { contentType: 'image/jpeg' });
@@ -159,7 +163,7 @@ export default function HomePage() {
           .from('moments')
           .insert({
             id: newMomentId,
-            sender_id: DEMO_CURRENT_USER.id,
+            sender_id: userProfile.id,
             media_url: mediaUrl,
             caption: caption,
           })
@@ -173,15 +177,13 @@ export default function HomePage() {
           }));
           await supabase.from('moment_recipients').insert(recipientInserts);
         }
-      } catch (e) {
-        console.error('Supabase send error:', e);
-      }
+      } catch (e) {}
     }
 
     const createdMoment: Moment = {
       id: newMomentId,
-      sender_id: DEMO_CURRENT_USER.id,
-      sender: DEMO_CURRENT_USER,
+      sender_id: currentUser.id,
+      sender: currentUser,
       media_url: mediaUrl,
       caption: caption,
       created_at: new Date().toISOString(),
@@ -196,11 +198,11 @@ export default function HomePage() {
 
   return (
     <div className="min-h-full flex flex-col justify-between bg-black selection:bg-[#FFC700] selection:text-black">
-      {/* Top Bar Header */}
+      {/* Header */}
       {currentView !== 'chat' && (
         <LocketHeader
-          currentUser={DEMO_CURRENT_USER}
-          friends={DEMO_FRIENDS}
+          currentUser={currentUser}
+          friends={DEMO_SUGGESTED_USERS.slice(0, 5)}
           selectedFriendFilter={selectedFriendFilter}
           onSelectFilter={(friendId) => {
             setSelectedFriendFilter(friendId);
@@ -211,17 +213,15 @@ export default function HomePage() {
         />
       )}
 
-      {/* Main Content Views */}
+      {/* Main Views */}
       <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden">
         {currentView === 'chat' ? (
-          /* Direct Messages View (Matching Screenshot 2) */
           <LocketChatView
-            friends={DEMO_FRIENDS}
-            currentUser={DEMO_CURRENT_USER}
+            friends={DEMO_SUGGESTED_USERS.slice(0, 5)}
+            currentUser={currentUser}
             onBack={() => setCurrentView('feed')}
           />
         ) : currentView === 'grid' ? (
-          /* 3-Column History Grid (Matching Screenshot 4 & 5) */
           <LocketHistoryGrid
             moments={filteredMoments}
             onSelectMoment={(moment) => {
@@ -232,7 +232,6 @@ export default function HomePage() {
             onOpenCamera={() => setShowCamera(true)}
           />
         ) : (
-          /* Main Feed View (Matching Screenshot 1 & 3) */
           <div className="w-full flex-1 flex flex-col justify-between p-2">
             <div className="w-full px-2 pt-1">
               <SupabaseConfigNotice />
@@ -246,7 +245,7 @@ export default function HomePage() {
             ) : filteredMoments.length > 0 && currentMoment ? (
               <LocketFeedCard
                 moment={currentMoment}
-                currentUser={DEMO_CURRENT_USER}
+                currentUser={currentUser}
                 onNext={handleNext}
                 onPrev={handlePrev}
                 hasPrev={currentIndex > 0}
@@ -273,7 +272,7 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* Bottom Floating Locket Dock */}
+      {/* Bottom Dock */}
       {currentView !== 'chat' && (
         <LocketDock
           currentView={currentView}
@@ -287,7 +286,7 @@ export default function HomePage() {
         />
       )}
 
-      {/* Menu / Options Modal */}
+      {/* Menu Modal */}
       {showMenuModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="w-full max-w-sm bg-[#18181C] border border-zinc-800 rounded-t-3xl sm:rounded-3xl p-5 text-left relative">
@@ -310,7 +309,7 @@ export default function HomePage() {
               >
                 <div className="flex items-center space-x-2.5">
                   <UserPlus className="w-4 h-4 text-[#FFC700]" />
-                  <span>Quản lý & Kết bạn</span>
+                  <span>Quản lý & Gợi ý kết bạn</span>
                 </div>
                 <span className="text-zinc-500">&gt;</span>
               </button>
@@ -324,7 +323,7 @@ export default function HomePage() {
               >
                 <div className="flex items-center space-x-2.5">
                   <Camera className="w-4 h-4 text-[#FFC700]" />
-                  <span>Trang cá nhân & PWA</span>
+                  <span>Trang cá nhân của tôi</span>
                 </div>
                 <span className="text-zinc-500">&gt;</span>
               </button>
@@ -333,10 +332,10 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Live Camera View Modal */}
+      {/* Camera View */}
       {showCamera && (
         <CameraView
-          friends={DEMO_FRIENDS}
+          friends={DEMO_SUGGESTED_USERS.slice(0, 5)}
           onClose={() => setShowCamera(false)}
           onSendMoment={handleSendMoment}
         />
