@@ -5,12 +5,14 @@ import { Navbar } from '@/components/Navbar';
 import { CameraView } from '@/components/CameraView';
 import { DEFAULT_3_FRIENDS, DEMO_CURRENT_USER, addDemoMoment } from '@/lib/demoStore';
 import { Profile } from '@/lib/types';
-import { UserPlus, Search, Users, Sparkles, UserCheck, ShieldCheck } from 'lucide-react';
+import { UserPlus, Search, Users, Sparkles, UserCheck, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { CapturedImage } from '@/lib/camera';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { fetchGlobalCloudProfiles } from '@/lib/cloudSync';
+import { useRouter } from 'next/navigation';
 
 export default function FriendsPage() {
+  const router = useRouter();
   const [friendsList, setFriendsList] = useState<Profile[]>(DEFAULT_3_FRIENDS);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showCamera, setShowCamera] = useState<boolean>(false);
@@ -106,7 +108,7 @@ export default function FriendsPage() {
     : friendsList;
 
   return (
-    <div className="min-h-full flex flex-col justify-between p-4 pb-28 bg-black select-none">
+    <div className="h-full flex flex-col justify-between p-4 pb-4 bg-black select-none overflow-y-auto custom-scrollbar">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-[#FFC700] text-black px-4 py-2 rounded-2xl font-bold text-xs shadow-lg animate-in fade-in duration-200">
@@ -116,9 +118,16 @@ export default function FriendsPage() {
 
       {/* Header */}
       <div>
-        <div className="flex items-center space-x-2 mb-2">
-          <Users className="w-6 h-6 text-[#FFC700]" />
-          <h1 className="text-white text-xl font-extrabold">Mạng lưới Bạn bè Google</h1>
+        <div className="flex items-center space-x-3 mb-3 pb-2 border-b border-zinc-900">
+          <button
+            onClick={() => router.push('/')}
+            className="p-1.5 rounded-full text-white hover:bg-zinc-800 transition-colors"
+            title="Quay lại trang chủ"
+          >
+            <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
+          </button>
+          <Users className="w-5 h-5 text-[#FFC700]" />
+          <h1 className="text-white text-lg font-extrabold">Mạng lưới Bạn bè</h1>
         </div>
 
         {/* Auto Friend Notice Banner */}

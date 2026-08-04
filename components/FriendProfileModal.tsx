@@ -27,6 +27,7 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="absolute inset-0 z-50 bg-black/85 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4"
+        onClick={onClose}
       >
         <motion.div
           initial={{ y: 100, scale: 0.95 }}
@@ -34,6 +35,7 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
           exit={{ y: 100, scale: 0.95 }}
           transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
           className="w-full max-w-sm bg-[#18181C] border border-zinc-800 rounded-t-3xl sm:rounded-3xl p-5 text-left relative flex flex-col max-h-[85vh] overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button */}
           <button

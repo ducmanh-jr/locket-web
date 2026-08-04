@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { LayoutGrid, MoreHorizontal, Smile, Send, Sparkles } from 'lucide-react';
 
 interface LocketDockProps {
@@ -24,6 +24,19 @@ export const LocketDock: React.FC<LocketDockProps> = ({
 }) => {
   const [messageText, setMessageText] = useState('');
   const [showEmojiQuickBar, setShowEmojiQuickBar] = useState(false);
+  const emojiBarRef = useRef<HTMLDivElement>(null);
+
+  // Close emoji bar when clicking outside
+  useEffect(() => {
+    if (!showEmojiQuickBar) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (emojiBarRef.current && !emojiBarRef.current.contains(e.target as Node)) {
+        setShowEmojiQuickBar(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showEmojiQuickBar]);
 
   // Haptic Feedback Helper
   const triggerHaptic = () => {
@@ -117,7 +130,7 @@ export const LocketDock: React.FC<LocketDockProps> = ({
 
       {/* Expanded Quick Emoji Picker */}
       {showEmojiQuickBar && currentView === 'feed' && (
-        <div className="w-full max-w-sm flex items-center justify-around bg-[#262626] border border-zinc-800 rounded-2xl p-2 animate-in fade-in duration-150">
+        <div ref={emojiBarRef} className="w-full max-w-sm flex items-center justify-around bg-[#262626] border border-zinc-800 rounded-2xl p-2 animate-in fade-in duration-150">
           {['🔥', '🥺', '👍', '😍', '🎉', '💩'].map((emoji) => (
             <button
               key={emoji}

@@ -22,7 +22,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCamera, pendingRequestsCou
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 max-w-md mx-auto px-4 pb-6 pt-2 pointer-events-none">
+    <nav className="sticky bottom-0 left-0 right-0 z-40 w-full max-w-sm mx-auto px-4 pb-4 pt-2 pointer-events-none flex justify-center mt-auto">
       <div className="pointer-events-auto bg-[#18181C]/90 backdrop-blur-xl border border-[#2C2C34]/80 rounded-full px-4 py-2 flex items-center justify-around shadow-2xl shadow-black/80">
         {navItems.map((item) => {
           const isActive = pathname === item.href;

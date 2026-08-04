@@ -92,7 +92,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-full flex flex-col justify-between bg-black text-white px-4 pt-3 pb-8 select-none">
+    <div className="h-full flex flex-col justify-between bg-black text-white px-4 pt-3 pb-4 select-none overflow-y-auto custom-scrollbar">
       {/* Top Header Bar */}
       <div>
         <div className="flex items-center space-x-3 pb-4 border-b border-zinc-900">

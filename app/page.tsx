@@ -15,6 +15,7 @@ import {
   DEFAULT_3_FRIENDS,
   DEMO_SUGGESTED_USERS,
   getStoredDemoMoments,
+  saveStoredDemoMoments,
   addDemoMoment,
   addDemoReaction,
 } from '@/lib/demoStore';
@@ -35,6 +36,7 @@ export default function HomePage() {
   const [currentView, setCurrentView] = useState<'feed' | 'grid' | 'chat'>('feed');
   const [selectedFriendFilter, setSelectedFriendFilter] = useState<string | null>(null);
   const [selectedFriendForModal, setSelectedFriendForModal] = useState<Profile | null>(null);
+  const [selectedChatFriend, setSelectedChatFriend] = useState<Profile | null>(null);
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [showMenuModal, setShowMenuModal] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -50,6 +52,45 @@ export default function HomePage() {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
   }, []);
+
+  // Smart Data Diffing Helpers to prevent unnecessary React re-renders & flickering
+  const areProfilesEqual = (a: Profile[], b: Profile[]): boolean => {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (a[i].id !== b[i].id || a[i].display_name !== b[i].display_name || a[i].avatar_url !== b[i].avatar_url) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const areMomentsEqual = (a: Moment[], b: Moment[]): boolean => {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (
+        a[i].id !== b[i].id ||
+        a[i].media_url !== b[i].media_url ||
+        (a[i].reactions?.length || 0) !== (b[i].reactions?.length || 0)
+      ) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // Delete moment handler
+  const handleDeleteMoment = (momentId: string) => {
+    setMoments((prev) => {
+      const updated = prev.filter((m) => m.id !== momentId);
+      saveStoredDemoMoments(updated);
+      return updated;
+    });
+    // Clamp currentIndex to stay in bounds after deletion
+    setCurrentIndex((prev) => {
+      const maxIdx = filteredMoments.length - 2; // -2 because one is being removed
+      return Math.max(0, Math.min(prev, maxIdx));
+    });
+  };
 
   // Fetch real friends from Global Cloud + Supabase + push current user profile
   const loadFriends = async () => {
@@ -101,7 +142,8 @@ export default function HomePage() {
       (user, index, self) => index === self.findIndex((u) => u.username === user.username)
     );
 
-    setFriendsList(unique.length > 0 ? unique : DEFAULT_3_FRIENDS);
+    const targetList = unique.length > 0 ? unique : DEFAULT_3_FRIENDS;
+    setFriendsList((prev) => (areProfilesEqual(prev, targetList) ? prev : targetList));
   };
 
   // Fetch moments & guarantee 50 moments dataset + global multi-account moments are loaded
@@ -150,7 +192,8 @@ export default function HomePage() {
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
 
-    setMoments(unique.length > 0 ? unique : demoMoments);
+    const targetMoments = unique.length > 0 ? unique : demoMoments;
+    setMoments((prev) => (areMomentsEqual(prev, targetMoments) ? prev : targetMoments));
     setLoading(false);
   };
 
@@ -158,11 +201,12 @@ export default function HomePage() {
     loadFriends();
     loadMoments();
 
-    // 4s polling timer so Account B automatically gets Account A's photos & profile without reloading
+    // Smart 12s polling timer (pauses when tab is hidden to save network/CPU)
     const syncTimer = setInterval(() => {
+      if (document.hidden) return;
       loadFriends();
       loadMoments();
-    }, 4000);
+    }, 12000);
 
     if (isSupabaseConfigured()) {
       // 1. Supabase Postgres DB Changes Channel
@@ -261,6 +305,22 @@ export default function HomePage() {
   const handleSendDirectMessage = (text: string) => {
     if (currentMoment) {
       handleReact(currentMoment.id, '💬');
+      const sender = currentMoment.sender;
+      if (sender && sender.id !== currentUser.id) {
+        try {
+          const stored = localStorage.getItem('locket_chat_messages_v1');
+          const msgs = stored ? JSON.parse(stored) : {};
+          const senderId = sender.id;
+          const newMsg = {
+            id: `msg-${Date.now()}`,
+            senderId: currentUser.id,
+            text: text,
+            timestamp: 'Vừa xong',
+          };
+          msgs[senderId] = [...(msgs[senderId] || []), newMsg];
+          localStorage.setItem('locket_chat_messages_v1', JSON.stringify(msgs));
+        } catch (e) {}
+      }
     }
   };
 
@@ -376,7 +436,10 @@ export default function HomePage() {
             setSelectedFriendFilter(friendId);
             setCurrentIndex(0);
           }}
-          onOpenChat={() => setCurrentView('chat')}
+          onOpenChat={() => {
+            setSelectedChatFriend(null);
+            setCurrentView('chat');
+          }}
           onOpenProfile={() => router.push('/profile')}
           onViewFriendProfile={(friend) => setSelectedFriendForModal(friend)}
         />
@@ -398,6 +461,7 @@ export default function HomePage() {
                 friends={friendsList}
                 currentUser={currentUser}
                 onBack={() => setCurrentView('feed')}
+                initialFriend={selectedChatFriend}
               />
             </motion.div>
           ) : currentView === 'grid' ? (
@@ -451,6 +515,7 @@ export default function HomePage() {
                   onPrev={handlePrev}
                   hasPrev={currentIndex > 0}
                   hasNext={currentIndex < filteredMoments.length - 1}
+                  onDeleteMoment={handleDeleteMoment}
                   nextMomentUrl={nextMoment?.media_url}
                   prevMomentUrl={prevMoment?.media_url}
                   activeReaction={lastReaction}
@@ -508,7 +573,10 @@ export default function HomePage() {
               m.sender?.username === selectedFriendForModal.username
           )}
           onClose={() => setSelectedFriendForModal(null)}
-          onOpenChatWithFriend={(friend) => setCurrentView('chat')}
+          onOpenChatWithFriend={(friend) => {
+            setSelectedChatFriend(friend);
+            setCurrentView('chat');
+          }}
           onSelectMoment={(moment) => {
             const filteredIdx = filteredMoments.findIndex((m) => m.id === moment.id);
             if (filteredIdx !== -1) {
@@ -531,6 +599,7 @@ export default function HomePage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4"
+            onClick={() => setShowMenuModal(false)}
           >
             <motion.div
               initial={{ y: 100, scale: 0.95 }}
@@ -538,6 +607,7 @@ export default function HomePage() {
               exit={{ y: 100, scale: 0.95 }}
               transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
               className="w-full max-w-sm bg-[#18181C] border border-zinc-800 rounded-t-3xl sm:rounded-3xl p-5 text-left relative"
+              onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => setShowMenuModal(false)}

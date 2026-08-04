@@ -5,10 +5,12 @@ import { Navbar } from '@/components/Navbar';
 import { CameraView } from '@/components/CameraView';
 import { DEMO_FRIENDS, DEMO_CURRENT_USER, getStoredDemoMoments, addDemoMoment } from '@/lib/demoStore';
 import { Moment } from '@/lib/types';
-import { Grid, Calendar, X, Heart, MessageSquare } from 'lucide-react';
+import { Grid, Calendar, X, Heart, MessageSquare, ArrowLeft } from 'lucide-react';
 import { CapturedImage } from '@/lib/camera';
+import { useRouter } from 'next/navigation';
 
 export default function HistoryPage() {
+  const router = useRouter();
   const [moments, setMoments] = useState<Moment[]>([]);
   const [selectedMoment, setSelectedMoment] = useState<Moment | null>(null);
   const [showCamera, setShowCamera] = useState<boolean>(false);
@@ -36,12 +38,19 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="min-h-full flex flex-col justify-between p-4 pb-28">
+    <div className="h-full flex flex-col justify-between p-4 pb-4 overflow-y-auto custom-scrollbar select-none">
       <div>
         {/* Header */}
-        <div className="flex items-center space-x-2 mb-4">
-          <Grid className="w-6 h-6 text-[#FFC700]" />
-          <h1 className="text-white text-xl font-extrabold">Lịch sử Khoảnh khắc</h1>
+        <div className="flex items-center space-x-3 mb-4 pb-3 border-b border-zinc-900">
+          <button
+            onClick={() => router.push('/')}
+            className="p-1.5 rounded-full text-white hover:bg-zinc-800 transition-colors"
+            title="Quay lại trang chủ"
+          >
+            <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
+          </button>
+          <Grid className="w-5 h-5 text-[#FFC700]" />
+          <h1 className="text-white text-lg font-extrabold">Lịch sử Khoảnh khắc</h1>
         </div>
 
         {/* Gallery Grid 3x3 */}

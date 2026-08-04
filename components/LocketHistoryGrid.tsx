@@ -57,6 +57,7 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
                 <img
                   src={moment.media_url}
                   alt={moment.caption || 'Khoảnh khắc Locket'}
+                  loading="lazy"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                 />
 

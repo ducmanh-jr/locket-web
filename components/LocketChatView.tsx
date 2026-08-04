@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Profile } from '@/lib/types';
 import { ArrowLeft, Send, MessageCircle } from 'lucide-react';
 
@@ -15,20 +15,60 @@ interface LocketChatViewProps {
   friends: Profile[];
   currentUser: Profile;
   onBack: () => void;
+  initialFriend?: Profile | null;
 }
+
+const CHAT_STORE_KEY = 'locket_chat_messages_v1';
 
 export const LocketChatView: React.FC<LocketChatViewProps> = ({
   friends,
   currentUser,
   onBack,
+  initialFriend = null,
 }) => {
-  const [activeFriend, setActiveFriend] = useState<Profile | null>(null);
-  const [messages, setMessages] = useState<Record<string, ChatMessage[]>>({
-    'user-minh': [
-      { id: 'm1', senderId: 'user-minh', text: 'Đẹp quá bn ơi', timestamp: '1 thg 5' },
-    ],
+  const [activeFriend, setActiveFriend] = useState<Profile | null>(initialFriend);
+  const [messages, setMessages] = useState<Record<string, ChatMessage[]>>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(CHAT_STORE_KEY);
+        if (stored) {
+          return JSON.parse(stored);
+        }
+      } catch (e) {}
+    }
+    return {
+      'user-minh': [
+        { id: 'm1', senderId: 'user-minh', text: 'Đẹp quá bn ơi', timestamp: '1 thg 5' },
+      ],
+      'user-dm': [
+        { id: 'm2', senderId: 'user-dm', text: 'Gửi ảnh mới chưa ông?', timestamp: 'Vừa xong' },
+      ],
+    };
   });
   const [inputText, setInputText] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when messages change
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Update initial active friend if passed as prop
+  React.useEffect(() => {
+    if (initialFriend) {
+      setActiveFriend(initialFriend);
+    }
+  }, [initialFriend]);
+
+  // Persist messages
+  const saveMessages = (newMsgs: Record<string, ChatMessage[]>) => {
+    setMessages(newMsgs);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(CHAT_STORE_KEY, JSON.stringify(newMsgs));
+      } catch (e) {}
+    }
+  };
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,12 +81,15 @@ export const LocketChatView: React.FC<LocketChatViewProps> = ({
       timestamp: 'Vừa xong',
     };
 
-    setMessages((prev) => ({
-      ...prev,
-      [activeFriend.id]: [...(prev[activeFriend.id] || []), newMsg],
-    }));
+    const updated = {
+      ...messages,
+      [activeFriend.id]: [...(messages[activeFriend.id] || []), newMsg],
+    };
 
+    saveMessages(updated);
     setInputText('');
+    // Scroll to bottom after sending
+    setTimeout(scrollToBottom, 50);
   };
 
   // Filter out current logged in user from chat list & deduplicate
@@ -142,6 +185,7 @@ export const LocketChatView: React.FC<LocketChatViewProps> = ({
                 </div>
               );
             })}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Send Box */}

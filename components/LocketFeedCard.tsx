@@ -32,6 +32,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
 }) => {
   const touchStartY = useRef<number | null>(null);
   const mouseStartY = useRef<number | null>(null);
+  const wheelCooldown = useRef<boolean>(false);
   const [isMouseDown, setIsMouseDown] = useState<boolean>(false);
   const [direction, setDirection] = useState<'up' | 'down'>('up');
   const [floatingEmojis, setFloatingEmojis] = useState<
@@ -74,6 +75,9 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   // Keyboard Shortcuts (ArrowUp / ArrowDown for PC)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = document.activeElement?.tagName;
+      if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
+
       if (e.key === 'ArrowDown' || e.key === 'PageDown') {
         if (hasNext && onNext) {
           setDirection('up');
@@ -103,13 +107,16 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     const diff = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000);
     if (diff < 60) return 'Vừa xong';
     if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-    if (diff < 86400) return `${Math.floor(diff / 86400)}h`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
     return `${Math.floor(diff / 86400)}d`;
   };
+
+  const isDraggingRef = useRef<boolean>(false);
 
   // Touch Swipe Vertical Handlers (Mobile)
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
+    isDraggingRef.current = false;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
@@ -117,10 +124,14 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     const touchEndY = e.changedTouches[0].clientY;
     const diffY = touchStartY.current - touchEndY;
 
-    if (diffY > 35 && hasNext && onNext) {
+    if (Math.abs(diffY) > 15) {
+      isDraggingRef.current = true;
+    }
+
+    if (diffY > 50 && hasNext && onNext) {
       setDirection('up');
       onNext();
-    } else if (diffY < -35 && hasPrev && onPrev) {
+    } else if (diffY < -50 && hasPrev && onPrev) {
       setDirection('down');
       onPrev();
     }
@@ -132,16 +143,21 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   const handleMouseDown = (e: React.MouseEvent) => {
     mouseStartY.current = e.clientY;
     setIsMouseDown(true);
+    isDraggingRef.current = false;
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
     if (mouseStartY.current === null || !isMouseDown) return;
     const diffY = mouseStartY.current - e.clientY;
 
-    if (diffY > 35 && hasNext && onNext) {
+    if (Math.abs(diffY) > 15) {
+      isDraggingRef.current = true;
+    }
+
+    if (diffY > 50 && hasNext && onNext) {
       setDirection('up');
       onNext();
-    } else if (diffY < -35 && hasPrev && onPrev) {
+    } else if (diffY < -50 && hasPrev && onPrev) {
       setDirection('down');
       onPrev();
     }
@@ -155,14 +171,19 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     setIsMouseDown(false);
   };
 
-  // Mouse Wheel Vertical Scroll Handler
+  // Mouse Wheel Vertical Scroll Handler (with throttle to prevent rapid-fire)
   const handleWheel = (e: React.WheelEvent) => {
-    if (e.deltaY > 25 && hasNext && onNext) {
+    if (wheelCooldown.current) return;
+    if (e.deltaY > 35 && hasNext && onNext) {
       setDirection('up');
       onNext();
-    } else if (e.deltaY < -25 && hasPrev && onPrev) {
+      wheelCooldown.current = true;
+      setTimeout(() => { wheelCooldown.current = false; }, 300);
+    } else if (e.deltaY < -35 && hasPrev && onPrev) {
       setDirection('down');
       onPrev();
+      wheelCooldown.current = true;
+      setTimeout(() => { wheelCooldown.current = false; }, 300);
     }
   };
 
@@ -198,6 +219,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   };
 
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isDraggingRef.current) return;
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('form') || target.closest('input')) {
       return;
@@ -322,10 +344,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       {/* Sender Avatar & Name Tag Centered DIRECTLY Below Card */}
       <motion.div
         key={`sender-${moment.id}`}
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2, delay: 0.05 }}
-        className="w-full flex items-center justify-center space-x-2 mt-2.5 mb-1 text-center flex-shrink-0 z-10"
+        transition={{ duration: 0.18, delay: 0.05 }}
+        className="w-full h-8 flex items-center justify-center space-x-2 my-2 text-center flex-shrink-0 z-10"
       >
         <div className="w-6 h-6 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700 flex-shrink-0">
           <img
@@ -347,6 +369,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            onClick={() => setShowOptionsModal(false)}
             className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
@@ -354,6 +377,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               animate={{ y: 0, scale: 1 }}
               exit={{ y: 80, scale: 0.95 }}
               transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
+              onClick={(e) => e.stopPropagation()}
               className="w-full max-w-xs bg-[#18181C] border border-zinc-800 rounded-t-3xl sm:rounded-3xl p-4 text-left space-y-2"
             >
               <h4 className="text-white text-xs font-bold text-center pb-2 border-b border-zinc-800">

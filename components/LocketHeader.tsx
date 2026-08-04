@@ -67,7 +67,12 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
 
         {/* Dropdown Menu Modal */}
         {dropdownOpen && (
-          <div className="absolute top-11 left-1/2 -translate-x-1/2 w-64 bg-[#262626] border border-zinc-700/80 rounded-2xl p-1.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
+          <>
+            <div
+              className="fixed inset-0 z-40 bg-black/20"
+              onClick={() => setDropdownOpen(false)}
+            />
+            <div className="absolute top-11 left-1/2 -translate-x-1/2 w-64 bg-[#262626] border border-zinc-700/80 rounded-2xl p-1.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
             {/* Option: Tất cả bạn bè */}
             <button
               onClick={() => {
@@ -148,8 +153,9 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
               })}
             </div>
           </div>
-        )}
-      </div>
+        </>
+      )}
+    </div>
 
       {/* Right: Message / Chat Icon */}
       <button
