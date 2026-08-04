@@ -197,6 +197,29 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     setShowOptionsModal(false);
   };
 
+  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('form') || target.closest('input')) {
+      return;
+    }
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickY = e.clientY - rect.top;
+    const halfHeight = rect.height / 2;
+
+    if (clickY > halfHeight) {
+      if (hasNext && onNext) {
+        setDirection('up');
+        onNext();
+      }
+    } else {
+      if (hasPrev && onPrev) {
+        setDirection('down');
+        onPrev();
+      }
+    }
+  };
+
   return (
     <div
       onWheel={handleWheel}
@@ -211,8 +234,9 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     >
       {/* 1:1 Square Photo Card Container Touching Near Screen Edges */}
       <div
+        onClick={handleCardClick}
         onDoubleClick={handleDoubleTap}
-        className="w-[calc(100%-1rem)] max-w-[385px] aspect-square bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0 my-auto relative overflow-hidden rounded-[2.5rem]"
+        className="w-[calc(100%-1rem)] max-w-[385px] aspect-square bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0 my-auto relative overflow-hidden rounded-[2.5rem] cursor-pointer"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
