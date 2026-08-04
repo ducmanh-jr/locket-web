@@ -1,11 +1,16 @@
 import { Profile, Moment, Reaction } from './types';
 
+// Distinct Avatar Photos for Main Users (Zero overlap with feed moments)
+const AVATAR_DM = "/user-photos/1785829393992_567716528849713056_g276929852367586455_e887fb48d4d113fc528e29488435b6f7.jpg";
+const AVATAR_SYSTEM32 = "/user-photos/1785829394118_567716528849713056_g276929852367586455_b564766841f8f840f3191c21c6d0f07a.jpg";
+const AVATAR_ADMIN = "/user-photos/1785829394223_567716528849713056_g276929852367586455_abb069d5016bbb90f6a167b2e53545da.jpg";
+
 // Fallback Current User
 export const DEMO_CURRENT_USER: Profile = {
   id: "user-me",
   username: "manh_locket",
   display_name: "Đức Mạnh",
-  avatar_url: "/user-photos/1785829393992_567716528849713056_g276929852367586455_e887fb48d4d113fc528e29488435b6f7.jpg",
+  avatar_url: AVATAR_DM,
 };
 
 // 3 Main Default Friends: dm, system32, admin
@@ -14,26 +19,26 @@ export const DEFAULT_3_FRIENDS: Profile[] = [
     id: "user-dm",
     username: "dm",
     display_name: "dm",
-    avatar_url: "/user-photos/1785829393992_567716528849713056_g276929852367586455_e887fb48d4d113fc528e29488435b6f7.jpg",
+    avatar_url: AVATAR_DM,
   },
   {
     id: "user-system32",
     username: "system32",
     display_name: "system32",
-    avatar_url: "/user-photos/1785829394118_567716528849713056_g276929852367586455_b564766841f8f840f3191c21c6d0f07a.jpg",
+    avatar_url: AVATAR_SYSTEM32,
   },
   {
     id: "user-admin",
     username: "admin",
     display_name: "admin",
-    avatar_url: "/user-photos/1785829394223_567716528849713056_g276929852367586455_abb069d5016bbb90f6a167b2e53545da.jpg",
+    avatar_url: AVATAR_ADMIN,
   },
 ];
 
 export const DEMO_FRIENDS = DEFAULT_3_FRIENDS;
 export const DEMO_SUGGESTED_USERS = DEFAULT_3_FRIENDS;
 
-// 47 Unique Photos from user's provided data folder distributed among the 3 main friends (dm, system32, admin)
+// 47 Unique Locket Feed Photos (Excluding the 3 avatar photos above so avatars never repeat in feed)
 const USER_PHOTOS = [
   "1785829394343_567716528849713056_g276929852367586455_0c0291d52e88e0bfb12ff1da9d9f88f4.jpg",
   "1785829394516_567716528849713056_g276929852367586455_dea9da1ed58aa6c86e154a0653c7bb20.jpg",
@@ -76,7 +81,7 @@ const USER_PHOTOS = [
   "1785829399462_567716528849713056_g276929852367586455_5e325042a8d608bcee51042a49cf95a2.jpg",
   "1785829399601_567716528849713056_g276929852367586455_8751177c2fde8bf0efc3f96696f782b2.jpg",
   "1785829399729_567716528849713056_g276929852367586455_cfdae258c00ea135adbfd98310a4c4e9.jpg",
-  "1785829399866_567716528849713056_g276929852367586455_2e61e70067cfc34bea7624e7021d4dc3.jpg",
+  "1785829399866_567716528849713056_g276929852367586455_2e3ca9e0f76aec3241dca77bd958d48e.jpg",
   "1785829400008_567716528849713056_g276929852367586455_5eac2d5b9248bf4ccd9ca13a23fa726a.jpg",
   "1785829400138_567716528849713056_g276929852367586455_e990d8eadbdd0fd6d5e58e087893d518.jpg",
   "1785829400266_567716528849713056_g276929852367586455_3d3e145ca0d8f668ebb909ae341eec71.jpg",
@@ -110,7 +115,7 @@ export const DEMO_50_MOMENTS: Moment[] = USER_PHOTOS.map((filename, index) => {
   const timeOffsetMinutes = (index + 1) * 25;
 
   return {
-    id: `m-photo-${index + 1}`,
+    id: `m-photo-v4-${index + 1}`,
     sender_id: sender.id,
     sender: sender,
     media_url: `/user-photos/${filename}`,
@@ -120,20 +125,22 @@ export const DEMO_50_MOMENTS: Moment[] = USER_PHOTOS.map((filename, index) => {
   };
 });
 
+const CACHE_KEY = 'locket_demo_moments_v4';
+
 export function getStoredDemoMoments(): Moment[] {
   if (typeof window === 'undefined') return DEMO_50_MOMENTS;
   try {
-    const stored = localStorage.getItem('locket_demo_moments');
+    const stored = localStorage.getItem(CACHE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
       // Auto-invalidate old cached moments from previous versions
-      if (parsed.length > 0 && parsed[0]?.id?.startsWith('m-photo-')) {
+      if (parsed.length > 0 && parsed[0]?.id?.startsWith('m-photo-v4-')) {
         return parsed;
       }
     }
   } catch (e) {}
 
-  // If old cache existed, overwrite it with DEMO_50_MOMENTS
+  // Overwrite any old cache key with fresh DEMO_50_MOMENTS
   saveStoredDemoMoments(DEMO_50_MOMENTS);
   return DEMO_50_MOMENTS;
 }
@@ -141,7 +148,7 @@ export function getStoredDemoMoments(): Moment[] {
 export function saveStoredDemoMoments(moments: Moment[]): void {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem('locket_demo_moments', JSON.stringify(moments));
+    localStorage.setItem(CACHE_KEY, JSON.stringify(moments));
   } catch (e) {}
 }
 
