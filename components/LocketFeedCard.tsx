@@ -41,6 +41,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   >([]);
   const [showOptionsModal, setShowOptionsModal] = useState<boolean>(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+  const [videoError, setVideoError] = useState<boolean>(false);
   const currentMomentIdRef = useRef<string>(moment.id);
 
   // Track current moment ID for cleanup
@@ -333,23 +334,30 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             {(moment.media_type === 'video' ||
             moment.id?.includes('video') ||
             moment.media_url?.startsWith('data:video/')) &&
-            !moment.media_url?.startsWith('blob:') ? (
+            !videoError ? (
               <video
                 src={moment.media_url}
+                poster={moment.thumbnail_url}
                 autoPlay
                 loop
                 playsInline
                 muted={moment.audio_option !== 'original'}
                 controls={false}
                 preload="auto"
+                onError={() => setVideoError(true)}
                 className="w-full h-full object-cover rounded-[2.5rem] select-none pointer-events-none"
               />
-            ) : moment.media_url?.startsWith('blob:') ? (
-              /* blob: URLs are dead after page reload - show placeholder */
+            ) : moment.thumbnail_url ? (
+              <img
+                src={moment.thumbnail_url}
+                alt={moment.caption || 'Khoảnh khắc Locket'}
+                className="w-full h-full object-cover rounded-[2.5rem] select-none pointer-events-none"
+              />
+            ) : moment.media_type === 'video' || moment.id?.includes('video') ? (
               <div className="w-full h-full bg-zinc-900 flex items-center justify-center rounded-[2.5rem]">
                 <div className="text-center p-4">
-                  <Video className="w-10 h-10 text-zinc-600 mx-auto mb-2" />
-                  <p className="text-zinc-500 text-xs">Video không khả dụng</p>
+                  <Video className="w-10 h-10 text-[#FFC700] mx-auto mb-2" />
+                  <p className="text-zinc-400 text-xs font-semibold">Khoảnh khắc Video</p>
                 </div>
               </div>
             ) : (

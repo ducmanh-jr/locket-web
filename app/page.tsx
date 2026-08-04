@@ -23,7 +23,7 @@ import { Moment, Profile, MusicTrack } from '@/lib/types';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/lib/auth';
 import { Camera, X, UserPlus } from 'lucide-react';
-import { CapturedMedia } from '@/lib/camera';
+import { CapturedMedia, captureVideoThumbnail } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { pushMomentToGlobalCloud, fetchGlobalCloudMoments, pushProfileToGlobalCloud, fetchGlobalCloudProfiles, compressImageForCloudSync } from '@/lib/cloudSync';
@@ -418,9 +418,15 @@ export default function HomePage() {
 
     // Compress photo immediately to ~40KB so localStorage NEVER hits QuotaExceededError!
     let mediaUrl = media.dataUrl;
+    let thumbnailUrl: string | undefined = undefined;
+
     if (media.type === 'photo' && media.dataUrl.startsWith('data:image/')) {
       try {
         mediaUrl = await compressImageForCloudSync(media.dataUrl);
+      } catch (e) {}
+    } else if (media.type === 'video') {
+      try {
+        thumbnailUrl = await captureVideoThumbnail(media.dataUrl);
       } catch (e) {}
     }
 
@@ -435,6 +441,7 @@ export default function HomePage() {
       created_at: new Date().toISOString(),
       reactions: [],
       music: music,
+      thumbnail_url: thumbnailUrl,
     };
 
     // 1. Optimistic Local Save (40KB fits easily without localStorage quota errors!)

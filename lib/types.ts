@@ -35,6 +35,7 @@ export interface Moment {
   recipients?: MomentRecipient[];
   reactions?: Reaction[];
   music?: MusicTrack;
+  thumbnail_url?: string;
 }
 
 export interface MomentRecipient {

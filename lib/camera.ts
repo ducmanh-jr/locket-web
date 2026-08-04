@@ -161,16 +161,15 @@ export function createVideoRecorder(stream: MediaStream): {
               reject(new Error('FileReader produced empty result for video'));
               return;
             }
-            // Guarantee the MIME prefix is data:video/mp4; so <video> tags render
-            if (!dataUrl.startsWith('data:video/')) {
-              dataUrl = dataUrl.replace(/^data:[^;]*;/, 'data:video/mp4;');
+            // Clean up MIME type header
+            if (dataUrl && !dataUrl.startsWith('data:video/')) {
+              const actualMime = finalMime.split(';')[0] || 'video/mp4';
+              dataUrl = dataUrl.replace(/^data:[^;]*;/, `data:${actualMime};`);
             }
             resolve({ type: 'video', dataUrl, blob });
           };
 
           reader.onerror = () => {
-            // If FileReader fails, reject instead of using a blob: URL
-            // A blob: URL would cause black screen on reload and break cloud sync
             reject(new Error('FileReader failed to convert video blob to base64'));
           };
 
@@ -183,4 +182,49 @@ export function createVideoRecorder(stream: MediaStream): {
       });
     },
   };
+}
+
+/**
+ * Extracts a 1:1 square JPEG poster snapshot from a video DataURL.
+ * This guarantees a crisp fallback image if video playback is unsupported on a specific mobile browser.
+ */
+export function captureVideoThumbnail(videoDataUrl: string): Promise<string> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || !videoDataUrl) return resolve('');
+    try {
+      const video = document.createElement('video');
+      video.muted = true;
+      video.playsInline = true;
+      video.crossOrigin = 'anonymous';
+
+      video.onloadeddata = () => {
+        try {
+          video.currentTime = 0.1;
+        } catch (e) {}
+      };
+
+      video.onseeked = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const size = 720;
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(video, 0, 0, size, size);
+            resolve(canvas.toDataURL('image/jpeg', 0.82));
+          } else {
+            resolve('');
+          }
+        } catch (e) {
+          resolve('');
+        }
+      };
+
+      video.onerror = () => resolve('');
+      video.src = videoDataUrl;
+    } catch (e) {
+      resolve('');
+    }
+  });
 }
