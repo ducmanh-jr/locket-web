@@ -126,9 +126,15 @@ export function getStoredDemoMoments(): Moment[] {
     const stored = localStorage.getItem('locket_demo_moments');
     if (stored) {
       const parsed = JSON.parse(stored);
-      if (parsed.length > 0) return parsed;
+      // Auto-invalidate old cached moments from previous versions
+      if (parsed.length > 0 && parsed[0]?.id?.startsWith('m-photo-')) {
+        return parsed;
+      }
     }
   } catch (e) {}
+
+  // If old cache existed, overwrite it with DEMO_50_MOMENTS
+  saveStoredDemoMoments(DEMO_50_MOMENTS);
   return DEMO_50_MOMENTS;
 }
 
