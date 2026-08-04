@@ -22,6 +22,7 @@ import { useAuth } from '@/lib/auth';
 import { Camera, X, UserPlus } from 'lucide-react';
 import { CapturedImage } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function HomePage() {
   const router = useRouter();
@@ -123,6 +124,8 @@ export default function HomePage() {
     : moments;
 
   const currentMoment = filteredMoments[currentIndex] || filteredMoments[0];
+  const nextMoment = filteredMoments[currentIndex + 1];
+  const prevMoment = filteredMoments[currentIndex - 1];
 
   const handleNext = () => {
     if (currentIndex < filteredMoments.length - 1) {
@@ -234,63 +237,92 @@ export default function HomePage() {
         />
       )}
 
-      {/* Main Views Container with Strict Overflow-Hidden */}
+      {/* Main Views Container with Smooth Framer Motion Slide Transitions */}
       <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden w-full">
-        {currentView === 'chat' ? (
-          <LocketChatView
-            friends={friendsList}
-            currentUser={currentUser}
-            onBack={() => setCurrentView('feed')}
-          />
-        ) : currentView === 'grid' ? (
-          <LocketHistoryGrid
-            moments={filteredMoments}
-            onSelectMoment={(moment) => {
-              const idx = filteredMoments.findIndex((m) => m.id === moment.id);
-              if (idx !== -1) setCurrentIndex(idx);
-              setCurrentView('feed');
-            }}
-            onOpenCamera={() => setShowCamera(true)}
-          />
-        ) : (
-          <div className="w-full flex-1 flex flex-col justify-between items-center overflow-hidden p-1">
-            <div className="w-full px-2 pt-1">
-              <SupabaseConfigNotice />
-              <PWAInstallBanner />
-            </div>
-
-            {loading ? (
-              <div className="w-[90vw] max-w-[360px] aspect-square my-auto rounded-[2.5rem] bg-[#18181C] border border-zinc-800 flex items-center justify-center animate-pulse">
-                <div className="w-10 h-10 rounded-full border-4 border-[#FFC700] border-t-transparent animate-spin" />
-              </div>
-            ) : filteredMoments.length > 0 && currentMoment ? (
-              <LocketFeedCard
-                moment={currentMoment}
+        <AnimatePresence mode="wait">
+          {currentView === 'chat' ? (
+            <motion.div
+              key="view-chat"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
+              className="w-full h-full absolute inset-0"
+            >
+              <LocketChatView
+                friends={friendsList}
                 currentUser={currentUser}
-                onNext={handleNext}
-                onPrev={handlePrev}
-                hasPrev={currentIndex > 0}
-                hasNext={currentIndex < filteredMoments.length - 1}
+                onBack={() => setCurrentView('feed')}
               />
-            ) : (
-              <div className="w-[90vw] max-w-[360px] aspect-square my-auto rounded-[2.5rem] bg-[#18181C] border border-zinc-800 p-8 flex flex-col items-center justify-center text-center">
-                <div className="w-14 h-14 rounded-full bg-[#FFC700]/20 text-[#FFC700] flex items-center justify-center mb-3 border border-[#FFC700]/40">
-                  <Camera className="w-7 h-7" />
-                </div>
-                <h3 className="text-white font-bold text-sm mb-1">Chưa có khoảnh khắc nào</h3>
-                <p className="text-zinc-400 text-xs mb-4">
-                  Bấm nút chụp bên dưới để gửi khoảnh khắc đầu tiên!
-                </p>
-                <button
-                  onClick={() => setShowCamera(true)}
-                  className="py-2.5 px-5 bg-[#FFC700] text-black font-bold text-xs rounded-xl shadow-locket-glow active:scale-95 transition-transform"
-                >
-                  Chụp ảnh ngay 📸
-                </button>
+            </motion.div>
+          ) : currentView === 'grid' ? (
+            <motion.div
+              key="view-grid"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
+              className="w-full h-full absolute inset-0 bg-black z-30"
+            >
+              <LocketHistoryGrid
+                moments={filteredMoments}
+                onSelectMoment={(moment) => {
+                  const idx = filteredMoments.findIndex((m) => m.id === moment.id);
+                  if (idx !== -1) setCurrentIndex(idx);
+                  setCurrentView('feed');
+                }}
+                onOpenCamera={() => setShowCamera(true)}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="view-feed"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.2 }}
+              className="w-full flex-1 flex flex-col justify-between items-center overflow-hidden p-1"
+            >
+              <div className="w-full px-2 pt-1">
+                <SupabaseConfigNotice />
+                <PWAInstallBanner />
               </div>
-            )}
-          </div>
-        )}
+
+              {loading ? (
+                <div className="w-[85vw] max-w-[320px] aspect-square my-auto rounded-[2.5rem] bg-[#18181C] border border-zinc-800 flex items-center justify-center animate-pulse">
+                  <div className="w-10 h-10 rounded-full border-4 border-[#FFC700] border-t-transparent animate-spin" />
+                </div>
+              ) : filteredMoments.length > 0 && currentMoment ? (
+                <LocketFeedCard
+                  moment={currentMoment}
+                  currentUser={currentUser}
+                  onNext={handleNext}
+                  onPrev={handlePrev}
+                  hasPrev={currentIndex > 0}
+                  hasNext={currentIndex < filteredMoments.length - 1}
+                  nextMomentUrl={nextMoment?.media_url}
+                  prevMomentUrl={prevMoment?.media_url}
+                />
+              ) : (
+                <div className="w-[85vw] max-w-[320px] aspect-square my-auto rounded-[2.5rem] bg-[#18181C] border border-[#FFC700]/30 p-8 flex flex-col items-center justify-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-[#FFC700]/20 text-[#FFC700] flex items-center justify-center mb-3 border border-[#FFC700]/40">
+                    <Camera className="w-7 h-7" />
+                  </div>
+                  <h3 className="text-white font-bold text-sm mb-1">Chưa có khoảnh khắc nào</h3>
+                  <p className="text-zinc-400 text-xs mb-4">
+                    Bấm nút chụp bên dưới để gửi khoảnh khắc đầu tiên!
+                  </p>
+                  <button
+                    onClick={() => setShowCamera(true)}
+                    className="py-2.5 px-5 bg-[#FFC700] text-black font-bold text-xs rounded-xl shadow-locket-glow active:scale-95 transition-transform"
+                  >
+                    Chụp ảnh ngay 📸
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Bottom Dock */}
@@ -308,50 +340,63 @@ export default function HomePage() {
       )}
 
       {/* Menu Modal */}
-      {showMenuModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="w-full max-w-sm bg-[#18181C] border border-zinc-800 rounded-t-3xl sm:rounded-3xl p-5 text-left relative">
-            <button
-              onClick={() => setShowMenuModal(false)}
-              className="absolute top-4 right-4 w-7 h-7 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center hover:text-white"
+      <AnimatePresence>
+        {showMenuModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4"
+          >
+            <motion.div
+              initial={{ y: 100, scale: 0.95 }}
+              animate={{ y: 0, scale: 1 }}
+              exit={{ y: 100, scale: 0.95 }}
+              transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
+              className="w-full max-w-sm bg-[#18181C] border border-zinc-800 rounded-t-3xl sm:rounded-3xl p-5 text-left relative"
             >
-              <X className="w-4 h-4" />
-            </button>
-
-            <h3 className="text-white text-base font-bold mb-4">Tùy chọn & Bạn bè</h3>
-
-            <div className="space-y-2">
               <button
-                onClick={() => {
-                  setShowMenuModal(false);
-                  router.push('/friends');
-                }}
-                className="w-full p-3 bg-[#262626] hover:bg-[#333333] rounded-2xl text-white text-xs font-semibold flex items-center justify-between"
+                onClick={() => setShowMenuModal(false)}
+                className="absolute top-4 right-4 w-7 h-7 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center hover:text-white"
               >
-                <div className="flex items-center space-x-2.5">
-                  <UserPlus className="w-4 h-4 text-[#FFC700]" />
-                  <span>Quản lý & Gợi ý kết bạn</span>
-                </div>
-                <span className="text-zinc-500">&gt;</span>
+                <X className="w-4 h-4" />
               </button>
 
-              <button
-                onClick={() => {
-                  setShowMenuModal(false);
-                  router.push('/profile');
-                }}
-                className="w-full p-3 bg-[#262626] hover:bg-[#333333] rounded-2xl text-white text-xs font-semibold flex items-center justify-between"
-              >
-                <div className="flex items-center space-x-2.5">
-                  <Camera className="w-4 h-4 text-[#FFC700]" />
-                  <span>Trang cá nhân của tôi</span>
-                </div>
-                <span className="text-zinc-500">&gt;</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              <h3 className="text-white text-base font-bold mb-4">Tùy chọn & Bạn bè</h3>
+
+              <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    setShowMenuModal(false);
+                    router.push('/friends');
+                  }}
+                  className="w-full p-3 bg-[#262626] hover:bg-[#333333] rounded-2xl text-white text-xs font-semibold flex items-center justify-between"
+                >
+                  <div className="flex items-center space-x-2.5">
+                    <UserPlus className="w-4 h-4 text-[#FFC700]" />
+                    <span>Quản lý & Gợi ý kết bạn</span>
+                  </div>
+                  <span className="text-zinc-500">&gt;</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowMenuModal(false);
+                    router.push('/profile');
+                  }}
+                  className="w-full p-3 bg-[#262626] hover:bg-[#333333] rounded-2xl text-white text-xs font-semibold flex items-center justify-between"
+                >
+                  <div className="flex items-center space-x-2.5">
+                    <Camera className="w-4 h-4 text-[#FFC700]" />
+                    <span>Trang cá nhân của tôi</span>
+                  </div>
+                  <span className="text-zinc-500">&gt;</span>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Camera View */}
       {showCamera && (

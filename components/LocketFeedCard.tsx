@@ -30,7 +30,9 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
 }) => {
   const touchStartY = useRef<number | null>(null);
   const [direction, setDirection] = useState<'up' | 'down'>('up');
-  const [floatingEmojis, setFloatingEmojis] = useState<{ id: number; emoji: string; x: number }[]>([]);
+  const [floatingEmojis, setFloatingEmojis] = useState<
+    { id: number; emoji: string; x: number; rotation: number }[]
+  >([]);
   const [showOptionsModal, setShowOptionsModal] = useState<boolean>(false);
 
   // Preload Next & Previous Photos into Browser Cache
@@ -94,11 +96,15 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
 
   const handleDoubleTap = () => {
     const newId = Date.now();
-    const randomX = Math.floor(Math.random() * 60) - 30;
-    setFloatingEmojis((prev) => [...prev, { id: newId, emoji: '💛', x: randomX }]);
+    const randomX = Math.floor(Math.random() * 80) - 40;
+    const randomRot = Math.floor(Math.random() * 30) - 15;
+    setFloatingEmojis((prev) => [
+      ...prev,
+      { id: newId, emoji: '💛', x: randomX, rotation: randomRot },
+    ]);
     setTimeout(() => {
       setFloatingEmojis((prev) => prev.filter((item) => item.id !== newId));
-    }, 1200);
+    }, 1300);
   };
 
   const handleDownload = async () => {
@@ -126,18 +132,36 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       onTouchEnd={handleTouchEnd}
       className="w-full flex-1 flex flex-col items-center justify-center select-none cursor-grab active:cursor-grabbing p-2 my-auto overflow-hidden relative"
     >
-      {/* 1:1 Perfect Square Photo Card Container matching Locket Mobile App */}
+      {/* 1:1 Perfect Square Photo Card Container */}
       <div
         onDoubleClick={handleDoubleTap}
-        className="relative w-full max-w-[310px] sm:max-w-[330px] aspect-square rounded-[2.5rem] overflow-hidden bg-[#18181C] border border-zinc-800 shadow-2xl flex-shrink-0"
+        className="relative w-full max-w-[310px] sm:max-w-[330px] aspect-square rounded-[2.5rem] overflow-hidden bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={moment.id}
-            initial={{ opacity: 0, y: direction === 'up' ? 80 : -80 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: direction === 'up' ? -80 : 80 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
+            initial={{
+              opacity: 0,
+              y: direction === 'up' ? 70 : -70,
+              scale: 0.94,
+              filter: 'blur(4px)',
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              filter: 'blur(0px)',
+            }}
+            exit={{
+              opacity: 0,
+              y: direction === 'up' ? -70 : 70,
+              scale: 0.94,
+              filter: 'blur(4px)',
+            }}
+            transition={{
+              duration: 0.28,
+              ease: [0.32, 0.72, 0, 1], // iOS cubic-bezier physics curve
+            }}
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
             className="w-full h-full overflow-hidden"
           >
@@ -147,14 +171,25 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               className="w-full h-full object-cover select-none pointer-events-none"
             />
 
-            {/* Floating Emoji Reaction Particles */}
+            {/* Floating Emoji Reaction Particles with Bounce & Rotation */}
             {floatingEmojis.map((item) => (
               <motion.div
                 key={item.id}
-                initial={{ opacity: 1, y: 140, scale: 0.8, x: item.x }}
-                animate={{ opacity: 0, y: -90, scale: 1.8 }}
-                transition={{ duration: 1.1, ease: 'easeOut' }}
-                className="absolute bottom-10 left-1/2 text-4xl pointer-events-none z-30"
+                initial={{
+                  opacity: 1,
+                  y: 150,
+                  scale: 0.5,
+                  x: item.x,
+                  rotate: item.rotation,
+                }}
+                animate={{
+                  opacity: 0,
+                  y: -110,
+                  scale: [0.5, 1.4, 1.8],
+                  rotate: item.rotation * 2,
+                }}
+                transition={{ duration: 1.25, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute bottom-10 left-1/2 text-4xl pointer-events-none z-30 drop-shadow-lg"
               >
                 {item.emoji}
               </motion.div>
@@ -166,7 +201,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                 e.stopPropagation();
                 setShowOptionsModal(true);
               }}
-              className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md text-white/80 hover:text-white flex items-center justify-center border border-white/10 opacity-80 hover:opacity-100 transition-opacity z-20"
+              className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md text-white/80 hover:text-white flex items-center justify-center border border-white/10 opacity-80 hover:opacity-100 transition-all active:scale-90 z-20"
               title="Tùy chọn ảnh"
             >
               <MoreVertical className="w-4 h-4" />
@@ -185,7 +220,13 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       </div>
 
       {/* Sender Avatar & Name Tag Centered DIRECTLY Below Card */}
-      <div className="w-full flex items-center justify-center space-x-2 mt-2.5 mb-1 text-center flex-shrink-0 z-10">
+      <motion.div
+        key={`sender-${moment.id}`}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, delay: 0.05 }}
+        className="w-full flex items-center justify-center space-x-2 mt-2.5 mb-1 text-center flex-shrink-0 z-10"
+      >
         <div className="w-5.5 h-5.5 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700 flex-shrink-0">
           <img
             src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
@@ -195,46 +236,59 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         </div>
         <span className="text-white text-xs font-bold truncate max-w-[140px]">{sender.display_name}</span>
         <span className="text-zinc-500 text-xs font-medium flex-shrink-0">{formatLocketTime(moment.created_at)}</span>
-      </div>
+      </motion.div>
 
       {/* Options Modal Sheet */}
-      {showOptionsModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="w-full max-w-xs bg-[#18181C] border border-zinc-800 rounded-t-3xl sm:rounded-3xl p-4 text-left space-y-2">
-            <h4 className="text-white text-xs font-bold text-center pb-2 border-b border-zinc-800">
-              Tùy chọn Khoảnh khắc
-            </h4>
-
-            <button
-              onClick={handleDownload}
-              className="w-full p-3 bg-[#262626] hover:bg-[#333333] rounded-2xl text-white text-xs font-semibold flex items-center space-x-3 transition-colors"
+      <AnimatePresence>
+        {showOptionsModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4"
+          >
+            <motion.div
+              initial={{ y: 80, scale: 0.95 }}
+              animate={{ y: 0, scale: 1 }}
+              exit={{ y: 80, scale: 0.95 }}
+              transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
+              className="w-full max-w-xs bg-[#18181C] border border-zinc-800 rounded-t-3xl sm:rounded-3xl p-4 text-left space-y-2"
             >
-              <Download className="w-4 h-4 text-[#FFC700]" />
-              <span>Tải ảnh về máy</span>
-            </button>
+              <h4 className="text-white text-xs font-bold text-center pb-2 border-b border-zinc-800">
+                Tùy chọn Khoảnh khắc
+              </h4>
 
-            {isMyMoment && onDeleteMoment && (
               <button
-                onClick={() => {
-                  onDeleteMoment(moment.id);
-                  setShowOptionsModal(false);
-                }}
-                className="w-full p-3 bg-red-500/10 hover:bg-red-500/20 rounded-2xl text-red-400 text-xs font-semibold flex items-center space-x-3 transition-colors"
+                onClick={handleDownload}
+                className="w-full p-3 bg-[#262626] hover:bg-[#333333] rounded-2xl text-white text-xs font-semibold flex items-center space-x-3 transition-all active:scale-98"
               >
-                <Trash2 className="w-4 h-4 text-red-400" />
-                <span>Xóa khoảnh khắc này</span>
+                <Download className="w-4 h-4 text-[#FFC700]" />
+                <span>Tải ảnh về máy</span>
               </button>
-            )}
 
-            <button
-              onClick={() => setShowOptionsModal(false)}
-              className="w-full py-2.5 bg-zinc-800 text-zinc-400 text-xs font-bold rounded-2xl text-center"
-            >
-              Đóng
-            </button>
-          </div>
-        </div>
-      )}
+              {isMyMoment && onDeleteMoment && (
+                <button
+                  onClick={() => {
+                    onDeleteMoment(moment.id);
+                    setShowOptionsModal(false);
+                  }}
+                  className="w-full p-3 bg-red-500/10 hover:bg-red-500/20 rounded-2xl text-red-400 text-xs font-semibold flex items-center space-x-3 transition-all active:scale-98"
+                >
+                  <Trash2 className="w-4 h-4 text-red-400" />
+                  <span>Xóa khoảnh khắc này</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => setShowOptionsModal(false)}
+                className="w-full py-2.5 bg-zinc-800 text-zinc-400 text-xs font-bold rounded-2xl text-center active:scale-98"
+              >
+                Đóng
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
