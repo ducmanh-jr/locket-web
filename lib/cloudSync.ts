@@ -15,6 +15,33 @@ interface StoreData {
 }
 
 /**
+ * Uploads a photo blob to Catbox CDN to get a permanent public direct image URL.
+ */
+export async function uploadPhotoToCDN(blob: Blob): Promise<string | null> {
+  try {
+    const formData = new FormData();
+    formData.append('reqtype', 'fileupload');
+    formData.append('fileToUpload', blob, `photo_${Date.now()}.jpg`);
+
+    const res = await fetch('https://catbox.moe/user/api.php', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (res.ok) {
+      const url = await res.text();
+      if (url && url.startsWith('https://')) {
+        return url.trim();
+      }
+    }
+    return null;
+  } catch (e) {
+    console.error('Catbox upload error:', e);
+    return null;
+  }
+}
+
+/**
  * Fetches current store contents from JSONBlob.
  */
 async function getStore(): Promise<StoreData> {

@@ -25,7 +25,7 @@ import { Camera, X, UserPlus } from 'lucide-react';
 import { CapturedImage } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { pushMomentToGlobalCloud, fetchGlobalCloudMoments, pushProfileToGlobalCloud, fetchGlobalCloudProfiles } from '@/lib/cloudSync';
+import { pushMomentToGlobalCloud, fetchGlobalCloudMoments, pushProfileToGlobalCloud, fetchGlobalCloudProfiles, uploadPhotoToCDN } from '@/lib/cloudSync';
 
 export default function HomePage() {
   const router = useRouter();
@@ -292,48 +292,32 @@ export default function HomePage() {
     let mediaUrl = image.dataUrl;
     const activeSender = userProfile || currentUser;
 
+    // 1. Upload photo to CDN for fast, permanent global access across accounts
+    try {
+      const cdnUrl = await uploadPhotoToCDN(image.blob);
+      if (cdnUrl) {
+        mediaUrl = cdnUrl;
+      }
+    } catch (e) {}
+
     if (isSupabaseConfigured()) {
       try {
-        // 1. Upload photo to Supabase Storage (public bucket)
         const filePath = `public/${activeSender.id || 'anon'}/${newMomentId}.jpg`;
-        const { error: uploadError } = await supabase.storage
+        await supabase.storage
           .from('moments')
           .upload(filePath, image.blob, {
             contentType: 'image/jpeg',
             upsert: true,
           });
 
-        if (!uploadError) {
-          // Try signed URL first, then public URL
-          const { data: signedData } = await supabase.storage
-            .from('moments')
-            .createSignedUrl(filePath, 3600 * 24 * 365);
-          if (signedData?.signedUrl) {
-            mediaUrl = signedData.signedUrl;
-          } else {
-            const { data: publicData } = supabase.storage
-              .from('moments')
-              .getPublicUrl(filePath);
-            if (publicData?.publicUrl) {
-              mediaUrl = publicData.publicUrl;
-            }
-          }
-        }
-
-        // 2. Try to insert moment into Supabase DB (may fail due to RLS - that's OK)
-        // Don't set `id` field - the column is UUID type with auto-generation
         try {
           await supabase.from('moments').insert({
             sender_id: activeSender.id,
             media_url: mediaUrl,
             caption: caption,
           });
-        } catch (dbErr) {
-          // RLS or FK constraint error - silently continue, Global Cloud will handle sync
-        }
-      } catch (e) {
-        console.error('Supabase upload error:', e);
-      }
+        } catch (dbErr) {}
+      } catch (e) {}
     }
 
     const createdMoment: Moment = {
