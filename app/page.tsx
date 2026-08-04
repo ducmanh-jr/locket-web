@@ -142,11 +142,34 @@ export default function HomePage() {
     setFriendsList((prev) => (areProfilesEqual(prev, targetList) ? prev : targetList));
   };
 
-  // Fetch moments & guarantee 50 moments dataset + global multi-account moments are loaded
+  // Fetch moments with full bidirectional cloud↔local sync so ALL accounts see the SAME feed
   const loadMoments = async () => {
-    const demoMoments = getStoredDemoMoments();
-    const cloudMoments = await fetchGlobalCloudMoments();
+    // 1. Get local moments (from localStorage)
+    const localMoments = getStoredDemoMoments();
 
+    // 2. Get cloud moments (the global shared source of truth)
+    let cloudMoments: Moment[] = [];
+    try {
+      cloudMoments = await fetchGlobalCloudMoments();
+    } catch (e) {}
+
+    // 3. Find local USER-captured moments that are NOT yet in the cloud
+    //    (these are moments this user captured but haven't been synced yet)
+    const cloudIds = new Set(cloudMoments.map((m) => m.id));
+    const localOnlyUserMoments = localMoments.filter(
+      (m) =>
+        !cloudIds.has(m.id) &&
+        !m.id.startsWith('m-photo-v5-') // exclude default sample photos
+    );
+
+    // 4. Push any local-only user moments to cloud so ALL accounts can see them
+    for (const moment of localOnlyUserMoments) {
+      try {
+        await pushMomentToGlobalCloud(moment);
+      } catch (e) {}
+    }
+
+    // 5. Combine: cloud moments + local moments + sample dataset
     let validSupabaseMoments: Moment[] = [];
     if (isSupabaseConfigured()) {
       try {
@@ -163,7 +186,7 @@ export default function HomePage() {
       } catch (e) {}
     }
 
-    const combined = [...demoMoments, ...cloudMoments, ...validSupabaseMoments];
+    const combined = [...cloudMoments, ...localOnlyUserMoments, ...localMoments, ...validSupabaseMoments];
 
     const sanitized = combined.map((m) => {
       let item = m;
@@ -191,7 +214,11 @@ export default function HomePage() {
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
 
-    const targetMoments = unique.length > 0 ? unique : demoMoments;
+    // 6. Save the full combined dataset back to localStorage
+    //    so next reload is instant even if cloud is slow
+    saveStoredDemoMoments(unique);
+
+    const targetMoments = unique.length > 0 ? unique : localMoments;
     setMoments((prev) => (areMomentsEqual(prev, targetMoments) ? prev : targetMoments));
     setLoading(false);
   };
