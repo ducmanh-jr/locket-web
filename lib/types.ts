@@ -1,0 +1,43 @@
+export interface Profile {
+  id: string;
+  username: string;
+  display_name: string;
+  avatar_url?: string;
+  created_at?: string;
+}
+
+export interface Friendship {
+  id: string;
+  requester_id: string;
+  addressee_id: string;
+  status: 'pending' | 'accepted' | 'blocked';
+  created_at: string;
+  friend?: Profile;
+}
+
+export interface Moment {
+  id: string;
+  sender_id: string;
+  sender?: Profile;
+  media_url: string;
+  caption?: string;
+  created_at: string;
+  recipients?: MomentRecipient[];
+  reactions?: Reaction[];
+}
+
+export interface MomentRecipient {
+  moment_id: string;
+  recipient_id: string;
+  seen_at?: string | null;
+  recipient?: Profile;
+}
+
+export interface Reaction {
+  id: string;
+  moment_id: string;
+  user_id: string;
+  user?: Profile;
+  emoji: string;
+  created_at: string;
+}

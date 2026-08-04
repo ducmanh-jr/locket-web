@@ -1,0 +1,24 @@
+{
+  "name": "LocketWeb — Khoảnh khắc Bạn bè",
+  "short_name": "LocketWeb",
+  "description": "Ứng dụng chia sẻ ảnh tức thời giữa bạn bè chuẩn 100% như Locket",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0E0E10",
+  "theme_color": "#0E0E10",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
