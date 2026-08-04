@@ -3,7 +3,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Moment, Profile } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, Trash2, MoreVertical, Volume2, VolumeX, Music } from 'lucide-react';
+import { Download, Trash2, MoreVertical, Volume2, VolumeX, Music, Video } from 'lucide-react';
 import { killGlobalAudio, playGlobalAudio } from '@/lib/audioPlayer';
 
 interface LocketFeedCardProps {
@@ -330,11 +330,22 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             }}
             className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.5rem] transform-gpu will-change-[transform,opacity]"
           >
-            <img
-              src={moment.media_url}
-              alt={moment.caption || 'Khoảnh khắc Locket'}
-              className="w-full h-full object-cover rounded-[2.5rem] select-none pointer-events-none"
-            />
+            {moment.media_type === 'video' ? (
+              <video
+                src={moment.media_url}
+                autoPlay
+                loop
+                playsInline
+                muted={moment.audio_option !== 'original'}
+                className="w-full h-full object-cover rounded-[2.5rem] select-none pointer-events-none"
+              />
+            ) : (
+              <img
+                src={moment.media_url}
+                alt={moment.caption || 'Khoảnh khắc Locket'}
+                className="w-full h-full object-cover rounded-[2.5rem] select-none pointer-events-none"
+              />
+            )}
 
             {/* Floating Emoji Reaction Particles */}
             {floatingEmojis.map((item) => (

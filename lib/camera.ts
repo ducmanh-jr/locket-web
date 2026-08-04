@@ -1,8 +1,15 @@
 /**
- * Utility functions for camera capture, square 1:1 cropping, and blob compression.
+ * Utility functions for camera capture, square 1:1 cropping, and video recording.
  */
 
 export interface CapturedImage {
+  dataUrl: string;
+  blob: Blob;
+  type?: 'photo' | 'video';
+}
+
+export interface CapturedMedia {
+  type: 'photo' | 'video';
   dataUrl: string;
   blob: Blob;
 }
@@ -16,7 +23,7 @@ export async function captureSquarePhoto(
   quality: number = 0.82,
   maxDimension: number = 1080,
   isFrontCamera: boolean = true
-): Promise<CapturedImage> {
+): Promise<CapturedMedia> {
   const canvas = document.createElement('canvas');
   const videoWidth = videoElement.videoWidth || 640;
   const videoHeight = videoElement.videoHeight || 480;
@@ -61,7 +68,7 @@ export async function captureSquarePhoto(
     canvas.toBlob(
       (blob) => {
         if (blob) {
-          resolve({ dataUrl, blob });
+          resolve({ type: 'photo', dataUrl, blob });
         } else {
           reject(new Error('Failed to compress image canvas to blob'));
         }
@@ -70,4 +77,66 @@ export async function captureSquarePhoto(
       quality
     );
   });
+}
+
+/**
+ * Helper to record a video clip from MediaStream up to maxDurationMs (5000ms max).
+ */
+export function createVideoRecorder(stream: MediaStream): {
+  start: () => void;
+  stop: () => Promise<CapturedMedia>;
+} {
+  let mediaRecorder: MediaRecorder | null = null;
+  const chunks: Blob[] = [];
+
+  const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+    ? 'video/webm;codecs=vp9'
+    : MediaRecorder.isTypeSupported('video/webm')
+    ? 'video/webm'
+    : MediaRecorder.isTypeSupported('video/mp4')
+    ? 'video/mp4'
+    : '';
+
+  try {
+    mediaRecorder = mimeType
+      ? new MediaRecorder(stream, { mimeType })
+      : new MediaRecorder(stream);
+  } catch (e) {
+    mediaRecorder = new MediaRecorder(stream);
+  }
+
+  mediaRecorder.ondataavailable = (event) => {
+    if (event.data && event.data.size > 0) {
+      chunks.push(event.data);
+    }
+  };
+
+  return {
+    start: () => {
+      chunks.length = 0;
+      if (mediaRecorder && mediaRecorder.state === 'inactive') {
+        mediaRecorder.start(100);
+      }
+    },
+    stop: (): Promise<CapturedMedia> => {
+      return new Promise((resolve, reject) => {
+        if (!mediaRecorder) return reject(new Error('No MediaRecorder available'));
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: mediaRecorder?.mimeType || 'video/webm' });
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const dataUrl = reader.result as string;
+            resolve({ type: 'video', dataUrl, blob });
+          };
+          reader.onerror = () => reject(new Error('Failed to read video blob'));
+          reader.readAsDataURL(blob);
+        };
+
+        if (mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+      });
+    },
+  };
 }

@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { Profile } from '@/lib/types';
-import { captureSquarePhoto, CapturedImage } from '@/lib/camera';
+import { captureSquarePhoto, createVideoRecorder, CapturedMedia } from '@/lib/camera';
 import {
   Camera,
   RotateCcw,
@@ -14,6 +14,9 @@ import {
   Users,
   Sparkles,
   Music,
+  VolumeX,
+  Mic,
+  Video,
 } from 'lucide-react';
 import { MusicTrack } from '@/lib/types';
 import { MusicPickerModal } from './MusicPickerModal';
@@ -23,10 +26,11 @@ interface CameraViewProps {
   friends: Profile[];
   onClose: () => void;
   onSendMoment: (
-    image: CapturedImage,
+    media: CapturedMedia,
     caption: string,
     recipientIds: string[],
-    music?: MusicTrack
+    music?: MusicTrack,
+    audioOption?: 'mute' | 'original' | 'music'
   ) => Promise<void>;
 }
 
@@ -36,8 +40,10 @@ export const CameraView: React.FC<CameraViewProps> = ({
   onSendMoment,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
-  const [capturedPhoto, setCapturedPhoto] = useState<CapturedImage | null>(null);
+  const [capturedMedia, setCapturedMedia] = useState<CapturedMedia | null>(null);
+  const [audioOption, setAudioOption] = useState<'mute' | 'original' | 'music'>('original');
   const [caption, setCaption] = useState<string>('');
   const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>(
     friends.map((f) => f.id)
@@ -46,6 +52,14 @@ export const CameraView: React.FC<CameraViewProps> = ({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [selectedMusic, setSelectedMusic] = useState<MusicTrack | null>(null);
   const [showMusicPicker, setShowMusicPicker] = useState<boolean>(false);
+
+  // Video Recording States
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [recordingProgress, setRecordingProgress] = useState<number>(0);
+  const pressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const recorderRef = useRef<{ start: () => void; stop: () => Promise<CapturedMedia> } | null>(null);
+  const startTimeRef = useRef<number>(0);
 
   // Kill any feed audio when camera opens, and clean up when it closes
   useEffect(() => {
@@ -62,23 +76,34 @@ export const CameraView: React.FC<CameraViewProps> = ({
     }
   }, [friends]);
 
-  // Initialize Camera Stream
+  // Initialize Camera Stream with Video + Audio (for Video Recording capability)
   useEffect(() => {
-    let currentStream: MediaStream | null = null;
-
     async function startCamera() {
       try {
         setCameraError(null);
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: facingMode,
-            width: { ideal: 1080 },
-            height: { ideal: 1080 },
-          },
-          audio: false,
-        });
+        let stream: MediaStream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: facingMode,
+              width: { ideal: 1080 },
+              height: { ideal: 1080 },
+            },
+            audio: true, // Try microphone for original video audio
+          });
+        } catch (audioErr) {
+          // Fallback to video-only if microphone permission is denied
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: facingMode,
+              width: { ideal: 1080 },
+              height: { ideal: 1080 },
+            },
+            audio: false,
+          });
+        }
 
-        currentStream = stream;
+        mediaStreamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
@@ -90,44 +115,125 @@ export const CameraView: React.FC<CameraViewProps> = ({
       }
     }
 
-    if (!capturedPhoto) {
+    if (!capturedMedia) {
       startCamera();
     }
 
     return () => {
-      if (currentStream) {
-        currentStream.getTracks().forEach((track) => track.stop());
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
       }
     };
-  }, [facingMode, capturedPhoto]);
+  }, [facingMode, capturedMedia]);
 
   // Flip Front/Back Camera
   const toggleFacingMode = () => {
     setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
   };
 
-  // Capture Snapshot (With Front Camera Mirroring Fix & Haptic Shutter!)
-  const handleShutter = async () => {
-    if (!videoRef.current) return;
+  // Trigger Haptic Feedback
+  const triggerHaptic = (ms = 35) => {
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-      try {
-        navigator.vibrate(35);
-      } catch (e) {}
-    }
-    try {
-      const isFront = facingMode === 'user';
-      const captured = await captureSquarePhoto(videoRef.current, 0.85, 1080, isFront);
-      setCapturedPhoto(captured);
-    } catch (err) {
-      console.error('Capture failed:', err);
+      try { navigator.vibrate(ms); } catch (e) {}
     }
   };
 
-  // Retake Photo
+  // Stop Recording Video & Save Clip
+  const stopRecording = async () => {
+    if (!isRecording && !recorderRef.current) return;
+    setIsRecording(false);
+
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+
+    triggerHaptic(50);
+
+    if (recorderRef.current) {
+      try {
+        const media = await recorderRef.current.stop();
+        recorderRef.current = null;
+        setCapturedMedia(media);
+        setAudioOption('original');
+      } catch (e) {
+        console.error('Failed to stop video recorder:', e);
+      }
+    }
+  };
+
+  // Start Video Recording
+  const startRecording = () => {
+    if (!mediaStreamRef.current) return;
+    triggerHaptic(60);
+    setIsRecording(true);
+    setRecordingProgress(0);
+    startTimeRef.current = Date.now();
+
+    const recorder = createVideoRecorder(mediaStreamRef.current);
+    recorderRef.current = recorder;
+    recorder.start();
+
+    // 5-second max duration progress ticker (50ms interval)
+    progressIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - startTimeRef.current;
+      const pct = Math.min(100, (elapsed / 5000) * 100);
+      setRecordingProgress(pct);
+
+      if (elapsed >= 5000) {
+        stopRecording();
+      }
+    }, 50);
+  };
+
+  // Press & Hold Shutter Button Handlers
+  const handleShutterDown = () => {
+    if (capturedMedia || isRecording) return;
+
+    // Start 400ms hold timer to distinguish tap vs hold
+    pressTimerRef.current = setTimeout(() => {
+      startRecording();
+    }, 400);
+  };
+
+  const handleShutterUp = async () => {
+    if (capturedMedia) return;
+
+    if (isRecording) {
+      // User released finger while recording -> Stop recording
+      await stopRecording();
+    } else if (pressTimerRef.current) {
+      // User released finger before 400ms -> Take Photo!
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+
+      if (!videoRef.current) return;
+      triggerHaptic(35);
+      try {
+        const isFront = facingMode === 'user';
+        const photo = await captureSquarePhoto(videoRef.current, 0.85, 1080, isFront);
+        setCapturedMedia(photo);
+        setAudioOption('mute');
+      } catch (err) {
+        console.error('Capture photo failed:', err);
+      }
+    }
+  };
+
+  // Retake Photo/Video
   const handleRetake = () => {
-    setCapturedPhoto(null);
+    killGlobalAudio();
+    setCapturedMedia(null);
     setCaption('');
     setSelectedMusic(null);
+    setAudioOption('original');
+    setIsRecording(false);
+    setRecordingProgress(0);
   };
 
   // Toggle Friend Selection
@@ -145,12 +251,18 @@ export const CameraView: React.FC<CameraViewProps> = ({
     }
   };
 
-  // Final Send
+  // Final Send Moment
   const handleSend = async () => {
-    if (!capturedPhoto || selectedFriendIds.length === 0) return;
+    if (!capturedMedia || selectedFriendIds.length === 0) return;
     setIsSending(true);
     try {
-      await onSendMoment(capturedPhoto, caption, selectedFriendIds, selectedMusic || undefined);
+      await onSendMoment(
+        capturedMedia,
+        caption,
+        selectedFriendIds,
+        audioOption === 'music' ? (selectedMusic || undefined) : undefined,
+        audioOption
+      );
       onClose();
     } catch (err) {
       console.error('Failed to send moment:', err);
@@ -172,13 +284,14 @@ export const CameraView: React.FC<CameraViewProps> = ({
 
         <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-[#FFC700]" />
-          Chụp Khoảnh Khắc Locket
+          {isRecording ? 'Đang quay video (max 5s)...' : 'Chụp Khoảnh Khắc Locket'}
         </span>
 
-        {!capturedPhoto ? (
+        {!capturedMedia ? (
           <button
             onClick={toggleFacingMode}
-            className="w-10 h-10 rounded-full bg-[#18181C] text-[#FFC700] flex items-center justify-center border border-zinc-800 hover:bg-[#262626] transition-colors"
+            disabled={isRecording}
+            className="w-10 h-10 rounded-full bg-[#18181C] text-[#FFC700] flex items-center justify-center border border-zinc-800 hover:bg-[#262626] transition-colors disabled:opacity-40"
             title="Đổi camera trước/sau"
           >
             <RotateCcw className="w-5 h-5" />
@@ -188,28 +301,116 @@ export const CameraView: React.FC<CameraViewProps> = ({
         )}
       </div>
 
-      {/* Main Viewfinder / Photo Review */}
+      {/* Main Viewfinder / Media Review */}
       <div className="relative w-full max-w-sm aspect-square my-auto rounded-[2.5rem] overflow-hidden bg-[#18181C] border border-zinc-800 shadow-2xl flex items-center justify-center">
         {cameraError ? (
           <div className="p-6 text-center text-red-400 text-xs">
             {cameraError}
           </div>
-        ) : !capturedPhoto ? (
+        ) : !capturedMedia ? (
           /* Live Camera Stream Video */
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className={`w-full h-full object-cover ${
-              facingMode === 'user' ? 'scale-x-[-1]' : ''
-            }`}
-          />
+          <div className="relative w-full h-full">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className={`w-full h-full object-cover ${
+                facingMode === 'user' ? 'scale-x-[-1]' : ''
+              }`}
+            />
+            {/* Live Recording Pulsing Banner Overlay */}
+            {isRecording && (
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-600/90 text-white font-bold text-xs px-3.5 py-1 rounded-full flex items-center space-x-2 animate-pulse shadow-lg">
+                <div className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
+                <span>Quay video: {(recordingProgress * 0.05).toFixed(1)}s / 5s</span>
+              </div>
+            )}
+          </div>
+        ) : capturedMedia.type === 'video' ? (
+          /* Captured Video Review & 3 Audio Option Overlay */
+          <div className="relative w-full h-full">
+            <video
+              src={capturedMedia.dataUrl}
+              autoPlay
+              loop
+              playsInline
+              muted={audioOption !== 'original'}
+              className="w-full h-full object-cover"
+            />
+            {/* 3 Audio Mode Selector Pill Top Bar */}
+            <div className="absolute top-4 left-3 right-3 flex items-center justify-center space-x-1.5 bg-black/75 backdrop-blur-md p-1.5 rounded-full border border-white/15 shadow-xl">
+              <button
+                onClick={() => { killGlobalAudio(); setAudioOption('mute'); }}
+                className={`flex-1 py-1 px-2.5 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
+                  audioOption === 'mute'
+                    ? 'bg-[#FFC700] text-black shadow-md'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <VolumeX className="w-3.5 h-3.5" />
+                <span>Im lặng 🔇</span>
+              </button>
+
+              <button
+                onClick={() => { killGlobalAudio(); setAudioOption('original'); }}
+                className={`flex-1 py-1 px-2.5 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
+                  audioOption === 'original'
+                    ? 'bg-[#FFC700] text-black shadow-md'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Mic className="w-3.5 h-3.5" />
+                <span>Âm gốc 🎙️</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setAudioOption('music');
+                  setShowMusicPicker(true);
+                }}
+                className={`flex-1 py-1 px-2.5 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
+                  audioOption === 'music'
+                    ? 'bg-[#FFC700] text-black shadow-md'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Music className="w-3.5 h-3.5" />
+                <span>Thêm nhạc 🎵</span>
+              </button>
+            </div>
+
+            {/* Selected Music Badge Display */}
+            {audioOption === 'music' && selectedMusic && (
+              <div className="absolute top-16 left-4 right-4 flex items-center justify-center">
+                <div className="flex items-center space-x-2 bg-black/85 backdrop-blur-md border border-[#FFC700]/50 text-white text-xs px-3.5 py-1.5 rounded-full shadow-lg max-w-[90%]">
+                  <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-[#FFC700]/60 animate-spin">
+                    <img src={selectedMusic.cover_url} alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <span className="font-semibold text-xs truncate">
+                    {selectedMusic.title} • {selectedMusic.artist}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Caption Input Pill inside Video at Bottom Center */}
+            <div className="absolute bottom-4 left-4 right-4 text-center">
+              <input
+                type="text"
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                placeholder="Viết chú thích..."
+                maxLength={60}
+                className="w-[85%] bg-black/75 backdrop-blur-md text-white text-xs font-semibold px-4 py-2.5 rounded-2xl border border-white/15 text-center placeholder-zinc-400 focus:outline-none focus:border-[#FFC700]"
+              />
+            </div>
+          </div>
         ) : (
           /* Captured Photo Review & Caption Overlay */
           <div className="relative w-full h-full">
             <img
-              src={capturedPhoto.dataUrl}
+              src={capturedMedia.dataUrl}
               alt="Locket Snapshot"
               className="w-full h-full object-cover"
             />
@@ -259,16 +460,47 @@ export const CameraView: React.FC<CameraViewProps> = ({
 
       {/* Bottom Controls / Recipients Selector */}
       <div className="w-full max-w-sm pb-6 z-10">
-        {!capturedPhoto ? (
-          /* Live Shutter Button */
-          <div className="flex items-center justify-center">
-            <button
-              onClick={handleShutter}
-              className="w-20 h-20 rounded-full border-4 border-[#FFC700] p-1.5 flex items-center justify-center shadow-locket-glow active:scale-90 transition-transform"
-              title="Chụp ảnh"
-            >
-              <div className="w-full h-full bg-white rounded-full shadow-inner" />
-            </button>
+        {!capturedMedia ? (
+          /* Live Shutter Button (Tap = Photo, Hold >= 400ms = Record Video max 5s) */
+          <div className="flex flex-col items-center justify-center space-y-2">
+            <div className="relative w-20 h-20 flex items-center justify-center">
+              {/* Animated Progress Ring for Video Recording */}
+              {isRecording && (
+                <svg className="absolute inset-0 w-20 h-20 -rotate-90 pointer-events-none z-20">
+                  <circle
+                    cx="40"
+                    cy="40"
+                    r="36"
+                    stroke="#EF4444"
+                    strokeWidth="5"
+                    fill="transparent"
+                    strokeDasharray={226}
+                    strokeDashoffset={226 - (226 * recordingProgress) / 100}
+                    className="transition-all duration-75 ease-linear"
+                  />
+                </svg>
+              )}
+
+              <button
+                onMouseDown={handleShutterDown}
+                onMouseUp={handleShutterUp}
+                onTouchStart={handleShutterDown}
+                onTouchEnd={handleShutterUp}
+                className={`w-20 h-20 rounded-full border-4 ${
+                  isRecording ? 'border-red-500 scale-105' : 'border-[#FFC700]'
+                } p-1.5 flex items-center justify-center shadow-locket-glow transition-all active:scale-90`}
+                title="Nhấn để chụp ảnh • Nhấn giữ 2s để quay video (max 5s)"
+              >
+                <div
+                  className={`w-full h-full ${
+                    isRecording ? 'bg-red-500 rounded-2xl scale-75' : 'bg-white rounded-full'
+                  } transition-all duration-200 shadow-inner`}
+                />
+              </button>
+            </div>
+            <span className="text-[11px] font-semibold text-zinc-400 text-center">
+              Chạm để chụp • Nhấn giữ để quay video (5s)
+            </span>
           </div>
         ) : (
           /* Post Capture: Select Friends & Send Buttons */
@@ -323,7 +555,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
                 className="flex-1 py-3 bg-[#18181C] hover:bg-[#262626] border border-zinc-800 text-zinc-300 font-bold text-xs rounded-2xl flex items-center justify-center space-x-1.5 transition-all active:scale-95"
               >
                 <RotateCcw className="w-4 h-4 text-zinc-400" />
-                <span>Chụp lại</span>
+                <span>Quay/Chụp lại</span>
               </button>
 
               <button
@@ -348,7 +580,10 @@ export const CameraView: React.FC<CameraViewProps> = ({
       {showMusicPicker && (
         <MusicPickerModal
           selectedTrackId={selectedMusic?.id}
-          onSelectMusic={(track) => setSelectedMusic(track)}
+          onSelectMusic={(track) => {
+            setSelectedMusic(track);
+            setAudioOption('music');
+          }}
           onClose={() => setShowMusicPicker(false)}
         />
       )}

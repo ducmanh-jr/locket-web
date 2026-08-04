@@ -23,7 +23,7 @@ import { Moment, Profile, MusicTrack } from '@/lib/types';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/lib/auth';
 import { Camera, X, UserPlus } from 'lucide-react';
-import { CapturedImage } from '@/lib/camera';
+import { CapturedMedia } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { pushMomentToGlobalCloud, fetchGlobalCloudMoments, pushProfileToGlobalCloud, fetchGlobalCloudProfiles, compressImageForCloudSync } from '@/lib/cloudSync';
@@ -334,19 +334,22 @@ export default function HomePage() {
   };
 
   const handleSendMoment = async (
-    image: CapturedImage,
+    media: CapturedMedia,
     caption: string,
     recipientIds: string[],
-    music?: MusicTrack
+    music?: MusicTrack,
+    audioOption?: 'mute' | 'original' | 'music'
   ) => {
-    const newMomentId = `m-photo-v5-${Date.now()}`;
+    const newMomentId = `m-${media.type}-v5-${Date.now()}`;
     const activeSender = userProfile || currentUser;
 
     const initialMoment: Moment = {
       id: newMomentId,
       sender_id: activeSender.id,
       sender: activeSender,
-      media_url: image.dataUrl,
+      media_url: media.dataUrl,
+      media_type: media.type,
+      audio_option: audioOption || (media.type === 'video' ? 'original' : undefined),
       caption: caption,
       created_at: new Date().toISOString(),
       reactions: [],
@@ -361,12 +364,15 @@ export default function HomePage() {
     setShowCamera(false);
     setCurrentView('feed');
 
-    // 🚀 Background Sync: Compress photo & sync via DB + WebSockets without blocking UI
+    // 🚀 Background Sync: Compress media & sync via DB + WebSockets without blocking UI
     (async () => {
-      let mediaUrl = image.dataUrl;
-      try {
-        mediaUrl = await compressImageForCloudSync(image.dataUrl);
-      } catch (e) {}
+      let mediaUrl = media.dataUrl;
+      // Only compress photos, not videos
+      if (media.type === 'photo') {
+        try {
+          mediaUrl = await compressImageForCloudSync(media.dataUrl);
+        } catch (e) {}
+      }
 
       const createdMoment: Moment = {
         ...initialMoment,

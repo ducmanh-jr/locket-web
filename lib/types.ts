@@ -28,6 +28,8 @@ export interface Moment {
   sender_id: string;
   sender?: Profile;
   media_url: string;
+  media_type?: 'photo' | 'video';
+  audio_option?: 'mute' | 'original' | 'music';
   caption?: string;
   created_at: string;
   recipients?: MomentRecipient[];

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Moment } from '@/lib/types';
-import { Grid } from 'lucide-react';
+import { Grid, Video } from 'lucide-react';
 
 interface LocketHistoryGridProps {
   moments: Moment[];
@@ -66,6 +66,13 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
                 {moment.caption && (
                   <div className="absolute bottom-1 left-1 right-1 bg-black/85 text-[9px] text-zinc-200 px-1.5 py-0.5 rounded-lg truncate font-medium text-center border border-white/10">
                     {moment.caption}
+                  </div>
+                )}
+
+                {/* Video Indicator Badge */}
+                {moment.media_type === 'video' && (
+                  <div className="absolute top-1.5 right-1.5 bg-black/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center space-x-0.5 border border-white/10">
+                    <Video className="w-3 h-3" />
                   </div>
                 )}
               </div>
