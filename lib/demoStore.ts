@@ -106,84 +106,55 @@ export const DEMO_50_MOMENTS: Moment[] = PHOTO_DATASET.map((item, index) => {
   };
 });
 
-// Dedicated Permanent Storage Key for User Captured Moments (NEVER WIPED ACROSS UPDATES!)
-const PERMANENT_USER_MOMENTS_KEY = 'locket_user_moments_permanent_v1';
-const ALL_KEYS_TO_MIGRATE = [
-  'locket_user_moments_permanent_v1',
-  'locket_demo_moments_v8',
-  'locket_demo_moments_v7',
-  'locket_demo_moments_v6',
+const CACHE_KEYS = [
   'locket_demo_moments_v5',
-  'locket_demo_moments_v4',
-  'locket_demo_moments_v3',
+  'locket_demo_moments_v6',
+  'locket_demo_moments_v7',
+  'locket_demo_moments_v8',
+  'locket_user_moments_permanent_v1',
 ];
 
-/**
- * Gets all user-captured moments permanently stored on this device.
- * Migrates any user moments found in older cache keys so ZERO captured moments are ever lost!
- */
 export function getStoredDemoMoments(): Moment[] {
   if (typeof window === 'undefined') return DEMO_50_MOMENTS;
 
-  const userMoments: Moment[] = [];
-
-  // 1. Scan & migrate user captured moments from ALL current & previous cache keys
-  for (const key of ALL_KEYS_TO_MIGRATE) {
+  // Scan ALL cache keys to recover user data!
+  let storedMoments: Moment[] = [];
+  for (const key of CACHE_KEYS) {
     try {
       const stored = localStorage.getItem(key);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          for (const m of parsed) {
-            // Identify user-captured moments (IDs not belonging to standard 47 sample photos)
-            const isUserCaptured =
-              m &&
-              m.id &&
-              !m.id.startsWith('m-photo-v5-') &&
-              !m.media_url?.includes('178582939');
-
-            if (isUserCaptured) {
-              const exists = userMoments.some((x) => x.id === m.id);
-              if (!exists) {
-                userMoments.push(m);
-              }
-            }
-          }
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          storedMoments = [...parsed, ...storedMoments];
         }
       }
     } catch (e) {}
   }
 
-  // 2. Save all recovered user-captured moments back to PERMANENT storage key
-  if (userMoments.length > 0) {
-    try {
-      localStorage.setItem(PERMANENT_USER_MOMENTS_KEY, JSON.stringify(userMoments));
-    } catch (e) {}
+  if (storedMoments.length > 0) {
+    // Deduplicate moments by ID
+    const unique = storedMoments.filter(
+      (m, i, self) => m && m.id && i === self.findIndex((x) => x && x.id === m.id)
+    );
+
+    // Merge default dataset so 47 photos are always present
+    const combined = [...unique, ...DEMO_50_MOMENTS];
+    return combined.filter(
+      (m, i, self) => m && m.id && i === self.findIndex((x) => x && x.id === m.id)
+    );
   }
 
-  // 3. Merge user-captured moments at HIGHEST priority on top of default sample dataset
-  return [...userMoments, ...DEMO_50_MOMENTS];
+  saveStoredDemoMoments(DEMO_50_MOMENTS);
+  return DEMO_50_MOMENTS;
 }
 
 export function saveStoredDemoMoments(moments: Moment[]): void {
   if (typeof window === 'undefined') return;
 
-  // Extract user-captured moments only for permanent local storage
-  const userMoments = moments.filter(
-    (m) =>
-      m &&
-      m.id &&
-      !m.id.startsWith('m-photo-v5-') &&
-      !m.media_url?.includes('178582939')
-  );
-
-  try {
-    localStorage.setItem(PERMANENT_USER_MOMENTS_KEY, JSON.stringify(userMoments));
-  } catch (e) {
+  for (const key of CACHE_KEYS) {
     try {
-      // Fallback: keep top 15 user moments if storage space is tight
-      localStorage.setItem(PERMANENT_USER_MOMENTS_KEY, JSON.stringify(userMoments.slice(0, 15)));
-    } catch (err) {}
+      localStorage.setItem(key, JSON.stringify(moments));
+    } catch (e) {}
   }
 }
 

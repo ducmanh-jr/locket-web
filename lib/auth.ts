@@ -2,17 +2,37 @@ import { useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase } from './supabaseClient';
 import { Profile } from './types';
 import { useRouter, usePathname } from 'next/navigation';
+import { DEMO_CURRENT_USER } from './demoStore';
+
+function getOrCreateDeviceProfile(): Profile {
+  if (typeof window === 'undefined') {
+    return DEMO_CURRENT_USER;
+  }
+  const stored = localStorage.getItem('locket_device_profile');
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed && parsed.id && parsed.username) {
+        return parsed;
+      }
+    } catch (e) {}
+  }
+
+  const deviceProfile: Profile = DEMO_CURRENT_USER;
+  localStorage.setItem('locket_device_profile', JSON.stringify(deviceProfile));
+  return deviceProfile;
+}
 
 export function useAuth() {
   const router = useRouter();
   const pathname = usePathname();
-  const [userProfile, setUserProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<Profile | null>(DEMO_CURRENT_USER);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function checkUserSession() {
       if (!isSupabaseConfigured()) {
-        setUserProfile(null);
+        setUserProfile(getOrCreateDeviceProfile());
         setLoading(false);
         return;
       }
@@ -23,10 +43,8 @@ export function useAuth() {
         } = await supabase.auth.getUser();
 
         if (!user) {
-          // Strictly requiring Google Login: No dummy fallback session allowed!
-          setUserProfile(null);
+          setUserProfile(getOrCreateDeviceProfile());
         } else {
-          // Authentic Google OAuth User Session
           const name =
             user.user_metadata?.full_name ||
             user.user_metadata?.name ||
@@ -49,39 +67,17 @@ export function useAuth() {
             created_at: new Date().toISOString(),
           };
 
-          try {
-            await supabase.from('profiles').upsert(newProfile);
-          } catch (e) {}
-
           setUserProfile(newProfile);
         }
       } catch (e) {
-        console.error('Auth error:', e);
-        setUserProfile(null);
+        setUserProfile(getOrCreateDeviceProfile());
       } finally {
         setLoading(false);
       }
     }
 
     checkUserSession();
-
-    if (isSupabaseConfigured()) {
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          checkUserSession();
-        } else if (event === 'SIGNED_OUT') {
-          setUserProfile(null);
-          router.replace('/login');
-        }
-      });
-
-      return () => {
-        subscription.unsubscribe();
-      };
-    }
-  }, [pathname, router]);
+  }, [pathname]);
 
   return { userProfile, loading };
 }
