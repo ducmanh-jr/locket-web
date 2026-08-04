@@ -3,7 +3,7 @@
 import React, { useRef, useState } from 'react';
 import { Moment, Profile } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, Trash2, MoreVertical, Heart } from 'lucide-react';
+import { Download, Trash2, MoreVertical } from 'lucide-react';
 
 interface LocketFeedCardProps {
   moment: Moment;
@@ -38,7 +38,6 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
 
   const isMyMoment = sender.id === currentUser.id;
 
-  // Format relative time like Locket (e.g. "1d", "3h", "15m")
   const formatLocketTime = (dateString: string) => {
     const diff = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000);
     if (diff < 60) return 'Vừa xong';
@@ -47,7 +46,6 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     return `${Math.floor(diff / 86400)}d`;
   };
 
-  // Touch Swipe Vertical Handlers (Lướt lên / Lướt xuống)
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
   };
@@ -57,10 +55,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     const touchEndY = e.changedTouches[0].clientY;
     const diffY = touchStartY.current - touchEndY;
 
-    if (diffY > 30 && hasNext && onNext) {
+    if (diffY > 35 && hasNext && onNext) {
       setDirection('up');
       onNext();
-    } else if (diffY < -30 && hasPrev && onPrev) {
+    } else if (diffY < -35 && hasPrev && onPrev) {
       setDirection('down');
       onPrev();
     }
@@ -68,18 +66,16 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     touchStartY.current = null;
   };
 
-  // Mouse Wheel Vertical Scroll Handler
   const handleWheel = (e: React.WheelEvent) => {
-    if (e.deltaY > 20 && hasNext && onNext) {
+    if (e.deltaY > 25 && hasNext && onNext) {
       setDirection('up');
       onNext();
-    } else if (e.deltaY < -20 && hasPrev && onPrev) {
+    } else if (e.deltaY < -25 && hasPrev && onPrev) {
       setDirection('down');
       onPrev();
     }
   };
 
-  // Double tap to quick heart
   const handleDoubleTap = () => {
     const newId = Date.now();
     const randomX = Math.floor(Math.random() * 60) - 30;
@@ -89,7 +85,6 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     }, 1200);
   };
 
-  // Download Image
   const handleDownload = async () => {
     try {
       const response = await fetch(moment.media_url);
@@ -113,20 +108,20 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       onWheel={handleWheel}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="w-full flex flex-col items-center justify-center select-none cursor-grab active:cursor-grabbing px-2 py-1 my-auto overflow-hidden relative"
+      className="w-full flex-1 flex flex-col items-center justify-center select-none cursor-grab active:cursor-grabbing px-2 py-1 my-auto overflow-hidden relative"
     >
-      {/* 1:1 Large Authentic Locket Photo Card */}
+      {/* Strictly Constrained 1:1 Photo Card Container */}
       <div
         onDoubleClick={handleDoubleTap}
-        className="relative w-[90vw] max-w-[360px] sm:max-w-[370px] aspect-square rounded-[2.5rem] overflow-hidden bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0 group"
+        className="relative w-[88vw] max-w-[340px] sm:max-w-[350px] aspect-square rounded-[2.5rem] overflow-hidden bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={moment.id}
-            initial={{ opacity: 0, y: direction === 'up' ? 100 : -100 }}
+            initial={{ opacity: 0, y: direction === 'up' ? 60 : -60 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: direction === 'up' ? -100 : 100 }}
-            transition={{ duration: 0.22, ease: 'easeOut' }}
+            exit={{ opacity: 0, y: direction === 'up' ? -60 : 60 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             className="w-full h-full absolute inset-0 overflow-hidden"
           >
             <img
@@ -139,8 +134,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             {floatingEmojis.map((item) => (
               <motion.div
                 key={item.id}
-                initial={{ opacity: 1, y: 150, scale: 0.8, x: item.x }}
-                animate={{ opacity: 0, y: -100, scale: 1.8 }}
+                initial={{ opacity: 1, y: 140, scale: 0.8, x: item.x }}
+                animate={{ opacity: 0, y: -90, scale: 1.8 }}
                 transition={{ duration: 1.1, ease: 'easeOut' }}
                 className="absolute bottom-10 left-1/2 text-4xl pointer-events-none z-30"
               >
@@ -148,7 +143,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               </motion.div>
             ))}
 
-            {/* Quick Options Dots button on top right of photo */}
+            {/* Options button on top right of photo */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -160,7 +155,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               <MoreVertical className="w-4 h-4" />
             </button>
 
-            {/* Caption Overlay at bottom center inside photo */}
+            {/* Caption Overlay */}
             {moment.caption && (
               <div className="absolute bottom-4 left-4 right-4 text-center pointer-events-none z-10">
                 <span className="inline-block bg-black/75 backdrop-blur-md text-white text-xs font-semibold px-4 py-2 rounded-2xl shadow-lg max-w-[85%] break-words border border-white/10">
@@ -172,8 +167,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* Sender Avatar & Name Tag Centered DIRECTLY Below Photo Card */}
-      <div className="flex items-center justify-center space-x-2 mt-3 mb-1 w-full text-center flex-shrink-0">
+      {/* Sender Avatar & Name Tag Centered DIRECTLY Below Card */}
+      <div className="w-full flex items-center justify-center space-x-2 mt-2.5 mb-1 text-center flex-shrink-0">
         <div className="w-5.5 h-5.5 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700 flex-shrink-0">
           <img
             src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
@@ -181,7 +176,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             className="w-full h-full object-cover"
           />
         </div>
-        <span className="text-white text-xs font-bold truncate max-w-[150px]">{sender.display_name}</span>
+        <span className="text-white text-xs font-bold truncate max-w-[140px]">{sender.display_name}</span>
         <span className="text-zinc-500 text-xs font-medium flex-shrink-0">{formatLocketTime(moment.created_at)}</span>
       </div>
 
