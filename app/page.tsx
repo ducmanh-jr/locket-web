@@ -80,14 +80,34 @@ export default function HomePage() {
           .order('created_at', { ascending: false });
 
         if (!error && data) {
-          // Filter out old test rows that used avatar image
           const validSupabaseMoments = (data as Moment[]).filter(
             (m) => !m.media_url?.includes('1785829393992_')
           );
-          const combined = [...validSupabaseMoments, ...demoMoments];
-          const unique = combined.filter(
+          const combined = [...demoMoments, ...validSupabaseMoments];
+
+          // Ensure every moment has a valid sender object
+          const sanitized = combined.map((m) => {
+            if (!m.sender) {
+              if (m.sender_id === currentUser.id || m.sender_id === 'user-me') {
+                return { ...m, sender: currentUser };
+              }
+              const match = DEFAULT_3_FRIENDS.find((f) => f.id === m.sender_id);
+              if (match) return { ...m, sender: match };
+              return { ...m, sender: currentUser };
+            }
+            return m;
+          });
+
+          // Deduplicate by moment id
+          const unique = sanitized.filter(
             (m, i, self) => i === self.findIndex((x) => x.id === m.id)
           );
+
+          // Sort strictly by newest date first
+          unique.sort(
+            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+
           setMoments(unique.length > 0 ? unique : demoMoments);
         } else {
           setMoments(demoMoments);
@@ -235,8 +255,11 @@ export default function HomePage() {
     };
 
     const updatedMoments = addDemoMoment(createdMoment);
+    // Reset friend filter to 'All Friends' so the newly posted photo is ALWAYS visible!
+    setSelectedFriendFilter(null);
     setMoments(updatedMoments);
     setCurrentIndex(0);
+    setShowCamera(false);
     setCurrentView('feed');
   };
 

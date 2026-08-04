@@ -40,6 +40,13 @@ export const CameraView: React.FC<CameraViewProps> = ({
   const [isSending, setIsSending] = useState<boolean>(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
 
+  // Auto-select all friends when friends prop finishes loading
+  useEffect(() => {
+    if (friends.length > 0 && selectedFriendIds.length === 0) {
+      setSelectedFriendIds(friends.map((f) => f.id));
+    }
+  }, [friends]);
+
   // Initialize Camera Stream
   useEffect(() => {
     let currentStream: MediaStream | null = null;
