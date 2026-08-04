@@ -122,7 +122,11 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
                         }}
                         className="w-7 h-7 rounded-full object-cover border border-zinc-600 flex-shrink-0"
                       />
-                      <span className="truncate max-w-[110px]">{friend.display_name}</span>
+                      <span className="truncate max-w-[130px]">
+                        {friend.id === currentUser.id || friend.username === currentUser.username
+                          ? `${friend.display_name} (Bạn)`
+                          : friend.display_name}
+                      </span>
                     </button>
 
                     {/* View Friend Profile Icon */}

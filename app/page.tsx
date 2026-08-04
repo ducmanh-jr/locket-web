@@ -55,8 +55,18 @@ export default function HomePage() {
       try {
         const { data, error } = await supabase.from('profiles').select('*');
         if (!error && data && data.length > 0) {
-          const realOthers = data.filter((p: Profile) => p.id !== currentUser.id);
-          const combined = [...realOthers, ...DEFAULT_3_FRIENDS];
+          const realOthers = data.filter(
+            (p: Profile) =>
+              p.id !== currentUser.id &&
+              p.username !== currentUser.username &&
+              p.display_name !== currentUser.display_name
+          );
+          const combined = [...realOthers, ...DEFAULT_3_FRIENDS].filter(
+            (p) =>
+              p.id !== currentUser.id &&
+              p.username !== currentUser.username &&
+              p.display_name !== currentUser.display_name
+          );
           const unique = combined.filter(
             (user, index, self) => index === self.findIndex((u) => u.username === user.username)
           );

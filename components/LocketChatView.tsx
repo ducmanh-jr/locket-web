@@ -49,6 +49,19 @@ export const LocketChatView: React.FC<LocketChatViewProps> = ({
     setInputText('');
   };
 
+  // Filter out current logged in user from chat list & deduplicate
+  const chatFriends = friends
+    .filter(
+      (f) =>
+        f.id !== currentUser.id &&
+        f.username !== currentUser.username &&
+        f.id !== 'user-me' &&
+        f.username !== 'manh_locket'
+    )
+    .filter(
+      (user, index, self) => index === self.findIndex((u) => u.username === user.username)
+    );
+
   return (
     <div className="w-full flex-1 flex flex-col bg-black z-40">
       {/* Header */}
@@ -68,10 +81,10 @@ export const LocketChatView: React.FC<LocketChatViewProps> = ({
       {!activeFriend ? (
         /* Threads List matching Screenshot 2 */
         <div className="flex-1 p-4 space-y-3 overflow-y-auto custom-scrollbar">
-          {friends.length === 0 ? (
+          {chatFriends.length === 0 ? (
             <p className="text-center text-zinc-500 text-xs py-8">Chưa có cuộc trò chuyện nào.</p>
           ) : (
-            friends.map((friend) => {
+            chatFriends.map((friend) => {
               const friendMsgs = messages[friend.id] || [];
               const lastMsg = friendMsgs[friendMsgs.length - 1];
 

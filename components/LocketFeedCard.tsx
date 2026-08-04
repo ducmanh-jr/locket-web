@@ -335,7 +335,9 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             className="w-full h-full object-cover"
           />
         </div>
-        <span className="text-white text-xs font-bold truncate max-w-[140px]">{sender.display_name}</span>
+        <span className="text-white text-xs font-bold truncate max-w-[160px]">
+          {isMyMoment ? `${sender.display_name} (Bạn)` : sender.display_name}
+        </span>
         <span className="text-zinc-500 text-xs font-medium flex-shrink-0">{formatLocketTime(moment.created_at)}</span>
       </motion.div>
 
