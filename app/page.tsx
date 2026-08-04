@@ -204,7 +204,7 @@ export default function HomePage() {
     caption: string,
     recipientIds: string[]
   ) => {
-    const newMomentId = `moment-${Date.now()}`;
+    const newMomentId = `m-photo-v5-${Date.now()}`;
     let mediaUrl = image.dataUrl;
 
     if (isSupabaseConfigured() && userProfile) {

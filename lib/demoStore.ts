@@ -113,8 +113,7 @@ export function getStoredDemoMoments(): Moment[] {
     const stored = localStorage.getItem(CACHE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      // Auto-invalidate old cached moments from previous versions
-      if (parsed.length > 0 && parsed[0]?.id?.startsWith('m-photo-v5-')) {
+      if (Array.isArray(parsed) && parsed.length > 0) {
         return parsed;
       }
     }
