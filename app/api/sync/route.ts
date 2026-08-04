@@ -64,23 +64,29 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await fetchFromGlobalStore();
     const body = await request.json();
     const { action, profile, moment } = body;
 
+    // Always fetch latest state from global store first to prevent overwriting
+    await fetchFromGlobalStore();
+
     if (action === 'push_profile' && profile?.id) {
-      const idx = memoryProfiles.findIndex(
-        (p) => p.id === profile.id || p.username === profile.username
+      const googleProfilesOnly = memoryProfiles.filter(
+        (p: any) => p && p.id && !p.id.startsWith('user-') && !p.id.startsWith('user_dev_')
+      );
+      const idx = googleProfilesOnly.findIndex(
+        (p: any) => p.id === profile.id || p.username === profile.username
       );
       if (idx >= 0) {
-        memoryProfiles[idx] = { ...memoryProfiles[idx], ...profile };
+        googleProfilesOnly[idx] = { ...googleProfilesOnly[idx], ...profile };
       } else {
-        memoryProfiles.push(profile);
+        googleProfilesOnly.push(profile);
       }
+      memoryProfiles = googleProfilesOnly;
     }
 
     if (action === 'push_moment' && moment?.id && moment?.media_url) {
-      const exists = memoryMoments.some((m) => m.id === moment.id);
+      const exists = memoryMoments.some((m: any) => m.id === moment.id);
       if (!exists) {
         memoryMoments.unshift(moment);
         if (memoryMoments.length > 200) {
@@ -89,8 +95,8 @@ export async function POST(request: Request) {
       }
     }
 
-    // Persist to serverless persistent global JSON blob store asynchronously
-    saveToGlobalStore(memoryProfiles, memoryMoments);
+    // Persist merged profiles and moments safely
+    await saveToGlobalStore(memoryProfiles, memoryMoments);
 
     return NextResponse.json(
       { success: true, profiles: memoryProfiles, moments: memoryMoments },

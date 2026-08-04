@@ -169,9 +169,20 @@ export default function HomePage() {
     );
 
     // 4. Push any local-only user moments to cloud so ALL accounts can see them
-    for (const moment of localOnlyUserMoments) {
+    if (localOnlyUserMoments.length > 0) {
+      await Promise.all(
+        localOnlyUserMoments.map(async (moment) => {
+          try {
+            await pushMomentToGlobalCloud(moment);
+          } catch (e) {}
+        })
+      );
+      // Re-fetch cloud moments to get the unified global state after pushing
       try {
-        await pushMomentToGlobalCloud(moment);
+        const updatedCloud = await fetchGlobalCloudMoments();
+        if (updatedCloud.length > cloudMoments.length) {
+          cloudMoments = updatedCloud;
+        }
       } catch (e) {}
     }
 
