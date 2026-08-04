@@ -33,7 +33,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   const [floatingEmojis, setFloatingEmojis] = useState<{ id: number; emoji: string; x: number }[]>([]);
   const [showOptionsModal, setShowOptionsModal] = useState<boolean>(false);
 
-  // Preload Next & Previous Photos into Browser Cache for 0ms Latency
+  // Preload Next & Previous Photos into Browser Cache
   useEffect(() => {
     if (nextMomentUrl) {
       const img = new Image();
@@ -124,12 +124,12 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       onWheel={handleWheel}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="w-full flex-1 flex flex-col items-center justify-center select-none cursor-grab active:cursor-grabbing px-2 py-1 my-auto overflow-hidden relative"
+      className="w-full flex-1 flex flex-col items-center justify-center select-none cursor-grab active:cursor-grabbing p-2 my-auto overflow-hidden relative"
     >
-      {/* 1:1 Photo Card Container */}
+      {/* 1:1 Perfect Square Photo Card Container matching Locket Mobile App */}
       <div
         onDoubleClick={handleDoubleTap}
-        className="relative w-[85vw] max-w-[320px] sm:max-w-[340px] h-[85vw] max-h-[320px] sm:max-h-[340px] aspect-square rounded-[2.5rem] overflow-hidden bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0"
+        className="relative w-full max-w-[310px] sm:max-w-[330px] aspect-square rounded-[2.5rem] overflow-hidden bg-[#18181C] border border-zinc-800 shadow-2xl flex-shrink-0"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
