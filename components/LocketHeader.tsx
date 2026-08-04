@@ -7,7 +7,7 @@ import { ChevronDown, ChevronUp, MessageCircle, Users, User } from 'lucide-react
 interface LocketHeaderProps {
   currentUser: Profile;
   friends: Profile[];
-  selectedFriendFilter: string | null; // null = 'Tất cả bạn bè'
+  selectedFriendFilter: string | null;
   onSelectFilter: (friendId: string | null) => void;
   onOpenChat: () => void;
   onOpenProfile: () => void;
@@ -27,7 +27,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
   const labelText = selectedFriend ? selectedFriend.display_name : 'Tất cả bạn bè';
 
   return (
-    <div className="relative w-full z-40 px-4 pt-3 pb-2 flex items-center justify-between bg-black">
+    <div className="relative w-full z-40 px-4 pt-8 pb-2 flex items-center justify-between bg-black">
       {/* Left: User Avatar */}
       <button
         onClick={onOpenProfile}
