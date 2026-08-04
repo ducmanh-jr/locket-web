@@ -187,10 +187,18 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
       }`}
     >
-      {/* 1:1 Guaranteed Exact Square Photo Card Container (Fixed 300px/330px width and height) */}
+      {/* 1:1 Guaranteed Exact Square Photo Card Container with Explicit Inline Styles */}
       <div
         onDoubleClick={handleDoubleTap}
-        className="relative w-[300px] h-[300px] sm:w-[330px] sm:h-[330px] min-w-[300px] min-h-[300px] sm:min-w-[330px] sm:min-h-[330px] rounded-[2.5rem] overflow-hidden bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0 my-auto"
+        style={{
+          width: '310px',
+          height: '310px',
+          minWidth: '310px',
+          minHeight: '310px',
+          maxWidth: '310px',
+          maxHeight: '310px',
+        }}
+        className="relative rounded-[2.5rem] overflow-hidden bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0 my-auto"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
