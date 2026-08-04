@@ -81,7 +81,7 @@ export async function captureSquarePhoto(
 
 /**
  * Helper to record a video clip from MediaStream up to maxDurationMs (5000ms max).
- * Uses Blob Object URLs for native, butter-smooth video playback with zero black screen errors!
+ * Capped at 600kbps bitrate (5s = ~350KB ultra-lightweight portable video), preventing black screen bugs!
  */
 export function createVideoRecorder(stream: MediaStream): {
   start: () => void;
@@ -108,13 +108,18 @@ export function createVideoRecorder(stream: MediaStream): {
     }
   }
 
+  const options: MediaRecorderOptions = {
+    videoBitsPerSecond: 600000, // 600 kbps: 5s video = ~350KB lightweight video!
+  };
+  if (selectedType) options.mimeType = selectedType;
+
   try {
-    mediaRecorder = selectedType
-      ? new MediaRecorder(stream, { mimeType: selectedType })
-      : new MediaRecorder(stream);
+    mediaRecorder = new MediaRecorder(stream, options);
   } catch (e) {
     try {
-      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder = selectedType
+        ? new MediaRecorder(stream, { mimeType: selectedType })
+        : new MediaRecorder(stream);
     } catch (err) {
       console.error('MediaRecorder initialization failed:', err);
     }
@@ -142,8 +147,17 @@ export function createVideoRecorder(stream: MediaStream): {
         mediaRecorder.onstop = () => {
           const finalMime = mediaRecorder?.mimeType || selectedType || 'video/mp4';
           const blob = new Blob(chunks, { type: finalMime });
-          const videoObjectUrl = URL.createObjectURL(blob);
-          resolve({ type: 'video', dataUrl: videoObjectUrl, blob });
+          const reader = new FileReader();
+
+          reader.onloadend = () => {
+            const dataUrl = reader.result as string;
+            resolve({ type: 'video', dataUrl, blob });
+          };
+          reader.onerror = () => {
+            const fallbackUrl = URL.createObjectURL(blob);
+            resolve({ type: 'video', dataUrl: fallbackUrl, blob });
+          };
+          reader.readAsDataURL(blob);
         };
 
         if (mediaRecorder.state !== 'inactive') {

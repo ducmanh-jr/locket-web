@@ -127,8 +127,16 @@ export const CameraView: React.FC<CameraViewProps> = ({
     };
   }, [facingMode, capturedMedia]);
 
-  // Flip Front/Back Camera
+  const isFlippingRef = useRef<boolean>(false);
+
+  // Flip Front/Back Camera with 700ms Hardware Lock
   const toggleFacingMode = () => {
+    if (isFlippingRef.current) return;
+    isFlippingRef.current = true;
+    setTimeout(() => {
+      isFlippingRef.current = false;
+    }, 700);
+
     setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
   };
 
