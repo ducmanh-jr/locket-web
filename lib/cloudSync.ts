@@ -87,3 +87,62 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
     return [];
   }
 }
+
+// ========================
+// GLOBAL CLOUD PROFILE SYNC
+// ========================
+
+const PROFILE_TAG = 'locket_v5_profile';
+
+/**
+ * Registers a user profile to the Global Cloud so other accounts can see them as friends.
+ */
+export async function pushProfileToGlobalCloud(profile: { id: string; username: string; display_name: string; avatar_url: string }): Promise<boolean> {
+  try {
+    const res = await fetch(GLOBAL_SYNC_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: PROFILE_TAG,
+        data: {
+          id: profile.id,
+          username: profile.username,
+          display_name: profile.display_name,
+          avatar_url: profile.avatar_url,
+          registered_at: new Date().toISOString(),
+        },
+      }),
+    });
+    return res.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Fetches all registered user profiles from the Global Cloud.
+ */
+export async function fetchGlobalCloudProfiles(): Promise<{ id: string; username: string; display_name: string; avatar_url: string }[]> {
+  try {
+    const res = await fetch(GLOBAL_SYNC_ENDPOINT, { cache: 'no-store' });
+    if (!res.ok) return [];
+
+    const list = await res.json();
+    if (!Array.isArray(list)) return [];
+
+    return list
+      .filter((item: any) => item?.name === PROFILE_TAG && item?.data?.id)
+      .map((item: any) => ({
+        id: item.data.id,
+        username: item.data.username || 'user',
+        display_name: item.data.display_name || 'Locket User',
+        avatar_url: item.data.avatar_url || '',
+      }))
+      // Deduplicate by username
+      .filter(
+        (p: any, i: number, self: any[]) => i === self.findIndex((x) => x.username === p.username)
+      );
+  } catch (e) {
+    return [];
+  }
+}

@@ -25,7 +25,7 @@ import { Camera, X, UserPlus } from 'lucide-react';
 import { CapturedImage } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { pushMomentToGlobalCloud, fetchGlobalCloudMoments } from '@/lib/cloudSync';
+import { pushMomentToGlobalCloud, fetchGlobalCloudMoments, pushProfileToGlobalCloud, fetchGlobalCloudProfiles } from '@/lib/cloudSync';
 
 export default function HomePage() {
   const router = useRouter();
@@ -50,33 +50,58 @@ export default function HomePage() {
     }
   }, []);
 
-  // Fetch real friends and registered users from Supabase
+  // Fetch real friends from Global Cloud + Supabase + push current user profile
   const loadFriends = async () => {
+    // 1. Push current user to Global Cloud so other accounts see them
+    try {
+      await pushProfileToGlobalCloud({
+        id: currentUser.id,
+        username: currentUser.username,
+        display_name: currentUser.display_name,
+        avatar_url: currentUser.avatar_url || '',
+      });
+    } catch (e) {}
+
+    // 2. Fetch all profiles from Global Cloud
+    let cloudProfiles: Profile[] = [];
+    try {
+      const rawCloud = await fetchGlobalCloudProfiles();
+      cloudProfiles = rawCloud.map((p) => ({
+        id: p.id,
+        username: p.username,
+        display_name: p.display_name,
+        avatar_url: p.avatar_url,
+      }));
+    } catch (e) {}
+
+    // 3. Fetch from Supabase (may return 0 due to RLS)
+    let supabaseProfiles: Profile[] = [];
     if (isSupabaseConfigured()) {
       try {
         const { data, error } = await supabase.from('profiles').select('*');
         if (!error && data && data.length > 0) {
-          const realOthers = data.filter(
-            (p: Profile) =>
-              p.id !== currentUser.id &&
-              p.username !== currentUser.username &&
-              p.display_name !== currentUser.display_name
-          );
-          const combined = [...realOthers, ...DEFAULT_3_FRIENDS].filter(
-            (p) =>
-              p.id !== currentUser.id &&
-              p.username !== currentUser.username &&
-              p.display_name !== currentUser.display_name
-          );
-          const unique = combined.filter(
-            (user, index, self) => index === self.findIndex((u) => u.username === user.username)
-          );
-          setFriendsList(unique);
-          return;
+          supabaseProfiles = data as Profile[];
         }
       } catch (e) {}
     }
-    setFriendsList(DEFAULT_3_FRIENDS);
+
+    // 4. Merge all sources: Cloud + Supabase + Default 3 friends
+    const allProfiles = [...cloudProfiles, ...supabaseProfiles, ...DEFAULT_3_FRIENDS];
+
+    // Filter out current user
+    const others = allProfiles.filter(
+      (p) =>
+        p.id !== currentUser.id &&
+        p.username !== currentUser.username &&
+        p.display_name !== currentUser.display_name
+    );
+
+    // Deduplicate by username
+    const unique = others.filter(
+      (user, index, self) => index === self.findIndex((u) => u.username === user.username)
+    );
+
+    setFriendsList(unique.length > 0 ? unique : DEFAULT_3_FRIENDS);
   };
 
   // Fetch moments & guarantee 50 moments dataset + global multi-account moments are loaded
