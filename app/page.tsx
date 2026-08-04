@@ -162,14 +162,35 @@ export default function HomePage() {
     );
   }
 
-  // Filter moments by selected friend (dm, system32, admin)
+  // Filter moments by selected friend dropdown
+  const isFilteringCurrentUser =
+    selectedFriendFilter === currentUser.id ||
+    selectedFriendFilter === currentUser.username ||
+    selectedFriendFilter === currentUser.display_name ||
+    selectedFriendFilter === 'user-me' ||
+    selectedFriendFilter === 'user-dm';
+
   const filteredMoments = selectedFriendFilter
     ? moments.filter((m) => {
         const sender = m.sender;
+        if (isFilteringCurrentUser) {
+          return (
+            m.sender_id === currentUser.id ||
+            m.sender_id === 'user-me' ||
+            m.sender_id === 'user-dm' ||
+            sender?.id === currentUser.id ||
+            sender?.id === 'user-me' ||
+            sender?.id === 'user-dm' ||
+            sender?.username === currentUser.username ||
+            sender?.username === 'dm' ||
+            sender?.display_name === currentUser.display_name
+          );
+        }
         return (
           m.sender_id === selectedFriendFilter ||
           sender?.username === selectedFriendFilter ||
-          sender?.id === selectedFriendFilter
+          sender?.id === selectedFriendFilter ||
+          sender?.display_name === selectedFriendFilter
         );
       })
     : moments;
