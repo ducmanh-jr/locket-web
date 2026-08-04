@@ -1,10 +1,85 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Moment, Profile } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, Trash2, MoreVertical, Volume2, VolumeX, Music } from 'lucide-react';
-import { createGuaranteedAudio } from '@/lib/audioPlayer';
+
+// ─── Module-level singleton audio controller ───
+// Only ONE audio can ever play at a time across the entire app.
+// This guarantees stop() always kills playback, even across re-renders.
+let _globalAudio: HTMLAudioElement | null = null;
+let _globalSynthStop: (() => void) | null = null;
+
+function killGlobalAudio() {
+  if (_globalAudio) {
+    try {
+      _globalAudio.pause();
+      _globalAudio.onended = null;
+      _globalAudio.onerror = null;
+      _globalAudio.onloadedmetadata = null;
+      _globalAudio.src = '';
+      _globalAudio.load(); // Force abort any buffered playback
+    } catch (e) {}
+    _globalAudio = null;
+  }
+  if (_globalSynthStop) {
+    try { _globalSynthStop(); } catch (e) {}
+    _globalSynthStop = null;
+  }
+}
+
+function playGlobalAudio(url: string, onEnd: () => void): void {
+  // Always kill previous audio first
+  killGlobalAudio();
+
+  if (!url || !url.startsWith('http')) return;
+
+  const audio = new Audio();
+  audio.src = url;
+  audio.volume = 0.85;
+  audio.onended = () => onEnd();
+  audio.onerror = () => {
+    // Fallback: try Web Audio API synth
+    try {
+      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtxClass) return;
+      const ctx = new AudioCtxClass();
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      const melody = [523.25, 659.25, 783.99, 1046.50, 880.00, 659.25, 698.46, 783.99];
+      let stopped = false;
+      let step = 0;
+      const playStep = () => {
+        if (stopped) return;
+        try {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(melody[step % melody.length], ctx.currentTime);
+          gain.gain.setValueAtTime(0.15, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.3);
+          step++;
+          if (!stopped) setTimeout(playStep, 260);
+        } catch (e) {}
+      };
+      playStep();
+      _globalSynthStop = () => { stopped = true; try { ctx.close(); } catch(e) {} };
+    } catch(e) {}
+  };
+
+  _globalAudio = audio;
+  const playPromise = audio.play();
+  if (playPromise) {
+    playPromise.catch(() => {
+      if (audio.onerror) (audio.onerror as any)();
+    });
+  }
+}
+// ─── End module-level audio controller ───
 
 interface LocketFeedCardProps {
   moment: Moment;
@@ -41,49 +116,47 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   >([]);
   const [showOptionsModal, setShowOptionsModal] = useState<boolean>(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
-  const activeAudioHandle = useRef<{ stop: () => void } | null>(null);
+  const currentMomentIdRef = useRef<string>(moment.id);
 
-  // Guaranteed Audio snippet player for Moment Music
+  // Track current moment ID for cleanup
+  currentMomentIdRef.current = moment.id;
+
+  // Auto-play music when moment changes, auto-stop when switching away
   useEffect(() => {
-    if (activeAudioHandle.current) {
-      activeAudioHandle.current.stop();
-      activeAudioHandle.current = null;
-      setIsPlayingAudio(false);
-    }
+    // Kill any previous audio immediately
+    killGlobalAudio();
+    setIsPlayingAudio(false);
 
     if (moment.music?.preview_url) {
       setIsPlayingAudio(true);
-      activeAudioHandle.current = createGuaranteedAudio(
-        moment.music.preview_url,
-        () => setIsPlayingAudio(false)
-      );
-
-      return () => {
-        if (activeAudioHandle.current) {
-          activeAudioHandle.current.stop();
-          activeAudioHandle.current = null;
+      playGlobalAudio(moment.music.preview_url, () => {
+        // Only update state if this moment is still the active one
+        if (currentMomentIdRef.current === moment.id) {
+          setIsPlayingAudio(false);
         }
-        setIsPlayingAudio(false);
-      };
+      });
     }
+
+    return () => {
+      killGlobalAudio();
+      setIsPlayingAudio(false);
+    };
   }, [moment.id, moment.music?.preview_url]);
 
-  const toggleAudio = (e: React.MouseEvent) => {
+  const toggleAudio = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (isPlayingAudio) {
-      if (activeAudioHandle.current) {
-        activeAudioHandle.current.stop();
-        activeAudioHandle.current = null;
-      }
+      killGlobalAudio();
       setIsPlayingAudio(false);
     } else if (moment.music?.preview_url) {
       setIsPlayingAudio(true);
-      activeAudioHandle.current = createGuaranteedAudio(
-        moment.music.preview_url,
-        () => setIsPlayingAudio(false)
-      );
+      playGlobalAudio(moment.music.preview_url, () => {
+        if (currentMomentIdRef.current === moment.id) {
+          setIsPlayingAudio(false);
+        }
+      });
     }
-  };
+  }, [isPlayingAudio, moment.id, moment.music?.preview_url]);
 
   // Trigger Floating Emoji Fountain Effect when user clicks quick reaction emojis
   useEffect(() => {
