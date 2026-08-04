@@ -32,7 +32,7 @@ export default function HomePage() {
   const router = useRouter();
   const { userProfile, loading: authLoading } = useAuth();
   const [moments, setMoments] = useState<Moment[]>([]);
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [selectedMomentId, setSelectedMomentId] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<'feed' | 'grid' | 'chat'>('feed');
   const [selectedFriendFilter, setSelectedFriendFilter] = useState<string | null>(null);
   const [selectedFriendForModal, setSelectedFriendForModal] = useState<Profile | null>(null);
@@ -85,7 +85,6 @@ export default function HomePage() {
       saveStoredDemoMoments(updated);
       return updated;
     });
-    setCurrentIndex((prev) => Math.max(0, prev - 1));
   };
 
   // Fetch real friends from Global Cloud + Supabase + push current user profile
@@ -180,22 +179,7 @@ export default function HomePage() {
     );
 
     const targetMoments = unique.length > 0 ? unique : demoMoments;
-
-    // Save currently viewed moment ID before updating list
-    setMoments((prevMoments) => {
-      if (areMomentsEqual(prevMoments, targetMoments)) return prevMoments;
-
-      // Adjust currentIndex safely outside reducer if needed
-      const currentViewingId = prevMoments[currentIndex]?.id;
-      if (currentViewingId) {
-        const foundIdx = targetMoments.findIndex((m) => m.id === currentViewingId);
-        if (foundIdx !== -1 && foundIdx !== currentIndex) {
-          setTimeout(() => setCurrentIndex(foundIdx), 0);
-        }
-      }
-      return targetMoments;
-    });
-
+    setMoments((prev) => (areMomentsEqual(prev, targetMoments) ? prev : targetMoments));
     setLoading(false);
   };
 
@@ -203,7 +187,6 @@ export default function HomePage() {
     loadFriends();
     loadMoments();
 
-    // Smart 12s polling timer (pauses when tab is hidden to save network/CPU)
     const syncTimer = setInterval(() => {
       if (document.hidden) return;
       loadFriends();
@@ -286,21 +269,30 @@ export default function HomePage() {
       })
     : moments;
 
-  // Safe Index Bounds Guard
-  const safeIndex = Math.max(0, Math.min(currentIndex, filteredMoments.length - 1));
-  const currentMoment = filteredMoments[safeIndex] || filteredMoments[0];
+  // Derive Current Moment & Index 100% Purely from selectedMomentId!
+  const currentMoment = selectedMomentId
+    ? filteredMoments.find((m) => m.id === selectedMomentId) || filteredMoments[0]
+    : filteredMoments[0];
+
+  const currentIndex = currentMoment
+    ? filteredMoments.findIndex((m) => m.id === currentMoment.id)
+    : 0;
+
+  const safeIndex = currentIndex >= 0 ? currentIndex : 0;
   const nextMoment = filteredMoments[safeIndex + 1];
   const prevMoment = filteredMoments[safeIndex - 1];
 
   const handleNext = () => {
     if (safeIndex < filteredMoments.length - 1) {
-      setCurrentIndex(safeIndex + 1);
+      const nextM = filteredMoments[safeIndex + 1];
+      if (nextM) setSelectedMomentId(nextM.id);
     }
   };
 
   const handlePrev = () => {
     if (safeIndex > 0) {
-      setCurrentIndex(safeIndex - 1);
+      const prevM = filteredMoments[safeIndex - 1];
+      if (prevM) setSelectedMomentId(prevM.id);
     }
   };
 
@@ -365,7 +357,7 @@ export default function HomePage() {
     const updatedMoments = addDemoMoment(initialMoment);
     setSelectedFriendFilter(null);
     setMoments(updatedMoments);
-    setCurrentIndex(0);
+    setSelectedMomentId(newMomentId);
     setShowCamera(false);
     setCurrentView('feed');
 
@@ -437,7 +429,7 @@ export default function HomePage() {
           selectedFriendFilter={selectedFriendFilter}
           onSelectFilter={(friendId) => {
             setSelectedFriendFilter(friendId);
-            setCurrentIndex(0);
+            setSelectedMomentId(null);
           }}
           onOpenChat={() => {
             setSelectedChatFriend(null);
@@ -479,14 +471,7 @@ export default function HomePage() {
               <LocketHistoryGrid
                 moments={filteredMoments}
                 onSelectMoment={(moment) => {
-                  const filteredIdx = filteredMoments.findIndex((m) => m.id === moment.id);
-                  if (filteredIdx !== -1) {
-                    setCurrentIndex(filteredIdx);
-                  } else {
-                    setSelectedFriendFilter(null);
-                    const globalIdx = moments.findIndex((m) => m.id === moment.id);
-                    if (globalIdx !== -1) setCurrentIndex(globalIdx);
-                  }
+                  setSelectedMomentId(moment.id);
                   setCurrentView('feed');
                 }}
                 onOpenCamera={() => setShowCamera(true)}
@@ -581,14 +566,7 @@ export default function HomePage() {
             setCurrentView('chat');
           }}
           onSelectMoment={(moment) => {
-            const filteredIdx = filteredMoments.findIndex((m) => m.id === moment.id);
-            if (filteredIdx !== -1) {
-              setCurrentIndex(filteredIdx);
-            } else {
-              setSelectedFriendFilter(null);
-              const globalIdx = moments.findIndex((m) => m.id === moment.id);
-              if (globalIdx !== -1) setCurrentIndex(globalIdx);
-            }
+            setSelectedMomentId(moment.id);
             setCurrentView('feed');
           }}
         />
