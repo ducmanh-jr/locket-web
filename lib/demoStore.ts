@@ -8,24 +8,24 @@ export const DEMO_CURRENT_USER: Profile = {
   avatar_url: "/user-photos/1785829393992_567716528849713056_g276929852367586455_e887fb48d4d113fc528e29488435b6f7.jpg",
 };
 
-// 3 Main Default Friends ONLY (No extra virtual accounts)
+// 3 Main Default Friends: dm, system32, admin
 export const DEFAULT_3_FRIENDS: Profile[] = [
   {
-    id: "user-minh",
-    username: "minh_anh",
-    display_name: "Minh Anh ✨",
+    id: "user-dm",
+    username: "dm",
+    display_name: "dm",
     avatar_url: "/user-photos/1785829393992_567716528849713056_g276929852367586455_e887fb48d4d113fc528e29488435b6f7.jpg",
   },
   {
-    id: "user-hoang",
-    username: "hoang_nam",
-    display_name: "Hoàng Nam ⚡",
+    id: "user-system32",
+    username: "system32",
+    display_name: "system32",
     avatar_url: "/user-photos/1785829394118_567716528849713056_g276929852367586455_b564766841f8f840f3191c21c6d0f07a.jpg",
   },
   {
-    id: "user-linh",
-    username: "phuong_linh",
-    display_name: "Phương Linh 🌸",
+    id: "user-admin",
+    username: "admin",
+    display_name: "admin",
     avatar_url: "/user-photos/1785829394223_567716528849713056_g276929852367586455_abb069d5016bbb90f6a167b2e53545da.jpg",
   },
 ];
@@ -33,7 +33,7 @@ export const DEFAULT_3_FRIENDS: Profile[] = [
 export const DEMO_FRIENDS = DEFAULT_3_FRIENDS;
 export const DEMO_SUGGESTED_USERS = DEFAULT_3_FRIENDS;
 
-// 47 Unique Photos from user's provided data folder distributed among the 3 main friends
+// 47 Unique Photos from user's provided data folder distributed among the 3 main friends (dm, system32, admin)
 const USER_PHOTOS = [
   "1785829394343_567716528849713056_g276929852367586455_0c0291d52e88e0bfb12ff1da9d9f88f4.jpg",
   "1785829394516_567716528849713056_g276929852367586455_dea9da1ed58aa6c86e154a0653c7bb20.jpg",
@@ -103,7 +103,7 @@ const CAPTIONS = [
   "Âm nhạc chiều mưa 🎧",
 ];
 
-// Generate 47 unique moments using the user's provided photos
+// Generate 47 unique moments using the user's provided photos distributed among dm, system32, admin
 export const DEMO_50_MOMENTS: Moment[] = USER_PHOTOS.map((filename, index) => {
   const sender = DEFAULT_3_FRIENDS[index % 3];
   const caption = CAPTIONS[index % CAPTIONS.length];
