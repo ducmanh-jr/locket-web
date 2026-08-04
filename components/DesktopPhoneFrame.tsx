@@ -25,7 +25,7 @@ const DEVICE_PRESETS: PresetConfig[] = [
     name: 'iPhone 17 Pro Max',
     brand: 'Apple',
     icon: '🍎',
-    containerClass: 'max-w-[410px] h-[830px] rounded-[3.25rem] border-[9px] border-[#1C1C1E]',
+    containerClass: 'lg:max-w-[410px] lg:h-[830px] lg:rounded-[3.25rem] lg:border-[9px] lg:border-[#1C1C1E]',
     aspectDesc: '19.5:9 • Viền titan siêu mỏng',
   },
   {
@@ -33,7 +33,7 @@ const DEVICE_PRESETS: PresetConfig[] = [
     name: 'Xiaomi 17 Pro Max',
     brand: 'Xiaomi',
     icon: '⚡',
-    containerClass: 'max-w-[390px] h-[840px] rounded-[2.5rem] border-[8px] border-[#18181B]',
+    containerClass: 'lg:max-w-[390px] lg:h-[840px] lg:rounded-[2.5rem] lg:border-[8px] lg:border-[#18181B]',
     aspectDesc: '20:9 • Khung tràn viền 120Hz',
   },
   {
@@ -41,7 +41,7 @@ const DEVICE_PRESETS: PresetConfig[] = [
     name: 'Samsung Z Fold 8',
     brand: 'Samsung',
     icon: '📐',
-    containerClass: 'max-w-[540px] h-[780px] rounded-[2.25rem] border-[10px] border-[#222226]',
+    containerClass: 'lg:max-w-[540px] lg:h-[780px] lg:rounded-[2.25rem] lg:border-[10px] lg:border-[#222226]',
     aspectDesc: 'Màn hình gập vuông rộng lớn',
   },
   {
@@ -49,7 +49,7 @@ const DEVICE_PRESETS: PresetConfig[] = [
     name: 'Toàn màn hình PC',
     brand: 'Desktop',
     icon: '🖥️',
-    containerClass: 'max-w-xl h-[860px] rounded-[2rem] border-[6px] border-[#27272A]',
+    containerClass: 'lg:max-w-xl lg:h-[860px] lg:rounded-[2rem] lg:border-[6px] lg:border-[#27272A]',
     aspectDesc: 'Chế độ khung nhìn rộng',
   },
 ];
@@ -177,7 +177,7 @@ export const DesktopPhoneFrame: React.FC<DesktopPhoneFrameProps> = ({ children }
       <motion.div
         layout
         transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-        className={`relative w-full h-[100dvh] sm:h-[820px] bg-black sm:shadow-[0_30px_90px_-20px_rgba(255,199,0,0.18),0_20px_50px_rgba(0,0,0,0.95)] overflow-hidden flex flex-col justify-between z-10 mx-auto transition-all duration-300 ${currentConfig.containerClass}`}
+        className={`relative w-full h-[100dvh] bg-black lg:shadow-[0_30px_90px_-20px_rgba(255,199,0,0.18),0_20px_50px_rgba(0,0,0,0.95)] overflow-hidden flex flex-col justify-between z-10 mx-auto transition-all duration-300 rounded-none border-0 ${currentConfig.containerClass}`}
       >
         {/* Inner Content Area */}
         <div className="w-full h-full flex flex-col justify-between overflow-hidden relative">

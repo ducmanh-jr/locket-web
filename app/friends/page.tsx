@@ -51,8 +51,7 @@ export default function FriendsPage() {
       const combined = [...cloudProfiles, ...supabaseProfiles, ...DEFAULT_3_FRIENDS].filter(
         (p) =>
           p.id !== DEMO_CURRENT_USER.id &&
-          p.username !== DEMO_CURRENT_USER.username &&
-          p.display_name !== DEMO_CURRENT_USER.display_name
+          p.username !== DEMO_CURRENT_USER.username
       );
 
       // Deduplicate by username

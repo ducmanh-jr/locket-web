@@ -88,12 +88,11 @@ export default function HomePage() {
     // 4. Merge all sources: Cloud + Supabase + Default 3 friends
     const allProfiles = [...cloudProfiles, ...supabaseProfiles, ...DEFAULT_3_FRIENDS];
 
-    // Filter out current user
+    // Filter out current user strictly by ID and Username (never by display_name)
     const others = allProfiles.filter(
       (p) =>
         p.id !== currentUser.id &&
-        p.username !== currentUser.username &&
-        p.display_name !== currentUser.display_name
+        p.username !== currentUser.username
     );
 
     // Deduplicate by username
