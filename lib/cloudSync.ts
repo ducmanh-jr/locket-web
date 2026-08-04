@@ -21,13 +21,15 @@ export function compressImageForCloudSync(dataUrl: string): Promise<string> {
     img.onload = () => {
       try {
         const canvas = document.createElement('canvas');
-        const targetSize = 360; // 360x360 square
+        const targetSize = 720; // 720x720 HD High Quality Crisp Square
         canvas.width = targetSize;
         canvas.height = targetSize;
         const ctx = canvas.getContext('2d');
         if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
           ctx.drawImage(img, 0, 0, targetSize, targetSize);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
           resolve(compressedDataUrl);
         } else {
           resolve(dataUrl);
