@@ -81,6 +81,7 @@ export async function captureSquarePhoto(
 
 /**
  * Helper to record a video clip from MediaStream up to maxDurationMs (5000ms max).
+ * Prioritizes iOS Safari supported MIME types (video/mp4) so videos play on iPhone!
  */
 export function createVideoRecorder(stream: MediaStream): {
   start: () => void;
@@ -89,27 +90,44 @@ export function createVideoRecorder(stream: MediaStream): {
   let mediaRecorder: MediaRecorder | null = null;
   const chunks: Blob[] = [];
 
-  const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-    ? 'video/webm;codecs=vp9'
-    : MediaRecorder.isTypeSupported('video/webm')
-    ? 'video/webm'
-    : MediaRecorder.isTypeSupported('video/mp4')
-    ? 'video/mp4'
-    : '';
+  // Prioritize MIME types for iOS Safari & Android Chrome compatibility
+  const candidateTypes = [
+    'video/mp4;codecs=avc1,mp4a.40.2',
+    'video/mp4',
+    'video/webm;codecs=vp9,opus',
+    'video/webm;codecs=vp8,opus',
+    'video/webm',
+  ];
 
-  try {
-    mediaRecorder = mimeType
-      ? new MediaRecorder(stream, { mimeType })
-      : new MediaRecorder(stream);
-  } catch (e) {
-    mediaRecorder = new MediaRecorder(stream);
+  let selectedType = '';
+  if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported) {
+    for (const type of candidateTypes) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        selectedType = type;
+        break;
+      }
+    }
   }
 
-  mediaRecorder.ondataavailable = (event) => {
-    if (event.data && event.data.size > 0) {
-      chunks.push(event.data);
+  try {
+    mediaRecorder = selectedType
+      ? new MediaRecorder(stream, { mimeType: selectedType })
+      : new MediaRecorder(stream);
+  } catch (e) {
+    try {
+      mediaRecorder = new MediaRecorder(stream);
+    } catch (err) {
+      console.error('MediaRecorder initialization failed:', err);
     }
-  };
+  }
+
+  if (mediaRecorder) {
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data && event.data.size > 0) {
+        chunks.push(event.data);
+      }
+    };
+  }
 
   return {
     start: () => {
@@ -123,7 +141,8 @@ export function createVideoRecorder(stream: MediaStream): {
         if (!mediaRecorder) return reject(new Error('No MediaRecorder available'));
 
         mediaRecorder.onstop = () => {
-          const blob = new Blob(chunks, { type: mediaRecorder?.mimeType || 'video/webm' });
+          const finalMime = mediaRecorder?.mimeType || selectedType || 'video/mp4';
+          const blob = new Blob(chunks, { type: finalMime });
           const reader = new FileReader();
           reader.onloadend = () => {
             const dataUrl = reader.result as string;

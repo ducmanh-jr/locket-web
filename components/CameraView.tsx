@@ -133,17 +133,30 @@ export const CameraView: React.FC<CameraViewProps> = ({
   };
 
   const lastTapTimeRef = useRef<number>(0);
+  const lastTouchTimeRef = useRef<number>(0);
 
-  // Double Tap on Viewfinder to Flip Camera
+  // Double Tap on Viewfinder to Flip Camera (Desktop & Mobile)
   const handleViewfinderTap = () => {
     if (capturedMedia || isRecording) return;
     const now = Date.now();
-    if (now - lastTapTimeRef.current < 350) {
+    if (now - lastTapTimeRef.current < 380) {
       toggleFacingMode();
       triggerHaptic(45);
       lastTapTimeRef.current = 0;
     } else {
       lastTapTimeRef.current = now;
+    }
+  };
+
+  const handleTouchEndViewfinder = (e: React.TouchEvent) => {
+    if (capturedMedia || isRecording) return;
+    const now = Date.now();
+    if (now - lastTouchTimeRef.current > 50 && now - lastTouchTimeRef.current < 380) {
+      toggleFacingMode();
+      triggerHaptic(50);
+      lastTouchTimeRef.current = 0;
+    } else {
+      lastTouchTimeRef.current = now;
     }
   };
 
@@ -326,7 +339,8 @@ export const CameraView: React.FC<CameraViewProps> = ({
           /* Live Camera Stream Video */
           <div
             onClick={handleViewfinderTap}
-            className="relative w-full h-full cursor-pointer group"
+            onTouchEnd={handleTouchEndViewfinder}
+            className="relative w-full h-full cursor-pointer group select-none"
             title="Chạm đúp để đổi camera trước/sau 🔄"
           >
             <video

@@ -337,6 +337,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                 loop
                 playsInline
                 muted={moment.audio_option !== 'original'}
+                controls={false}
+                preload="auto"
                 className="w-full h-full object-cover rounded-[2.5rem] select-none pointer-events-none"
               />
             ) : (

@@ -153,7 +153,13 @@ export function saveStoredDemoMoments(moments: Moment[]): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify(moments));
-  } catch (e) {}
+  } catch (e) {
+    // LocalStorage quota exceeded (e.g. large video DataURLs) -> keep recent 20 moments
+    try {
+      const recent = moments.slice(0, 20);
+      localStorage.setItem(CACHE_KEY, JSON.stringify(recent));
+    } catch (err) {}
+  }
 }
 
 export function addDemoMoment(newMoment: Moment): Moment[] {
