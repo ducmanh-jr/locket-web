@@ -4,70 +4,86 @@ const GLOBAL_SYNC_ENDPOINT = 'https://api.restful-api.dev/objects';
 const SYNC_TAG = 'locket_v5_global_moment';
 
 /**
- * Uploads a newly posted moment to the Global Public Cloud Store so all accounts & devices can see it.
+ * Uploads a newly posted moment to the Global Public Cloud Store.
+ * The media_url stored is either a Supabase signed URL or a base64 dataUrl.
+ * For base64, we only store metadata (caption, sender) and the URL will be
+ * resolved locally from localStorage on the receiving device.
  */
 export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> {
   try {
+    // Don't push base64 data URLs to cloud (too large). Only push if we have a real URL.
+    const mediaUrlToStore = moment.media_url?.startsWith('data:')
+      ? '__base64_local__'
+      : moment.media_url;
+
     const payload = {
       name: SYNC_TAG,
       data: {
         id: moment.id,
         sender_id: moment.sender_id,
-        sender: moment.sender,
-        media_url: moment.media_url,
-        caption: moment.caption,
+        sender: moment.sender
+          ? {
+              id: moment.sender.id,
+              username: moment.sender.username,
+              display_name: moment.sender.display_name,
+              avatar_url: moment.sender.avatar_url,
+            }
+          : null,
+        media_url: mediaUrlToStore,
+        caption: moment.caption || '',
         created_at: moment.created_at,
-        reactions: moment.reactions || [],
+        reactions: [],
       },
     };
 
     const res = await fetch(GLOBAL_SYNC_ENDPOINT, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
     return res.ok;
   } catch (e) {
-    console.error('Error pushing moment to global cloud:', e);
+    console.error('pushMomentToGlobalCloud error:', e);
     return false;
   }
 }
 
 /**
  * Fetches all user-posted moments from the Global Cloud Store.
+ * Filters by our SYNC_TAG name to only get Locket moments.
  */
 export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
   try {
-    const res = await fetch(`${GLOBAL_SYNC_ENDPOINT}?name=${SYNC_TAG}`, {
-      cache: 'no-store',
-    });
-
+    // The API returns all objects; we filter client-side by our tag name
+    const res = await fetch(GLOBAL_SYNC_ENDPOINT, { cache: 'no-store' });
     if (!res.ok) return [];
 
     const list = await res.json();
     if (!Array.isArray(list)) return [];
 
     const cloudMoments: Moment[] = list
-      .map((item: any) => {
-        if (!item?.data || !item.data.id || !item.data.media_url) return null;
-        return {
-          id: item.data.id,
-          sender_id: item.data.sender_id,
-          sender: item.data.sender,
-          media_url: item.data.media_url,
-          caption: item.data.caption || '',
-          created_at: item.data.created_at || new Date().toISOString(),
-          reactions: item.data.reactions || [],
-        } as Moment;
-      })
-      .filter((m): m is Moment => m !== null);
+      .filter((item: any) => item?.name === SYNC_TAG && item?.data?.id && item?.data?.media_url)
+      // Skip items where media was base64 (can't be resolved on other devices)
+      .filter((item: any) => item.data.media_url !== '__base64_local__')
+      .map((item: any) => ({
+        id: item.data.id,
+        sender_id: item.data.sender_id || 'unknown',
+        sender: item.data.sender || {
+          id: item.data.sender_id || 'unknown',
+          username: 'user',
+          display_name: 'Locket User',
+          avatar_url: '',
+        },
+        media_url: item.data.media_url,
+        caption: item.data.caption || '',
+        created_at: item.data.created_at || new Date().toISOString(),
+        reactions: item.data.reactions || [],
+      }));
 
     return cloudMoments;
   } catch (e) {
-    console.error('Error fetching global cloud moments:', e);
+    console.error('fetchGlobalCloudMoments error:', e);
     return [];
   }
 }
