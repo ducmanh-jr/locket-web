@@ -16,6 +16,7 @@ export interface CloudProfile {
 export function compressImageForCloudSync(dataUrl: string): Promise<string> {
   return new Promise((resolve) => {
     if (typeof window === 'undefined' || !dataUrl) return resolve(dataUrl);
+    if (dataUrl.startsWith('data:video/')) return resolve(dataUrl);
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
@@ -116,9 +117,9 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
   try {
     if (!moment.id || !moment.media_url) return false;
 
-    // Compress photo to ~12KB if it's base64 dataUrl
+    // Compress photo to ~12KB if it's base64 dataUrl (skip for videos)
     let finalMediaUrl = moment.media_url;
-    if (moment.media_url.startsWith('data:')) {
+    if (moment.media_url.startsWith('data:') && moment.media_type !== 'video' && !moment.media_url.startsWith('data:video/')) {
       finalMediaUrl = await compressImageForCloudSync(moment.media_url);
     }
 

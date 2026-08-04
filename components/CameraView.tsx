@@ -132,6 +132,21 @@ export const CameraView: React.FC<CameraViewProps> = ({
     setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
   };
 
+  const lastTapTimeRef = useRef<number>(0);
+
+  // Double Tap on Viewfinder to Flip Camera
+  const handleViewfinderTap = () => {
+    if (capturedMedia || isRecording) return;
+    const now = Date.now();
+    if (now - lastTapTimeRef.current < 350) {
+      toggleFacingMode();
+      triggerHaptic(45);
+      lastTapTimeRef.current = 0;
+    } else {
+      lastTapTimeRef.current = now;
+    }
+  };
+
   // Trigger Haptic Feedback
   const triggerHaptic = (ms = 35) => {
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {
@@ -309,7 +324,11 @@ export const CameraView: React.FC<CameraViewProps> = ({
           </div>
         ) : !capturedMedia ? (
           /* Live Camera Stream Video */
-          <div className="relative w-full h-full">
+          <div
+            onClick={handleViewfinderTap}
+            className="relative w-full h-full cursor-pointer group"
+            title="Chạm đúp để đổi camera trước/sau 🔄"
+          >
             <video
               ref={videoRef}
               autoPlay
@@ -319,6 +338,12 @@ export const CameraView: React.FC<CameraViewProps> = ({
                 facingMode === 'user' ? 'scale-x-[-1]' : ''
               }`}
             />
+            {/* Double Tap Hint Badge */}
+            {!isRecording && (
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm text-white/80 text-[10px] px-2.5 py-1 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                Nhấn đúp để đổi cam 🔄
+              </div>
+            )}
             {/* Live Recording Pulsing Banner Overlay */}
             {isRecording && (
               <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-600/90 text-white font-bold text-xs px-3.5 py-1 rounded-full flex items-center space-x-2 animate-pulse shadow-lg">
