@@ -33,6 +33,7 @@ export default function HomePage() {
   const { userProfile, loading: authLoading } = useAuth();
   const [moments, setMoments] = useState<Moment[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const viewingMomentIdRef = React.useRef<string | null>(null);
   const [currentView, setCurrentView] = useState<'feed' | 'grid' | 'chat'>('feed');
   const [selectedFriendFilter, setSelectedFriendFilter] = useState<string | null>(null);
   const [selectedFriendForModal, setSelectedFriendForModal] = useState<Profile | null>(null);
@@ -193,7 +194,18 @@ export default function HomePage() {
     );
 
     const targetMoments = unique.length > 0 ? unique : demoMoments;
-    setMoments((prev) => (areMomentsEqual(prev, targetMoments) ? prev : targetMoments));
+    setMoments((prev) => {
+      if (areMomentsEqual(prev, targetMoments)) return prev;
+      // When data refreshes, keep viewing the same moment by adjusting currentIndex
+      const viewingId = viewingMomentIdRef.current;
+      if (viewingId) {
+        const newIdx = targetMoments.findIndex((m) => m.id === viewingId);
+        if (newIdx !== -1) {
+          setCurrentIndex(newIdx);
+        }
+      }
+      return targetMoments;
+    });
     setLoading(false);
   };
 
@@ -233,6 +245,12 @@ export default function HomePage() {
               const updated = [payload, ...prev];
               updated.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
               addDemoMoment(payload);
+              // Keep viewing the same moment after broadcast insert
+              const viewingId = viewingMomentIdRef.current;
+              if (viewingId) {
+                const newIdx = updated.findIndex((m) => m.id === viewingId);
+                if (newIdx !== -1) setCurrentIndex(newIdx);
+              }
               return updated;
             });
           }
@@ -289,6 +307,13 @@ export default function HomePage() {
   const currentMoment = filteredMoments[currentIndex] || filteredMoments[0];
   const nextMoment = filteredMoments[currentIndex + 1];
   const prevMoment = filteredMoments[currentIndex - 1];
+
+  // Always track which moment the user is currently viewing by ID
+  React.useEffect(() => {
+    if (currentMoment) {
+      viewingMomentIdRef.current = currentMoment.id;
+    }
+  }, [currentMoment?.id]);
 
   const handleNext = () => {
     if (currentIndex < filteredMoments.length - 1) {
