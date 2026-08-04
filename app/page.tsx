@@ -137,19 +137,37 @@ export default function HomePage() {
     loadMoments();
 
     if (isSupabaseConfigured()) {
-      const channel = supabase
+      // 1. Supabase Postgres DB Changes Channel
+      const dbChannel = supabase
         .channel('public:moments-feed')
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'moments' },
-          () => {
+          (payload) => {
             loadMoments();
           }
         )
         .subscribe();
 
+      // 2. Instant Realtime Broadcast Channel between accounts
+      const broadcastChannel = supabase.channel('locket-live-broadcast');
+      broadcastChannel
+        .on('broadcast', { event: 'new_moment' }, ({ payload }) => {
+          if (payload) {
+            setMoments((prev) => {
+              const exists = prev.some((m) => m.id === payload.id);
+              if (exists) return prev;
+              const updated = [payload, ...prev];
+              updated.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+              return updated;
+            });
+          }
+        })
+        .subscribe();
+
       return () => {
-        supabase.removeChannel(channel);
+        supabase.removeChannel(dbChannel);
+        supabase.removeChannel(broadcastChannel);
       };
     }
   }, [currentUser.id]);
@@ -239,10 +257,20 @@ export default function HomePage() {
   ) => {
     const newMomentId = `m-photo-v5-${Date.now()}`;
     let mediaUrl = image.dataUrl;
+    const activeSender = userProfile || currentUser;
 
-    if (isSupabaseConfigured() && userProfile) {
+    if (isSupabaseConfigured()) {
       try {
-        const filePath = `${userProfile.id}/${newMomentId}.jpg`;
+        // 1. Upsert active sender profile so Foreign Key constraints pass
+        await supabase.from('profiles').upsert({
+          id: activeSender.id,
+          username: activeSender.username,
+          display_name: activeSender.display_name,
+          avatar_url: activeSender.avatar_url,
+        });
+
+        // 2. Upload photo to Storage
+        const filePath = `${activeSender.id}/${newMomentId}.jpg`;
         const { error: uploadError } = await supabase.storage
           .from('moments')
           .upload(filePath, image.blob, { contentType: 'image/jpeg' });
@@ -256,39 +284,48 @@ export default function HomePage() {
           }
         }
 
-        const { data: momentData } = await supabase
-          .from('moments')
-          .insert({
-            id: newMomentId,
-            sender_id: userProfile.id,
-            media_url: mediaUrl,
-            caption: caption,
-          })
-          .select()
-          .single();
+        // 3. Insert moment into Supabase database
+        await supabase.from('moments').insert({
+          id: newMomentId,
+          sender_id: activeSender.id,
+          media_url: mediaUrl,
+          caption: caption,
+        });
 
-        if (momentData) {
+        if (recipientIds && recipientIds.length > 0) {
           const recipientInserts = recipientIds.map((rid) => ({
             moment_id: newMomentId,
             recipient_id: rid,
           }));
           await supabase.from('moment_recipients').insert(recipientInserts);
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('Supabase moment insert error:', e);
+      }
     }
 
     const createdMoment: Moment = {
       id: newMomentId,
-      sender_id: currentUser.id,
-      sender: currentUser,
+      sender_id: activeSender.id,
+      sender: activeSender,
       media_url: mediaUrl,
       caption: caption,
       created_at: new Date().toISOString(),
       reactions: [],
     };
 
+    // 4. Instant Realtime Broadcast to all other logged-in accounts
+    if (isSupabaseConfigured()) {
+      try {
+        supabase.channel('locket-live-broadcast').send({
+          type: 'broadcast',
+          event: 'new_moment',
+          payload: createdMoment,
+        });
+      } catch (e) {}
+    }
+
     const updatedMoments = addDemoMoment(createdMoment);
-    // Reset friend filter to 'All Friends' so the newly posted photo is ALWAYS visible!
     setSelectedFriendFilter(null);
     setMoments(updatedMoments);
     setCurrentIndex(0);
