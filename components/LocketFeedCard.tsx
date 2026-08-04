@@ -15,6 +15,7 @@ interface LocketFeedCardProps {
   onDeleteMoment?: (momentId: string) => void;
   nextMomentUrl?: string;
   prevMomentUrl?: string;
+  activeReaction?: { emoji: string; timestamp: number } | null;
 }
 
 export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
@@ -27,6 +28,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   onDeleteMoment,
   nextMomentUrl,
   prevMomentUrl,
+  activeReaction,
 }) => {
   const touchStartY = useRef<number | null>(null);
   const mouseStartY = useRef<number | null>(null);
@@ -36,6 +38,26 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     { id: number; emoji: string; x: number; rotation: number }[]
   >([]);
   const [showOptionsModal, setShowOptionsModal] = useState<boolean>(false);
+
+  // Trigger Floating Emoji Fountain Effect when user clicks quick reaction emojis
+  useEffect(() => {
+    if (activeReaction?.emoji) {
+      const now = Date.now();
+      const newParticles = Array.from({ length: 5 }).map((_, i) => ({
+        id: now + i + Math.random(),
+        emoji: activeReaction.emoji,
+        x: Math.floor(Math.random() * 140) - 70,
+        rotation: Math.floor(Math.random() * 40) - 20,
+      }));
+      setFloatingEmojis((prev) => [...prev, ...newParticles]);
+
+      setTimeout(() => {
+        setFloatingEmojis((prev) =>
+          prev.filter((item) => !newParticles.some((p) => p.id === item.id))
+        );
+      }, 1400);
+    }
+  }, [activeReaction]);
 
   // Preload Next & Previous Photos into Browser Cache
   useEffect(() => {

@@ -38,6 +38,7 @@ export default function HomePage() {
   const [showMenuModal, setShowMenuModal] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [friendsList, setFriendsList] = useState<Profile[]>([]);
+  const [lastReaction, setLastReaction] = useState<{ emoji: string; timestamp: number } | null>(null);
 
   const currentUser = userProfile || DEMO_CURRENT_USER;
 
@@ -186,6 +187,7 @@ export default function HomePage() {
   };
 
   const handleReact = async (momentId: string, emoji: string) => {
+    setLastReaction({ emoji, timestamp: Date.now() });
     if (isSupabaseConfigured() && userProfile) {
       try {
         await supabase.from('reactions').insert({
@@ -352,6 +354,7 @@ export default function HomePage() {
                   hasNext={currentIndex < filteredMoments.length - 1}
                   nextMomentUrl={nextMoment?.media_url}
                   prevMomentUrl={prevMoment?.media_url}
+                  activeReaction={lastReaction}
                 />
               ) : (
                 <div className="w-[310px] h-[310px] my-auto rounded-[2.5rem] bg-[#18181C] border border-[#FFC700]/30 p-8 flex flex-col items-center justify-center text-center">
