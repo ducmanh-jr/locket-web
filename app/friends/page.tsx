@@ -8,6 +8,7 @@ import { Profile } from '@/lib/types';
 import { UserPlus, Search, Users, Sparkles, UserCheck, ShieldCheck } from 'lucide-react';
 import { CapturedImage } from '@/lib/camera';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
+import { fetchGlobalCloudProfiles } from '@/lib/cloudSync';
 
 export default function FriendsPage() {
   const [friendsList, setFriendsList] = useState<Profile[]>(DEFAULT_3_FRIENDS);
@@ -23,34 +24,43 @@ export default function FriendsPage() {
   // Fetch All Google/Supabase Registered Profiles -> Everyone is automatically friends!
   useEffect(() => {
     async function loadAllGoogleUsers() {
+      // 1. Fetch Cloud profiles
+      let cloudProfiles: Profile[] = [];
+      try {
+        const rawCloud = await fetchGlobalCloudProfiles();
+        cloudProfiles = rawCloud.map((p) => ({
+          id: p.id,
+          username: p.username,
+          display_name: p.display_name,
+          avatar_url: p.avatar_url,
+        }));
+      } catch (e) {}
+
+      // 2. Fetch Supabase profiles
+      let supabaseProfiles: Profile[] = [];
       if (isSupabaseConfigured()) {
         try {
           const { data, error } = await supabase.from('profiles').select('*');
           if (!error && data && data.length > 0) {
-            // Filter out current logged-in user
-            const realOthers = data.filter(
-              (p: Profile) =>
-                p.id !== DEMO_CURRENT_USER.id &&
-                p.username !== DEMO_CURRENT_USER.username &&
-                p.display_name !== DEMO_CURRENT_USER.display_name
-            );
-            // Combine real Google users with default friends (dm, system32, admin)
-            const combined = [...realOthers, ...DEFAULT_3_FRIENDS].filter(
-              (p) =>
-                p.id !== DEMO_CURRENT_USER.id &&
-                p.username !== DEMO_CURRENT_USER.username &&
-                p.display_name !== DEMO_CURRENT_USER.display_name
-            );
-            // Deduplicate by username
-            const unique = combined.filter(
-              (user, index, self) => index === self.findIndex((u) => u.username === user.username)
-            );
-            setFriendsList(unique);
+            supabaseProfiles = data as Profile[];
           }
-        } catch (e) {
-          console.error('Error fetching Supabase profiles:', e);
-        }
+        } catch (e) {}
       }
+
+      // Merge Cloud + Supabase + Default 3 friends
+      const combined = [...cloudProfiles, ...supabaseProfiles, ...DEFAULT_3_FRIENDS].filter(
+        (p) =>
+          p.id !== DEMO_CURRENT_USER.id &&
+          p.username !== DEMO_CURRENT_USER.username &&
+          p.display_name !== DEMO_CURRENT_USER.display_name
+      );
+
+      // Deduplicate by username
+      const unique = combined.filter(
+        (user, index, self) => index === self.findIndex((u) => u.username === user.username)
+      );
+
+      setFriendsList(unique.length > 0 ? unique : DEFAULT_3_FRIENDS);
     }
     loadAllGoogleUsers();
   }, []);
