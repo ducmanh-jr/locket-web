@@ -222,10 +222,7 @@ export default function HomePage() {
   // Filter moments by selected friend dropdown
   const isFilteringCurrentUser =
     selectedFriendFilter === currentUser.id ||
-    selectedFriendFilter === currentUser.username ||
-    selectedFriendFilter === currentUser.display_name ||
-    selectedFriendFilter === 'user-me' ||
-    selectedFriendFilter === 'user-dm';
+    selectedFriendFilter === currentUser.username;
 
   const filteredMoments = selectedFriendFilter
     ? moments.filter((m) => {
@@ -233,21 +230,14 @@ export default function HomePage() {
         if (isFilteringCurrentUser) {
           return (
             m.sender_id === currentUser.id ||
-            m.sender_id === 'user-me' ||
-            m.sender_id === 'user-dm' ||
             sender?.id === currentUser.id ||
-            sender?.id === 'user-me' ||
-            sender?.id === 'user-dm' ||
-            sender?.username === currentUser.username ||
-            sender?.username === 'dm' ||
-            sender?.display_name === currentUser.display_name
+            sender?.username === currentUser.username
           );
         }
         return (
           m.sender_id === selectedFriendFilter ||
           sender?.username === selectedFriendFilter ||
-          sender?.id === selectedFriendFilter ||
-          sender?.display_name === selectedFriendFilter
+          sender?.id === selectedFriendFilter
         );
       })
     : moments;
@@ -500,12 +490,9 @@ export default function HomePage() {
           }}
           isMyMoment={
             currentMoment
-              ? currentMoment.sender_id === currentUser.id ||
-                currentMoment.sender_id === 'user-me' ||
-                currentMoment.sender_id === 'user-dm' ||
-                currentMoment.sender?.id === currentUser.id ||
-                currentMoment.sender?.username === currentUser.username ||
-                currentMoment.sender?.username === 'dm'
+              ? (currentMoment.sender_id === currentUser.id) ||
+                (currentMoment.sender?.id === currentUser.id) ||
+                (currentMoment.sender?.username === currentUser.username)
               : false
           }
         />
