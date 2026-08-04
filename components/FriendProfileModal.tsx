@@ -94,11 +94,25 @@ export const FriendProfileModal: React.FC<FriendProfileModalProps> = ({
                     }}
                     className="relative aspect-square rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800/80 cursor-pointer active:scale-95 transition-transform"
                   >
-                    <img
-                      src={moment.media_url}
-                      alt={moment.caption || 'Khoảnh khắc'}
-                      className="w-full h-full object-cover"
-                    />
+                    {moment.media_type === 'video' ||
+                    moment.id?.includes('video') ||
+                    moment.media_url?.startsWith('data:video/') ? (
+                      <video
+                        src={moment.media_url}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        controls={false}
+                        className="w-full h-full object-cover pointer-events-none"
+                      />
+                    ) : (
+                      <img
+                        src={moment.media_url}
+                        alt={moment.caption || 'Khoảnh khắc'}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                   </div>
                 ))}
               </div>

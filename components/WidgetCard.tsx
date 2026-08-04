@@ -73,11 +73,25 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
 
       {/* Main Locket Widget 1:1 Photo Frame */}
       <div className="relative w-full aspect-square rounded-[2.25rem] overflow-hidden bg-[#18181C] border-2 border-[#2C2C34] shadow-2xl shadow-black group">
-        <img
-          src={moment.media_url}
-          alt={moment.caption || 'Khoảnh khắc Locket'}
-          className="w-full h-full object-cover"
-        />
+        {moment.media_type === 'video' ||
+        moment.id?.includes('video') ||
+        moment.media_url?.startsWith('data:video/') ? (
+          <video
+            src={moment.media_url}
+            autoPlay
+            loop
+            muted={moment.audio_option !== 'original'}
+            playsInline
+            controls={false}
+            className="w-full h-full object-cover pointer-events-none"
+          />
+        ) : (
+          <img
+            src={moment.media_url}
+            alt={moment.caption || 'Khoảnh khắc Locket'}
+            className="w-full h-full object-cover"
+          />
+        )}
 
         {/* Caption Overlay */}
         {moment.caption && (

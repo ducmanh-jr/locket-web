@@ -66,13 +66,27 @@ export default function HistoryPage() {
                 onClick={() => setSelectedMoment(moment)}
                 className="relative aspect-square rounded-2xl overflow-hidden bg-[#18181C] border border-[#2C2C34] cursor-pointer hover:border-[#FFC700] transition-all group"
               >
-                <img
-                  src={moment.media_url}
-                  alt={moment.caption || 'Moment thumbnail'}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                />
+                {moment.media_type === 'video' ||
+                moment.id?.includes('video') ||
+                moment.media_url?.startsWith('data:video/') ? (
+                  <video
+                    src={moment.media_url}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    controls={false}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 pointer-events-none"
+                  />
+                ) : (
+                  <img
+                    src={moment.media_url}
+                    alt={moment.caption || 'Moment thumbnail'}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                  />
+                )}
 
                 {/* Reaction badge count indicator */}
                 {moment.reactions && moment.reactions.length > 0 && (
@@ -121,13 +135,27 @@ export default function HistoryPage() {
               </div>
             </div>
 
-            {/* Photo 1:1 */}
+            {/* Photo/Video 1:1 */}
             <div className="relative aspect-square w-full bg-black">
-              <img
-                src={selectedMoment.media_url}
-                alt="Selected moment full"
-                className="w-full h-full object-cover"
-              />
+              {selectedMoment.media_type === 'video' ||
+              selectedMoment.id?.includes('video') ||
+              selectedMoment.media_url?.startsWith('data:video/') ? (
+                <video
+                  src={selectedMoment.media_url}
+                  autoPlay
+                  loop
+                  muted={selectedMoment.audio_option !== 'original'}
+                  playsInline
+                  controls={false}
+                  className="w-full h-full object-cover pointer-events-none"
+                />
+              ) : (
+                <img
+                  src={selectedMoment.media_url}
+                  alt="Selected moment full"
+                  className="w-full h-full object-cover"
+                />
+              )}
 
               {selectedMoment.caption && (
                 <div className="absolute bottom-3 left-3 right-3 text-center">

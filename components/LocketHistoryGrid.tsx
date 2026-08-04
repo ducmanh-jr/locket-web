@@ -54,13 +54,27 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
                 onClick={() => onSelectMoment(moment)}
                 className="relative aspect-square rounded-2xl overflow-hidden bg-[#18181C] border border-zinc-800/80 cursor-pointer active:scale-95 transition-transform group transform-gpu"
               >
-                <img
-                  src={moment.media_url}
-                  alt={moment.caption || 'Khoảnh khắc Locket'}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                />
+                {moment.media_type === 'video' ||
+                moment.id?.includes('video') ||
+                moment.media_url?.startsWith('data:video/') ? (
+                  <video
+                    src={moment.media_url}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    controls={false}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 pointer-events-none"
+                  />
+                ) : (
+                  <img
+                    src={moment.media_url}
+                    alt={moment.caption || 'Khoảnh khắc Locket'}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                  />
+                )}
 
                 {/* Caption Tag Overlay at bottom */}
                 {moment.caption && (
