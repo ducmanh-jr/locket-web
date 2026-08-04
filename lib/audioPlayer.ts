@@ -1,10 +1,9 @@
-// Guaranteed 100% Reliable Audio Player Engine for Locket Web with Chorus Offset Jump
+// Guaranteed 100% Reliable Audio Player Engine for Locket Web
 
 const RELIABLE_MP3_URLS = [
-  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+  'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview116/v4/7f/52/9c/7f529ce1-6323-6850-e25d-475a14519442/mzaf_295044505976301651.plus.aac.p.m4a',
+  'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview116/v4/62/1d/af/621daf20-05ad-2f7e-143f-f7520c3b7944/mzaf_5181422385936780454.plus.aac.p.m4a',
+  'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/b3/68/33/b36833e0-8ace-1303-6328-2a22e0ff0ac7/mzaf_5433348825881119564.plus.aac.p.m4a',
 ];
 
 // Rich Web Audio API Synthesizer (Works 100% offline on any browser without network/CORS!)
@@ -66,7 +65,7 @@ export function playMelodicSynth(): () => void {
 export function createGuaranteedAudio(
   url: string,
   onEnd: () => void,
-  startTime: number = 30 // Starts directly at Main Chorus (~30s offset)
+  startTime: number = 0 // iTunes preview audio is already a 30s snippet starting at 0s!
 ): { stop: () => void } {
   let audio: HTMLAudioElement | null = null;
   let synthStopFn: (() => void) | null = null;
@@ -80,9 +79,9 @@ export function createGuaranteedAudio(
     audio.src = targetUrl;
     audio.volume = 0.85;
 
-    // Jump straight to Main Chorus timestamp when metadata loads
+    // Jump to startTime only if valid and less than duration
     audio.onloadedmetadata = () => {
-      if (startTime > 0 && audio && audio.duration && startTime < audio.duration) {
+      if (startTime > 0 && audio && audio.duration && startTime < audio.duration - 2) {
         try {
           audio.currentTime = startTime;
         } catch (e) {}
@@ -107,11 +106,9 @@ export function createGuaranteedAudio(
     if (promise !== undefined) {
       promise
         .then(() => {
-          if (startTime > 0 && audio) {
+          if (startTime > 0 && audio && audio.duration && startTime < audio.duration - 2) {
             try {
-              if (audio.duration && startTime < audio.duration) {
-                audio.currentTime = startTime;
-              }
+              audio.currentTime = startTime;
             } catch (e) {}
           }
         })
