@@ -166,15 +166,21 @@ export default function HomePage() {
     const combined = [...demoMoments, ...cloudMoments, ...validSupabaseMoments];
 
     const sanitized = combined.map((m) => {
-      if (!m.sender) {
-        if (m.sender_id === currentUser.id || m.sender_id === 'user-me') {
-          return { ...m, sender: currentUser };
-        }
-        const match = DEFAULT_3_FRIENDS.find((f) => f.id === m.sender_id);
-        if (match) return { ...m, sender: match };
-        return { ...m, sender: currentUser };
+      let item = m;
+      // Guarantee sample dataset photos (including cat photo) NEVER have fake music stickers
+      if (item.id.startsWith('m-photo-v5-') || item.caption?.includes('mèo cưng')) {
+        item = { ...item, music: undefined };
       }
-      return m;
+
+      if (!item.sender) {
+        if (item.sender_id === currentUser.id || item.sender_id === 'user-me') {
+          return { ...item, sender: currentUser };
+        }
+        const match = DEFAULT_3_FRIENDS.find((f) => f.id === item.sender_id);
+        if (match) return { ...item, sender: match };
+        return { ...item, sender: currentUser };
+      }
+      return item;
     });
 
     const unique = sanitized.filter(

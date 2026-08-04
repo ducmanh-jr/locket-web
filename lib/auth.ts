@@ -2,26 +2,6 @@ import { useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase } from './supabaseClient';
 import { Profile } from './types';
 import { useRouter, usePathname } from 'next/navigation';
-import { DEMO_CURRENT_USER } from './demoStore';
-
-function getStoredProfile(): Profile | null {
-  if (typeof window === 'undefined') return null;
-  const stored = localStorage.getItem('locket_user_session_v1');
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      if (parsed && parsed.id && parsed.username) {
-        return parsed;
-      }
-    } catch (e) {}
-  }
-  return null;
-}
-
-export function saveStoredProfile(profile: Profile): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('locket_user_session_v1', JSON.stringify(profile));
-}
 
 export function useAuth() {
   const router = useRouter();
@@ -32,8 +12,7 @@ export function useAuth() {
   useEffect(() => {
     async function checkUserSession() {
       if (!isSupabaseConfigured()) {
-        const stored = getStoredProfile();
-        setUserProfile(stored);
+        setUserProfile(null);
         setLoading(false);
         return;
       }
@@ -44,11 +23,10 @@ export function useAuth() {
         } = await supabase.auth.getUser();
 
         if (!user) {
-          // Check local session or return null so user is prompted to login via Google
-          const stored = getStoredProfile();
-          setUserProfile(stored);
+          // Strictly requiring Google Login: No dummy fallback session allowed!
+          setUserProfile(null);
         } else {
-          // Logged in Google/Supabase user
+          // Authentic Google OAuth User Session
           const name =
             user.user_metadata?.full_name ||
             user.user_metadata?.name ||
@@ -75,12 +53,11 @@ export function useAuth() {
             await supabase.from('profiles').upsert(newProfile);
           } catch (e) {}
 
-          saveStoredProfile(newProfile);
           setUserProfile(newProfile);
         }
       } catch (e) {
         console.error('Auth error:', e);
-        setUserProfile(getStoredProfile());
+        setUserProfile(null);
       } finally {
         setLoading(false);
       }
@@ -95,9 +72,8 @@ export function useAuth() {
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           checkUserSession();
         } else if (event === 'SIGNED_OUT') {
-          localStorage.removeItem('locket_user_session_v1');
           setUserProfile(null);
-          router.push('/login');
+          router.replace('/login');
         }
       });
 

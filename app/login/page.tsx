@@ -6,17 +6,9 @@ import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { Camera, Sparkles, ShieldCheck, ArrowRight, Zap, Image as ImageIcon, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-import { saveStoredProfile } from '@/lib/auth';
-import { DEMO_CURRENT_USER } from '@/lib/demoStore';
-
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
-
-  const handleDemoLogin = () => {
-    saveStoredProfile(DEMO_CURRENT_USER);
-    router.push('/');
-  };
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -31,8 +23,6 @@ export default function LoginPage() {
       } catch (e) {
         setLoading(false);
       }
-    } else {
-      handleDemoLogin();
     }
   };
 
@@ -122,16 +112,6 @@ export default function LoginPage() {
             <span className="text-[11px] font-extrabold text-[#FFC700] bg-[#FFC700]/15 px-2.5 py-1 rounded-full border border-[#FFC700]/30 group-hover:bg-[#FFC700] group-hover:text-black transition-colors">
               1-Click
             </span>
-          </button>
-
-          {/* Quick Demo Mode Entry */}
-          <button
-            onClick={handleDemoLogin}
-            className="w-full py-3 px-4 bg-[#18181C] hover:bg-[#222228] text-zinc-300 hover:text-white font-bold text-xs rounded-2xl border border-zinc-800 flex items-center justify-center space-x-2 transition-all active:scale-95"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#FFC700]" />
-            <span>Trải nghiệm Chế độ Demo (Không cần đăng nhập)</span>
-            <ArrowRight className="w-3.5 h-3.5 text-zinc-500" />
           </button>
         </div>
       </div>
