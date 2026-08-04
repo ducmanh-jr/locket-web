@@ -130,7 +130,7 @@ export const DEMO_50_MOMENTS: Moment[] = PHOTO_DATASET.map((item, index) => {
   };
 });
 
-const CACHE_KEY = 'locket_demo_moments_v7';
+const CACHE_KEY = 'locket_demo_moments_v8';
 
 export function getStoredDemoMoments(): Moment[] {
   if (typeof window === 'undefined') return DEMO_50_MOMENTS;

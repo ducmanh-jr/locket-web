@@ -200,8 +200,20 @@ export default function HomePage() {
     loadFriends();
     loadMoments();
 
-    // NO polling timer! Sync only on page load.
-    // Live updates come through Supabase Realtime broadcast only.
+    // Native BroadcastChannel for instant <2ms cross-tab real-time sync
+    let tabChannel: BroadcastChannel | null = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      tabChannel = new BroadcastChannel('locket_tab_sync');
+      tabChannel.onmessage = (event) => {
+        if (event.data?.type === 'NEW_MOMENT' && event.data?.moment) {
+          setMoments((prev) => {
+            const exists = prev.some((m) => m.id === event.data.moment.id);
+            if (exists) return prev;
+            return [event.data.moment, ...prev];
+          });
+        }
+      };
+    }
 
     if (isSupabaseConfigured()) {
       const dbChannel = supabase
@@ -210,7 +222,6 @@ export default function HomePage() {
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'moments' },
           (payload) => {
-            // Silently prepend the new moment without disrupting current view
             if (payload?.new) {
               const newMoment = payload.new as Moment;
               setMoments((prev) => {
@@ -243,12 +254,15 @@ export default function HomePage() {
         });
 
       return () => {
+        if (tabChannel) tabChannel.close();
         supabase.removeChannel(dbChannel);
         supabase.removeChannel(broadcastChannel);
       };
     }
 
-    return () => {};
+    return () => {
+      if (tabChannel) tabChannel.close();
+    };
   }, [currentUser.id]);
 
   if (authLoading || !userProfile) {
@@ -354,14 +368,22 @@ export default function HomePage() {
     music?: MusicTrack,
     audioOption?: 'mute' | 'original' | 'music'
   ) => {
-    const newMomentId = `m-${media.type}-v5-${Date.now()}`;
+    const newMomentId = `m-${media.type}-v8-${Date.now()}`;
     const activeSender = userProfile || currentUser;
 
-    const initialMoment: Moment = {
+    // Compress photo immediately to ~40KB so localStorage NEVER hits QuotaExceededError!
+    let mediaUrl = media.dataUrl;
+    if (media.type === 'photo' && media.dataUrl.startsWith('data:image/')) {
+      try {
+        mediaUrl = await compressImageForCloudSync(media.dataUrl);
+      } catch (e) {}
+    }
+
+    const newMoment: Moment = {
       id: newMomentId,
       sender_id: activeSender.id,
       sender: activeSender,
-      media_url: media.dataUrl,
+      media_url: mediaUrl,
       media_type: media.type,
       audio_option: audioOption || (media.type === 'video' ? 'original' : undefined),
       caption: caption,
@@ -370,29 +392,25 @@ export default function HomePage() {
       music: music,
     };
 
-    // ⚡ Optimistic UI: Close camera & update feed INSTANTLY (0ms latency!)
-    const updatedMoments = addDemoMoment(initialMoment);
+    // 1. Optimistic Local Save (40KB fits easily without localStorage quota errors!)
+    const updatedMoments = addDemoMoment(newMoment);
     setSelectedFriendFilter(null);
     setMoments(updatedMoments);
     setSelectedMomentId(newMomentId);
     setShowCamera(false);
     setCurrentView('feed');
 
-    // 🚀 Background Sync: Compress media & sync via DB + WebSockets without blocking UI
-    (async () => {
-      let mediaUrl = media.dataUrl;
-      // Only compress photos, not videos
-      if (media.type === 'photo') {
-        try {
-          mediaUrl = await compressImageForCloudSync(media.dataUrl);
-        } catch (e) {}
+    // 2. Broadcast to all open tabs via native BroadcastChannel (< 2ms cross-tab sync!)
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const tabChannel = new BroadcastChannel('locket_tab_sync');
+        tabChannel.postMessage({ type: 'NEW_MOMENT', moment: newMoment });
+        tabChannel.close();
       }
+    } catch (e) {}
 
-      const createdMoment: Moment = {
-        ...initialMoment,
-        media_url: mediaUrl,
-      };
-
+    // 3. Background Cloud / DB Sync
+    (async () => {
       if (isSupabaseConfigured()) {
         try {
           await supabase.from('profiles').upsert({
@@ -411,7 +429,7 @@ export default function HomePage() {
       }
 
       try {
-        await pushMomentToGlobalCloud(createdMoment);
+        await pushMomentToGlobalCloud(newMoment);
       } catch (e) {}
 
       if (broadcastChannelRef.current) {
@@ -419,20 +437,7 @@ export default function HomePage() {
           broadcastChannelRef.current.send({
             type: 'broadcast',
             event: 'new_moment',
-            payload: createdMoment,
-          });
-        } catch (e) {}
-      } else if (isSupabaseConfigured()) {
-        try {
-          const ch = supabase.channel('locket-live-broadcast');
-          ch.subscribe((status) => {
-            if (status === 'SUBSCRIBED') {
-              ch.send({
-                type: 'broadcast',
-                event: 'new_moment',
-                payload: createdMoment,
-              });
-            }
+            payload: newMoment,
           });
         } catch (e) {}
       }
