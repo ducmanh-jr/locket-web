@@ -209,21 +209,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
       }`}
     >
-      {/* 1:1 Guaranteed Exact Square Photo Card Container with Explicit Inline Styles */}
+      {/* 1:1 Square Photo Card Container Touching Near Screen Edges */}
       <div
         onDoubleClick={handleDoubleTap}
-        style={{
-          width: '310px',
-          height: '310px',
-          minWidth: '310px',
-          minHeight: '310px',
-          maxWidth: '310px',
-          maxHeight: '310px',
-          position: 'relative',
-          overflow: 'hidden',
-          borderRadius: '2.5rem',
-        }}
-        className="bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0 my-auto"
+        className="w-[calc(100%-1rem)] max-w-[385px] aspect-square bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0 my-auto relative overflow-hidden rounded-[2.5rem]"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -250,26 +239,12 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               duration: 0.28,
               ease: [0.32, 0.72, 0, 1],
             }}
-            style={{
-              width: '310px',
-              height: '310px',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              overflow: 'hidden',
-              borderRadius: '2.5rem',
-            }}
+            className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.5rem]"
           >
             <img
               src={moment.media_url}
               alt={moment.caption || 'Khoảnh khắc Locket'}
-              style={{
-                width: '310px',
-                height: '310px',
-                objectFit: 'cover',
-                borderRadius: '2.5rem',
-              }}
-              className="select-none pointer-events-none"
+              className="w-full h-full object-cover rounded-[2.5rem] select-none pointer-events-none"
             />
 
             {/* Floating Emoji Reaction Particles */}
