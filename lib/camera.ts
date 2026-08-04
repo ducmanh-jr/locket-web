@@ -9,15 +9,17 @@ export interface CapturedImage {
 
 /**
  * Converts a Video Element snapshot into a compressed 1:1 square image Blob & DataURL.
+ * Supports isFrontCamera mirroring fix so captured photos match camera preview!
  */
 export async function captureSquarePhoto(
   videoElement: HTMLVideoElement,
-  quality: number = 0.8,
-  maxDimension: number = 1080
+  quality: number = 0.82,
+  maxDimension: number = 1080,
+  isFrontCamera: boolean = true
 ): Promise<CapturedImage> {
   const canvas = document.createElement('canvas');
-  const videoWidth = videoElement.videoWidth;
-  const videoHeight = videoElement.videoHeight;
+  const videoWidth = videoElement.videoWidth || 640;
+  const videoHeight = videoElement.videoHeight || 480;
 
   // Determine square dimensions
   const minDimension = Math.min(videoWidth, videoHeight);
@@ -32,6 +34,12 @@ export async function captureSquarePhoto(
   const ctx = canvas.getContext('2d');
   if (!ctx) {
     throw new Error('Could not get 2d context from canvas');
+  }
+
+  // Fix Front Camera Inversion: Flip canvas horizontally if front camera
+  if (isFrontCamera) {
+    ctx.translate(targetSize, 0);
+    ctx.scale(-1, 1);
   }
 
   // Draw square crop from center of video stream
