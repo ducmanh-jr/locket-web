@@ -1,270 +1,127 @@
-import { Profile, Friendship, Moment, Reaction } from './types';
+import { Profile, Moment, Reaction } from './types';
 
-// Sample Current User Fallback
+// Fallback Current User
 export const DEMO_CURRENT_USER: Profile = {
   id: "user-me",
   username: "manh_locket",
   display_name: "Đức Mạnh",
-  avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
+  avatar_url: "/user-photos/1785829393992_567716528849713056_g276929852367586455_e887fb48d4d113fc528e29488435b6f7.jpg",
 };
 
-// 3 Default Friends ALWAYS linked to every new real user
+// 3 Main Default Friends ONLY (No extra virtual accounts)
 export const DEFAULT_3_FRIENDS: Profile[] = [
   {
     id: "user-minh",
     username: "minh_anh",
     display_name: "Minh Anh ✨",
-    avatar_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80",
+    avatar_url: "/user-photos/1785829393992_567716528849713056_g276929852367586455_e887fb48d4d113fc528e29488435b6f7.jpg",
   },
   {
     id: "user-hoang",
     username: "hoang_nam",
     display_name: "Hoàng Nam ⚡",
-    avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80",
+    avatar_url: "/user-photos/1785829394118_567716528849713056_g276929852367586455_b564766841f8f840f3191c21c6d0f07a.jpg",
   },
   {
     id: "user-linh",
     username: "phuong_linh",
     display_name: "Phương Linh 🌸",
-    avatar_url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=300&q=80",
+    avatar_url: "/user-photos/1785829394223_567716528849713056_g276929852367586455_abb069d5016bbb90f6a167b2e53545da.jpg",
   },
 ];
 
 export const DEMO_FRIENDS = DEFAULT_3_FRIENDS;
+export const DEMO_SUGGESTED_USERS = DEFAULT_3_FRIENDS;
 
-// Additional Suggested Friends
-export const DEMO_SUGGESTED_USERS: Profile[] = [
-  ...DEFAULT_3_FRIENDS,
-  {
-    id: "user-quang",
-    username: "quang_huy",
-    display_name: "Quang Huy 🎧",
-    avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    id: "user-tuan",
-    username: "minh_tuan",
-    display_name: "Minh Tuấn ⚽",
-    avatar_url: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    id: "user-trinh",
-    username: "ngoc_trinh",
-    display_name: "Ngọc Trinh 🎀",
-    avatar_url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    id: "user-chau",
-    username: "bao_chau",
-    display_name: "Bảo Châu 🎨",
-    avatar_url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    id: "user-ducanh",
-    username: "duc_anh",
-    display_name: "Đức Anh 📷",
-    avatar_url: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    id: "user-yen",
-    username: "hai_yen",
-    display_name: "Hải Yến ☕",
-    avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    id: "user-trung",
-    username: "thanh_trung",
-    display_name: "Thành Trung 🎸",
-    avatar_url: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=300&q=80",
-  },
+// 47 Unique Photos from user's provided data folder distributed among the 3 main friends
+const USER_PHOTOS = [
+  "1785829394343_567716528849713056_g276929852367586455_0c0291d52e88e0bfb12ff1da9d9f88f4.jpg",
+  "1785829394516_567716528849713056_g276929852367586455_dea9da1ed58aa6c86e154a0653c7bb20.jpg",
+  "1785829394645_567716528849713056_g276929852367586455_f1c442cbbe58f5911ffe486c37c93b77.jpg",
+  "1785829394805_567716528849713056_g276929852367586455_26b88cc7532be0e60f188aa2b1985868.jpg",
+  "1785829394968_567716528849713056_g276929852367586455_4b49a7c870904f250604f308a48f7879.jpg",
+  "1785829395125_567716528849713056_g276929852367586455_eb83ebfd4f67d00f21a6b1a4b59072ac.jpg",
+  "1785829395243_567716528849713056_g276929852367586455_aface844ef16682625f5900f2a54a257.jpg",
+  "1785829395388_567716528849713056_g276929852367586455_75c91f17db75fb8bffa865221effe916.jpg",
+  "1785829395520_567716528849713056_g276929852367586455_72d39c312e3133a41df16f6923337c7b.jpg",
+  "1785829395678_567716528849713056_g276929852367586455_eae0b991e5824866b40ee94ea3a72869.jpg",
+  "1785829395814_567716528849713056_g276929852367586455_ff38b2c163b27b174ef154fd0469f6a9.jpg",
+  "1785829395944_567716528849713056_g276929852367586455_cd49bb90498ca99f266ec92890d55fd3.jpg",
+  "1785829396037_567716528849713056_g276929852367586455_5b84a9f561acf8a6bb6b3c6c10f91d77.jpg",
+  "1785829396179_567716528849713056_g276929852367586455_e7a181ab8fbb832f82a705c441f1df1c.jpg",
+  "1785829396328_567716528849713056_g276929852367586455_2b1171125ac879657547e95eff486675.jpg",
+  "1785829396427_567716528849713056_g276929852367586455_123af3ffc71be8949dd7e55125ca894c.jpg",
+  "1785829396569_567716528849713056_g276929852367586455_3e0c60ce16e86606dd44e009f5f7d4b2.jpg",
+  "1785829396710_567716528849713056_g276929852367586455_ff65d38730613ac515dc142e790b9c94.jpg",
+  "1785829396847_567716528849713056_g276929852367586455_908870a48e8240976c21f261405e0828.jpg",
+  "1785829396976_567716528849713056_g276929852367586455_e794159442c034a1125203af65f26f2e.jpg",
+  "1785829397101_567716528849713056_g276929852367586455_f668e3378abfec97308f1ba722a31ca0.jpg",
+  "1785829397236_567716528849713056_g276929852367586455_e5a516e5de9046694ffccedf4961a6f4.jpg",
+  "1785829397361_567716528849713056_g276929852367586455_f38e1f58d53381c927e15370bcaf0fc5.jpg",
+  "1785829397521_567716528849713056_g276929852367586455_2e3ca9e0f76aec3241dca77bd958d48e.jpg",
+  "1785829397623_567716528849713056_g276929852367586455_aa829554c553b0beed3d15883a4d8460.jpg",
+  "1785829397736_567716528849713056_g276929852367586455_ae51ef7bb14bf2724fc639523b227c8c.jpg",
+  "1785829397872_567716528849713056_g276929852367586455_b4603b896e7aec0641af77b3878ba91c.jpg",
+  "1785829398010_567716528849713056_g276929852367586455_dbe041ff1d8b6d0aa77523a15fd4e22b.jpg",
+  "1785829398146_567716528849713056_g276929852367586455_eb05874a3f94f5552416f655453a218e.jpg",
+  "1785829398299_567716528849713056_g276929852367586455_4dadbcec32bc9166496bb69af2a4fd9b.jpg",
+  "1785829398422_567716528849713056_g276929852367586455_c5b02be3fa22bd3e9d103d1eb989e2a2.jpg",
+  "1785829398530_567716528849713056_g276929852367586455_2c6977dbec7e2f7093da422c1600433d.jpg",
+  "1785829398689_567716528849713056_g276929852367586455_14ba80d2c3269eb393afa892320e8d31.jpg",
+  "1785829398825_567716528849713056_g276929852367586455_7dfb02e0f82c3e0fb311109fbd9054e7.jpg",
+  "1785829398955_567716528849713056_g276929852367586455_a4bf981cfae80e9914d3622fe0176b35.jpg",
+  "1785829399077_567716528849713056_g276929852367586455_908ab4b8ab53de5a93f416ec375efa94.jpg",
+  "1785829399213_567716528849713056_g276929852367586455_c4ed66838e7b202fbdbea79da450fcf1.jpg",
+  "1785829399339_567716528849713056_g276929852367586455_5010c2048685d8b5fb82a1f27d945cf0.jpg",
+  "1785829399462_567716528849713056_g276929852367586455_5e325042a8d608bcee51042a49cf95a2.jpg",
+  "1785829399601_567716528849713056_g276929852367586455_8751177c2fde8bf0efc3f96696f782b2.jpg",
+  "1785829399729_567716528849713056_g276929852367586455_cfdae258c00ea135adbfd98310a4c4e9.jpg",
+  "1785829399866_567716528849713056_g276929852367586455_2e61e70067cfc34bea7624e7021d4dc3.jpg",
+  "1785829400008_567716528849713056_g276929852367586455_5eac2d5b9248bf4ccd9ca13a23fa726a.jpg",
+  "1785829400138_567716528849713056_g276929852367586455_e990d8eadbdd0fd6d5e58e087893d518.jpg",
+  "1785829400266_567716528849713056_g276929852367586455_3d3e145ca0d8f668ebb909ae341eec71.jpg",
+  "1785829400392_567716528849713056_g276929852367586455_b28c37cc665366de97aa824ae5619d4b.jpg",
+  "1785829400531_567716528849713056_g276929852367586455_261f5f986f1964cf559f0bc556387985.jpg",
 ];
 
-// 20 Rich Moments from the 3 default friends
-export const DEMO_20_MOMENTS: Moment[] = [
-  {
-    id: "m-20",
-    sender_id: "user-minh",
-    sender: DEFAULT_3_FRIENDS[0],
-    media_url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80",
-    caption: "Cà phê sáng cùng bạn bè ☕✨",
-    created_at: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-19",
-    sender_id: "user-hoang",
-    sender: DEFAULT_3_FRIENDS[1],
-    media_url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80",
-    caption: "Hoàng hôn tuyệt đẹp hôm nay 🌅",
-    created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-18",
-    sender_id: "user-linh",
-    sender: DEFAULT_3_FRIENDS[2],
-    media_url: "https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=800&q=80",
-    caption: "Cún cưng đang ngủ 🐶💤",
-    created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-17",
-    sender_id: "user-minh",
-    sender: DEFAULT_3_FRIENDS[0],
-    media_url: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=800&q=80",
-    caption: "Trà matcha chiều thu 🍵",
-    created_at: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-16",
-    sender_id: "user-hoang",
-    sender: DEFAULT_3_FRIENDS[1],
-    media_url: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=800&q=80",
-    caption: "Chụp ảnh phong cảnh núi ⛰️",
-    created_at: new Date(Date.now() - 1000 * 60 * 360).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-15",
-    sender_id: "user-linh",
-    sender: DEFAULT_3_FRIENDS[2],
-    media_url: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=800&q=80",
-    caption: "Tiệc sinh nhật ấm cúng 🎉🎈",
-    created_at: new Date(Date.now() - 1000 * 60 * 500).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-14",
-    sender_id: "user-minh",
-    sender: DEFAULT_3_FRIENDS[0],
-    media_url: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80",
-    caption: "Góc làm việc chiều mưa 💻🌧️",
-    created_at: new Date(Date.now() - 1000 * 60 * 700).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-13",
-    sender_id: "user-hoang",
-    sender: DEFAULT_3_FRIENDS[1],
-    media_url: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80",
-    caption: "Tập đàn guitar acoustic 🎸",
-    created_at: new Date(Date.now() - 1000 * 60 * 900).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-12",
-    sender_id: "user-linh",
-    sender: DEFAULT_3_FRIENDS[2],
-    media_url: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=80",
-    caption: "Pizza ngon xỉu xỉu 🍕🔥",
-    created_at: new Date(Date.now() - 1000 * 60 * 1100).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-11",
-    sender_id: "user-minh",
-    sender: DEFAULT_3_FRIENDS[0],
-    media_url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80",
-    caption: "Bãi biển miền nhiệt đới 🌊🏖️",
-    created_at: new Date(Date.now() - 1000 * 60 * 1400).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-10",
-    sender_id: "user-hoang",
-    sender: DEFAULT_3_FRIENDS[1],
-    media_url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80",
-    caption: "Sương mù buổi sáng 🌫️",
-    created_at: new Date(Date.now() - 1000 * 60 * 1800).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-9",
-    sender_id: "user-linh",
-    sender: DEFAULT_3_FRIENDS[2],
-    media_url: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
-    caption: "Bát salad healthy 🥗✨",
-    created_at: new Date(Date.now() - 1000 * 60 * 2200).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-8",
-    sender_id: "user-minh",
-    sender: DEFAULT_3_FRIENDS[0],
-    media_url: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=800&q=80",
-    caption: "Du lịch núi rừng thiên nhiên 🌲",
-    created_at: new Date(Date.now() - 1000 * 60 * 2600).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-7",
-    sender_id: "user-hoang",
-    sender: DEFAULT_3_FRIENDS[1],
-    media_url: "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=800&q=80",
-    caption: "Đèn đường buổi tối 🌃",
-    created_at: new Date(Date.now() - 1000 * 60 * 3000).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-6",
-    sender_id: "user-linh",
-    sender: DEFAULT_3_FRIENDS[2],
-    media_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
-    caption: "Selfie phong cách retro 📸",
-    created_at: new Date(Date.now() - 1000 * 60 * 3500).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-5",
-    sender_id: "user-minh",
-    sender: DEFAULT_3_FRIENDS[0],
-    media_url: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80",
-    caption: "Đọc sách buổi chiều 📖☕",
-    created_at: new Date(Date.now() - 1000 * 60 * 4000).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-4",
-    sender_id: "user-hoang",
-    sender: DEFAULT_3_FRIENDS[1],
-    media_url: "https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&w=800&q=80",
-    caption: "Mèo con dễ thương 🐱🧡",
-    created_at: new Date(Date.now() - 1000 * 60 * 4500).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-3",
-    sender_id: "user-linh",
-    sender: DEFAULT_3_FRIENDS[2],
-    media_url: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?auto=format&fit=crop&w=800&q=80",
-    caption: "Vườn hoa rực rỡ 🌻🌸",
-    created_at: new Date(Date.now() - 1000 * 60 * 5000).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-2",
-    sender_id: "user-minh",
-    sender: DEFAULT_3_FRIENDS[0],
-    media_url: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80",
-    caption: "Cốc latte art trái tim ☕❤️",
-    created_at: new Date(Date.now() - 1000 * 60 * 5500).toISOString(),
-    reactions: [],
-  },
-  {
-    id: "m-1",
-    sender_id: "user-hoang",
-    sender: DEFAULT_3_FRIENDS[1],
-    media_url: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80",
-    caption: "Bữa tối ấm cúng cùng gia đình 🍲✨",
-    created_at: new Date(Date.now() - 1000 * 60 * 6000).toISOString(),
-    reactions: [],
-  },
+const CAPTIONS = [
+  "Khoảnh khắc ngày mới ✨",
+  "Góc nhỏ bình yên ☕",
+  "Nụ cười rạng rỡ 🌸",
+  "Góc phố thân quen 🏙️",
+  "Cuối tuần thư giãn 🌿",
+  "Chiều thu mát mẻ 🍁",
+  "Bữa tối ngon lành 🍕",
+  "Hoàng hôn rực rỡ 🌅",
+  "Check-in cùng bạn thân 📸",
+  "Sáng sớm trong lành ☀️",
+  "Trà sữa nóng 🧋",
+  "Bình yên một góc nhỏ 🤍",
+  "Du lịch cùng nhau ✈️",
+  "Cún cưng cute 🐶",
+  "Tập luyện chiều nay 🏃‍♂️",
+  "Âm nhạc chiều mưa 🎧",
 ];
+
+// Generate 47 unique moments using the user's provided photos
+export const DEMO_50_MOMENTS: Moment[] = USER_PHOTOS.map((filename, index) => {
+  const sender = DEFAULT_3_FRIENDS[index % 3];
+  const caption = CAPTIONS[index % CAPTIONS.length];
+  const timeOffsetMinutes = (index + 1) * 25;
+
+  return {
+    id: `m-photo-${index + 1}`,
+    sender_id: sender.id,
+    sender: sender,
+    media_url: `/user-photos/${filename}`,
+    caption: caption,
+    created_at: new Date(Date.now() - 1000 * 60 * timeOffsetMinutes).toISOString(),
+    reactions: [],
+  };
+});
 
 export function getStoredDemoMoments(): Moment[] {
-  if (typeof window === 'undefined') return DEMO_20_MOMENTS;
+  if (typeof window === 'undefined') return DEMO_50_MOMENTS;
   try {
     const stored = localStorage.getItem('locket_demo_moments');
     if (stored) {
@@ -272,7 +129,7 @@ export function getStoredDemoMoments(): Moment[] {
       if (parsed.length > 0) return parsed;
     }
   } catch (e) {}
-  return DEMO_20_MOMENTS;
+  return DEMO_50_MOMENTS;
 }
 
 export function saveStoredDemoMoments(moments: Moment[]): void {
