@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Moment, Profile } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, Trash2, MoreVertical } from 'lucide-react';
@@ -13,6 +13,8 @@ interface LocketFeedCardProps {
   hasPrev?: boolean;
   hasNext?: boolean;
   onDeleteMoment?: (momentId: string) => void;
+  nextMomentUrl?: string;
+  prevMomentUrl?: string;
 }
 
 export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
@@ -23,11 +25,25 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   hasPrev = false,
   hasNext = false,
   onDeleteMoment,
+  nextMomentUrl,
+  prevMomentUrl,
 }) => {
   const touchStartY = useRef<number | null>(null);
   const [direction, setDirection] = useState<'up' | 'down'>('up');
   const [floatingEmojis, setFloatingEmojis] = useState<{ id: number; emoji: string; x: number }[]>([]);
   const [showOptionsModal, setShowOptionsModal] = useState<boolean>(false);
+
+  // Preload Next & Previous Photos into Browser Cache for 0ms Latency
+  useEffect(() => {
+    if (nextMomentUrl) {
+      const img = new Image();
+      img.src = nextMomentUrl;
+    }
+    if (prevMomentUrl) {
+      const img = new Image();
+      img.src = prevMomentUrl;
+    }
+  }, [nextMomentUrl, prevMomentUrl]);
 
   const sender = moment.sender || {
     id: 'unknown',
@@ -42,7 +58,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     const diff = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000);
     if (diff < 60) return 'Vừa xong';
     if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+    if (diff < 86400) return `${Math.floor(diff / 86400)}h`;
     return `${Math.floor(diff / 86400)}d`;
   };
 
@@ -110,7 +126,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       onTouchEnd={handleTouchEnd}
       className="w-full flex-1 flex flex-col items-center justify-center select-none cursor-grab active:cursor-grabbing px-2 py-1 my-auto overflow-hidden relative"
     >
-      {/* 1:1 Photo Card Container with Forced Absolute Positioning for Framer Motion */}
+      {/* 1:1 Photo Card Container */}
       <div
         onDoubleClick={handleDoubleTap}
         className="relative w-[85vw] max-w-[320px] sm:max-w-[340px] h-[85vw] max-h-[320px] sm:max-h-[340px] aspect-square rounded-[2.5rem] overflow-hidden bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0"
@@ -121,7 +137,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             initial={{ opacity: 0, y: direction === 'up' ? 80 : -80 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: direction === 'up' ? -80 : 80 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
             className="w-full h-full overflow-hidden"
           >
