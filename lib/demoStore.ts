@@ -1,6 +1,6 @@
 import { Profile, Friendship, Moment, Reaction } from './types';
 
-// Sample Profiles
+// Sample Current User
 export const DEMO_CURRENT_USER: Profile = {
   id: "user-me",
   username: "manh_locket",
@@ -8,7 +8,8 @@ export const DEMO_CURRENT_USER: Profile = {
   avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
 };
 
-export const DEMO_FRIENDS: Profile[] = [
+// 10 Initial Suggested Friends (Gợi ý kết bạn)
+export const DEMO_SUGGESTED_USERS: Profile[] = [
   {
     id: "user-minh",
     username: "minh_anh",
@@ -27,24 +28,69 @@ export const DEMO_FRIENDS: Profile[] = [
     display_name: "Phương Linh 🌸",
     avatar_url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=300&q=80",
   },
+  {
+    id: "user-quang",
+    username: "quang_huy",
+    display_name: "Quang Huy 🎧",
+    avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    id: "user-tuan",
+    username: "minh_tuan",
+    display_name: "Minh Tuấn ⚽",
+    avatar_url: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    id: "user-[#trinh]",
+    username: "ngoc_trinh",
+    display_name: "Ngọc Trinh 🎀",
+    avatar_url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    id: "user-chau",
+    username: "bao_chau",
+    display_name: "Bảo Châu 🎨",
+    avatar_url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    id: "user-ducanh",
+    username: "duc_anh",
+    display_name: "Đức Anh 📷",
+    avatar_url: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    id: "user-yen",
+    username: "hai_yen",
+    display_name: "Hải Yến ☕",
+    avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    id: "user-trung",
+    username: "thanh_trung",
+    display_name: "Thành Trung 🎸",
+    avatar_url: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=300&q=80",
+  },
 ];
 
-// Sample Initial Moments
+// Initial Friends (first 3 accepted)
+export const DEMO_FRIENDS: Profile[] = DEMO_SUGGESTED_USERS.slice(0, 3);
+
+// Initial Moments
 export const DEMO_INITIAL_MOMENTS: Moment[] = [
   {
     id: "moment-1",
     sender_id: "user-minh",
-    sender: DEMO_FRIENDS[0],
+    sender: DEMO_SUGGESTED_USERS[0],
     media_url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80",
     caption: "Cà phê sáng cùng bạn bè ☕✨",
-    created_at: new Date(Date.now() - 1000 * 60 * 15).toISOString(), // 15 mins ago
+    created_at: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
     reactions: [
       {
         id: "react-1",
         moment_id: "moment-1",
         user_id: "user-me",
         user: DEMO_CURRENT_USER,
-        emoji: "❤️",
+        emoji: "💛",
         created_at: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
       },
     ],
@@ -52,10 +98,10 @@ export const DEMO_INITIAL_MOMENTS: Moment[] = [
   {
     id: "moment-2",
     sender_id: "user-hoang",
-    sender: DEMO_FRIENDS[1],
+    sender: DEMO_SUGGESTED_USERS[1],
     media_url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80",
     caption: "Hoàng hôn tuyệt đẹp hôm nay 🌅",
-    created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
+    created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
     reactions: [
       {
         id: "react-2",
@@ -70,25 +116,20 @@ export const DEMO_INITIAL_MOMENTS: Moment[] = [
   {
     id: "moment-3",
     sender_id: "user-linh",
-    sender: DEMO_FRIENDS[2],
+    sender: DEMO_SUGGESTED_USERS[2],
     media_url: "https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=800&q=80",
     caption: "Cún cưng đang ngủ 🐶💤",
-    created_at: new Date(Date.now() - 1000 * 60 * 360).toISOString(), // 6 hours ago
+    created_at: new Date(Date.now() - 1000 * 60 * 360).toISOString(),
     reactions: [],
   },
 ];
 
-// Helper to get local demo storage
 export function getStoredDemoMoments(): Moment[] {
   if (typeof window === 'undefined') return DEMO_INITIAL_MOMENTS;
   try {
     const stored = localStorage.getItem('locket_demo_moments');
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    console.error("Failed to parse demo moments", e);
-  }
+    if (stored) return JSON.parse(stored);
+  } catch (e) {}
   return DEMO_INITIAL_MOMENTS;
 }
 
@@ -96,9 +137,7 @@ export function saveStoredDemoMoments(moments: Moment[]): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem('locket_demo_moments', JSON.stringify(moments));
-  } catch (e) {
-    console.error("Failed to save demo moments", e);
-  }
+  } catch (e) {}
 }
 
 export function addDemoMoment(newMoment: Moment): Moment[] {
