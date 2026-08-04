@@ -28,23 +28,27 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
   const selectedFriend = friends.find((f) => f.id === selectedFriendFilter);
   const labelText = selectedFriend ? selectedFriend.display_name : 'Tất cả bạn bè';
 
+  const avatarSrc =
+    currentUser.avatar_url && currentUser.avatar_url.trim() !== ''
+      ? currentUser.avatar_url
+      : `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
+
   return (
     <div className="relative w-full z-40 px-4 pt-3 sm:pt-8 pb-1 flex items-center justify-between bg-black flex-shrink-0">
-      {/* Left: User Avatar */}
+      {/* Left: User Avatar with Instant Fallback */}
       <button
         onClick={onOpenProfile}
-        className="w-9 h-9 rounded-full overflow-hidden border border-zinc-800 bg-zinc-900 flex items-center justify-center active:scale-95 transition-transform flex-shrink-0"
+        className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#FFC700] bg-zinc-900 flex items-center justify-center active:scale-95 transition-transform flex-shrink-0 shadow-md"
         title="Trang cá nhân của tôi"
       >
-        {currentUser.avatar_url ? (
-          <img
-            src={currentUser.avatar_url}
-            alt={currentUser.display_name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <User className="w-4 h-4 text-zinc-400" />
-        )}
+        <img
+          src={avatarSrc}
+          alt={currentUser.display_name}
+          onError={(e) => {
+            e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
+          }}
+          className="w-full h-full object-cover"
+        />
       </button>
 
       {/* Center: Filter Pill Dropdown */}
@@ -89,46 +93,55 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
 
             {/* Individual Friends (dm, system32, admin) */}
             <div className="space-y-0.5 max-h-56 overflow-y-auto custom-scrollbar">
-              {friends.map((friend) => (
-                <div
-                  key={friend.id}
-                  className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold transition-all ${
-                    selectedFriendFilter === friend.id
-                      ? 'bg-[#FFC700]/20 text-[#FFC700] border border-[#FFC700]/30'
-                      : 'text-zinc-300 hover:bg-zinc-700/40'
-                  }`}
-                >
-                  <button
-                    onClick={() => {
-                      onSelectFilter(friend.id);
-                      setDropdownOpen(false);
-                    }}
-                    className="flex-1 flex items-center space-x-2.5 text-left"
+              {friends.map((friend) => {
+                const fAvatar =
+                  friend.avatar_url && friend.avatar_url.trim() !== ''
+                    ? friend.avatar_url
+                    : `https://api.dicebear.com/7.x/avataaars/svg?seed=${friend.username}`;
+                return (
+                  <div
+                    key={friend.id}
+                    className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold transition-all ${
+                      selectedFriendFilter === friend.id
+                        ? 'bg-[#FFC700]/20 text-[#FFC700] border border-[#FFC700]/30'
+                        : 'text-zinc-300 hover:bg-zinc-700/40'
+                    }`}
                   >
-                    <img
-                      src={friend.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${friend.username}`}
-                      alt={friend.display_name}
-                      className="w-7 h-7 rounded-full object-cover border border-zinc-600 flex-shrink-0"
-                    />
-                    <span className="truncate max-w-[110px]">{friend.display_name}</span>
-                  </button>
-
-                  {/* View Friend Profile Icon */}
-                  {onViewFriendProfile && (
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
+                      onClick={() => {
+                        onSelectFilter(friend.id);
                         setDropdownOpen(false);
-                        onViewFriendProfile(friend);
                       }}
-                      className="p-1 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-600 transition-colors"
-                      title="Xem trang cá nhân bạn bè"
+                      className="flex-1 flex items-center space-x-2.5 text-left"
                     >
-                      <Info className="w-4 h-4" />
+                      <img
+                        src={fAvatar}
+                        alt={friend.display_name}
+                        onError={(e) => {
+                          e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${friend.username}`;
+                        }}
+                        className="w-7 h-7 rounded-full object-cover border border-zinc-600 flex-shrink-0"
+                      />
+                      <span className="truncate max-w-[110px]">{friend.display_name}</span>
                     </button>
-                  )}
-                </div>
-              ))}
+
+                    {/* View Friend Profile Icon */}
+                    {onViewFriendProfile && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDropdownOpen(false);
+                          onViewFriendProfile(friend);
+                        }}
+                        className="p-1 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-600 transition-colors"
+                        title="Xem trang cá nhân bạn bè"
+                      >
+                        <Info className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
