@@ -137,13 +137,8 @@ export function getStoredDemoMoments(): Moment[] {
       (m, i, self) => m && m.id && i === self.findIndex((x) => x && x.id === m.id)
     );
 
-    // Filter out corrupt blob: URL moments (dead after page reload = black screen)
-    const validMoments = unique.filter(
-      (m) => !m.media_url?.startsWith('blob:')
-    );
-
     // Merge default dataset so 47 photos are always present
-    const combined = [...validMoments, ...DEMO_50_MOMENTS];
+    const combined = [...unique, ...DEMO_50_MOMENTS];
     return combined.filter(
       (m, i, self) => m && m.id && i === self.findIndex((x) => x && x.id === m.id)
     );

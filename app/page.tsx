@@ -189,8 +189,7 @@ export default function HomePage() {
       } catch (e) {}
     }
 
-    const combined = [...cloudMoments, ...localOnlyUserMoments, ...localMoments, ...validSupabaseMoments]
-      .filter((m) => !m.media_url?.startsWith('blob:')); // Remove ALL dead blob: URLs
+    const combined = [...cloudMoments, ...localOnlyUserMoments, ...localMoments, ...validSupabaseMoments];
 
     const sanitized = combined.map((m) => {
       let item = m;

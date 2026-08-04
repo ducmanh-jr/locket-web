@@ -193,9 +193,8 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
     }
   } catch (e) {}
 
-  // Deduplicate by moment ID AND filter out corrupt blob: URLs
-  // blob: URLs are ephemeral browser-session-only references that always show black
+  // Deduplicate by moment ID
   return allMoments
-    .filter((m) => m && m.id && m.media_url && !m.media_url.startsWith('blob:'))
+    .filter((m) => m && m.id && m.media_url)
     .filter((m, i, self) => i === self.findIndex((x) => x && x.id === m.id));
 }
