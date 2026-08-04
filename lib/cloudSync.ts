@@ -117,6 +117,10 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
   try {
     if (!moment.id || !moment.media_url) return false;
 
+    // CRITICAL: Never push blob: URLs to cloud - they are ephemeral browser-session-only
+    // references that become black screens on any other tab/device/account
+    if (moment.media_url.startsWith('blob:')) return false;
+
     // Compress photo to ~12KB if it's base64 dataUrl (skip for videos)
     let finalMediaUrl = moment.media_url;
     if (moment.media_url.startsWith('data:') && moment.media_type !== 'video' && !moment.media_url.startsWith('data:video/')) {
@@ -189,8 +193,9 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
     }
   } catch (e) {}
 
-  // Deduplicate by moment ID
-  return allMoments.filter(
-    (m, i, self) => m && m.id && i === self.findIndex((x) => x && x.id === m.id)
-  );
+  // Deduplicate by moment ID AND filter out corrupt blob: URLs
+  // blob: URLs are ephemeral browser-session-only references that always show black
+  return allMoments
+    .filter((m) => m && m.id && m.media_url && !m.media_url.startsWith('blob:'))
+    .filter((m, i, self) => i === self.findIndex((x) => x && x.id === m.id));
 }

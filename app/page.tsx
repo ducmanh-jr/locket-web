@@ -155,11 +155,13 @@ export default function HomePage() {
 
     // 3. Find local USER-captured moments that are NOT yet in the cloud
     //    (these are moments this user captured but haven't been synced yet)
+    //    CRITICAL: Skip blob: URLs - they are dead after page reload
     const cloudIds = new Set(cloudMoments.map((m) => m.id));
     const localOnlyUserMoments = localMoments.filter(
       (m) =>
         !cloudIds.has(m.id) &&
-        !m.id.startsWith('m-photo-v5-') // exclude default sample photos
+        !m.id.startsWith('m-photo-v5-') && // exclude default sample photos
+        !m.media_url?.startsWith('blob:') // blob: URLs can't be synced - they're dead
     );
 
     // 4. Push any local-only user moments to cloud so ALL accounts can see them
@@ -170,6 +172,7 @@ export default function HomePage() {
     }
 
     // 5. Combine: cloud moments + local moments + sample dataset
+    //    Filter out ALL blob: URL moments at this stage
     let validSupabaseMoments: Moment[] = [];
     if (isSupabaseConfigured()) {
       try {
@@ -186,7 +189,8 @@ export default function HomePage() {
       } catch (e) {}
     }
 
-    const combined = [...cloudMoments, ...localOnlyUserMoments, ...localMoments, ...validSupabaseMoments];
+    const combined = [...cloudMoments, ...localOnlyUserMoments, ...localMoments, ...validSupabaseMoments]
+      .filter((m) => !m.media_url?.startsWith('blob:')); // Remove ALL dead blob: URLs
 
     const sanitized = combined.map((m) => {
       let item = m;

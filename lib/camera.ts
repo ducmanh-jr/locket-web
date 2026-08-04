@@ -147,20 +147,33 @@ export function createVideoRecorder(stream: MediaStream): {
         mediaRecorder.onstop = () => {
           const finalMime = mediaRecorder?.mimeType || selectedType || 'video/mp4';
           const blob = new Blob(chunks, { type: finalMime });
-          const videoObjectUrl = URL.createObjectURL(blob);
+
+          // CRITICAL: Always convert blob to base64 data URL.
+          // NEVER use blob: URLs - they are ephemeral and die when page reloads,
+          // causing black screen on feed AND failing cloud sync entirely.
           const reader = new FileReader();
 
           reader.onloadend = () => {
             let dataUrl = reader.result as string;
-            // Guarantee mimeType starts with data:video/ so <video> tags render natively
-            if (dataUrl && !dataUrl.startsWith('data:video/')) {
-              dataUrl = dataUrl.replace(/^data:[^;]+;/, 'data:video/mp4;');
+            if (!dataUrl || dataUrl === 'data:') {
+              // FileReader produced empty result - this should never happen
+              // but if it does, we must NOT fallback to blob: URL
+              reject(new Error('FileReader produced empty result for video'));
+              return;
             }
-            resolve({ type: 'video', dataUrl: dataUrl || videoObjectUrl, blob });
+            // Guarantee the MIME prefix is data:video/mp4; so <video> tags render
+            if (!dataUrl.startsWith('data:video/')) {
+              dataUrl = dataUrl.replace(/^data:[^;]*;/, 'data:video/mp4;');
+            }
+            resolve({ type: 'video', dataUrl, blob });
           };
+
           reader.onerror = () => {
-            resolve({ type: 'video', dataUrl: videoObjectUrl, blob });
+            // If FileReader fails, reject instead of using a blob: URL
+            // A blob: URL would cause black screen on reload and break cloud sync
+            reject(new Error('FileReader failed to convert video blob to base64'));
           };
+
           reader.readAsDataURL(blob);
         };
 
