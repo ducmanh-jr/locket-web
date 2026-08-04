@@ -147,15 +147,19 @@ export function createVideoRecorder(stream: MediaStream): {
         mediaRecorder.onstop = () => {
           const finalMime = mediaRecorder?.mimeType || selectedType || 'video/mp4';
           const blob = new Blob(chunks, { type: finalMime });
+          const videoObjectUrl = URL.createObjectURL(blob);
           const reader = new FileReader();
 
           reader.onloadend = () => {
-            const dataUrl = reader.result as string;
-            resolve({ type: 'video', dataUrl, blob });
+            let dataUrl = reader.result as string;
+            // Guarantee mimeType starts with data:video/ so <video> tags render natively
+            if (dataUrl && !dataUrl.startsWith('data:video/')) {
+              dataUrl = dataUrl.replace(/^data:[^;]+;/, 'data:video/mp4;');
+            }
+            resolve({ type: 'video', dataUrl: dataUrl || videoObjectUrl, blob });
           };
           reader.onerror = () => {
-            const fallbackUrl = URL.createObjectURL(blob);
-            resolve({ type: 'video', dataUrl: fallbackUrl, blob });
+            resolve({ type: 'video', dataUrl: videoObjectUrl, blob });
           };
           reader.readAsDataURL(blob);
         };

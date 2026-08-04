@@ -330,7 +330,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             }}
             className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.5rem] transform-gpu will-change-[transform,opacity]"
           >
-            {moment.media_type === 'video' || moment.media_url?.startsWith('data:video/') ? (
+            {moment.media_type === 'video' ||
+            moment.id?.includes('video') ||
+            moment.media_url?.startsWith('data:video/') ||
+            moment.media_url?.startsWith('blob:') ? (
               <video
                 src={moment.media_url}
                 autoPlay

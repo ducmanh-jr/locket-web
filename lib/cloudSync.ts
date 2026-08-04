@@ -16,7 +16,7 @@ export interface CloudProfile {
 export function compressImageForCloudSync(dataUrl: string): Promise<string> {
   return new Promise((resolve) => {
     if (typeof window === 'undefined' || !dataUrl) return resolve(dataUrl);
-    if (dataUrl.startsWith('data:video/')) return resolve(dataUrl);
+    if (dataUrl.startsWith('data:video/') || dataUrl.startsWith('blob:') || !dataUrl.startsWith('data:image/')) return resolve(dataUrl);
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
