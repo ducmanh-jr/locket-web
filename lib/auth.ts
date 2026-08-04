@@ -26,8 +26,19 @@ function getOrCreateDeviceProfile(): Profile {
 export function useAuth() {
   const router = useRouter();
   const pathname = usePathname();
-  const [userProfile, setUserProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<Profile | null>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('locket_google_user_v1') || localStorage.getItem('locket_device_profile');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.id) return parsed;
+        } catch (e) {}
+      }
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function checkUserSession() {
@@ -91,10 +102,18 @@ export function useAuth() {
             created_at: new Date().toISOString(),
           };
 
+          try {
+            localStorage.setItem('locket_google_user_v1', JSON.stringify(newProfile));
+          } catch (e) {}
+
           setUserProfile(newProfile);
         }
       } catch (e) {
-        setUserProfile(getOrCreateDeviceProfile());
+        // Fallback check
+        const stored = localStorage.getItem('locket_google_user_v1');
+        if (stored) {
+          try { setUserProfile(JSON.parse(stored)); } catch (err) {}
+        }
       } finally {
         setLoading(false);
       }

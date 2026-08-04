@@ -310,11 +310,29 @@ export default function HomePage() {
     };
   }, [currentUser.id]);
 
-  if (authLoading || !userProfile) {
+  if (authLoading) {
     return (
       <div className="min-h-full flex flex-col items-center justify-center bg-black text-white space-y-4">
         <div className="w-10 h-10 rounded-full border-4 border-[#FFC700] border-t-transparent animate-spin" />
         <p className="text-xs font-semibold text-zinc-400">Đang kiểm tra tài khoản Google...</p>
+      </div>
+    );
+  }
+
+  if (!userProfile) {
+    return (
+      <div className="min-h-full flex flex-col items-center justify-center bg-black text-white space-y-4 p-4 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-[#FFC700]/20 text-[#FFC700] flex items-center justify-center mb-2 border border-[#FFC700]/40">
+          <Camera className="w-6 h-6" />
+        </div>
+        <p className="text-sm font-bold text-white">Yêu cầu Đăng nhập Google</p>
+        <p className="text-xs text-zinc-400 max-w-xs">Chuyển hướng đến màn hình đăng nhập...</p>
+        <button
+          onClick={() => router.push('/login')}
+          className="mt-2 px-4 py-2 bg-[#FFC700] text-black font-bold text-xs rounded-xl"
+        >
+          Đăng nhập ngay 🚀
+        </button>
       </div>
     );
   }
