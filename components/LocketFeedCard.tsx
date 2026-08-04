@@ -4,6 +4,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Moment, Profile } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, Trash2, MoreVertical, Volume2, VolumeX, Music } from 'lucide-react';
+import { createGuaranteedAudio } from '@/lib/audioPlayer';
 
 interface LocketFeedCardProps {
   moment: Moment;
@@ -40,30 +41,28 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   >([]);
   const [showOptionsModal, setShowOptionsModal] = useState<boolean>(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const activeAudioHandle = useRef<{ stop: () => void } | null>(null);
 
-  // Auto Play & Manage Audio snippet for Moment Music
+  // Guaranteed Audio snippet player for Moment Music
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
+    if (activeAudioHandle.current) {
+      activeAudioHandle.current.stop();
+      activeAudioHandle.current = null;
       setIsPlayingAudio(false);
     }
 
     if (moment.music?.preview_url) {
-      const audio = new Audio(moment.music.preview_url);
-      audio.volume = 0.65;
-      audio.loop = true;
-      audioRef.current = audio;
-
-      audio
-        .play()
-        .then(() => setIsPlayingAudio(true))
-        .catch(() => setIsPlayingAudio(false));
+      setIsPlayingAudio(true);
+      activeAudioHandle.current = createGuaranteedAudio(
+        moment.music.preview_url,
+        () => setIsPlayingAudio(false)
+      );
 
       return () => {
-        audio.pause();
-        audioRef.current = null;
+        if (activeAudioHandle.current) {
+          activeAudioHandle.current.stop();
+          activeAudioHandle.current = null;
+        }
         setIsPlayingAudio(false);
       };
     }
@@ -71,22 +70,18 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
 
   const toggleAudio = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!audioRef.current && moment.music?.preview_url) {
-      const audio = new Audio(moment.music.preview_url);
-      audio.volume = 0.65;
-      audio.loop = true;
-      audioRef.current = audio;
-    }
-    if (!audioRef.current) return;
-
     if (isPlayingAudio) {
-      audioRef.current.pause();
+      if (activeAudioHandle.current) {
+        activeAudioHandle.current.stop();
+        activeAudioHandle.current = null;
+      }
       setIsPlayingAudio(false);
-    } else {
-      audioRef.current
-        .play()
-        .then(() => setIsPlayingAudio(true))
-        .catch(() => {});
+    } else if (moment.music?.preview_url) {
+      setIsPlayingAudio(true);
+      activeAudioHandle.current = createGuaranteedAudio(
+        moment.music.preview_url,
+        () => setIsPlayingAudio(false)
+      );
     }
   };
 

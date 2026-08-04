@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MusicTrack } from '@/lib/types';
 import { Search, Play, Pause, Bookmark, MoreHorizontal, X, Check, Music } from 'lucide-react';
+import { createGuaranteedAudio } from '@/lib/audioPlayer';
 
 interface MusicPickerModalProps {
   onSelectMusic: (track: MusicTrack) => void;
@@ -20,56 +21,60 @@ const PRESET_TRENDING_TRACKS: ExtendedTrack[] = [
     title: 'Thế Mà Lại Hay',
     artist: 'Guxxi',
     playsCount: '1,1 triệu',
-    cover_url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&q=80',
-    preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/6b/c4/88/6bc4882e-60f2-b88d-7fb7-e21544a0e28b/mzaf_1003463991206103004.plus.aac.p.m4a',
+    cover_url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200&auto=format&fit=crop&q=80',
+    preview_url: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3',
   },
   {
     id: 'itunes-1763782910',
     title: 'Dù Có Cách Xa (NVT Remix)',
     artist: 'Kim Phương Anh',
     playsCount: '575.450',
-    cover_url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&q=80',
-    preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/e5/22/df/e522df14-722a-f886-f6b0-ee0b4c73f5a8/mzaf_6380963162791771146.plus.aac.p.m4a',
+    cover_url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200&auto=format&fit=crop&q=80',
+    preview_url: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3',
   },
   {
     id: 'itunes-1736173001',
     title: 'Chấp Niệm Trong Em (Remix)',
     artist: 'Ngân Ngân',
     playsCount: '749.245',
-    cover_url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&q=80',
-    preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/58/b7/66/58b7661b-91c9-6f94-6d9b-73599e52e5a7/mzaf_4079815049386348126.plus.aac.p.m4a',
+    cover_url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200&auto=format&fit=crop&q=80',
+    preview_url: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3',
   },
   {
     id: 'itunes-1735160200',
     title: 'Chúng Ta Của Tương Lai',
     artist: 'Sơn Tùng M-TP',
     playsCount: '2,8 triệu',
-    cover_url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&q=80',
-    preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/31/53/35/3153359d-648b-3e58-f3ff-568b6b15e4f4/mzaf_16480572573215570535.plus.aac.p.m4a',
+    cover_url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&auto=format&fit=crop&q=80',
+    preview_url: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3',
   },
   {
     id: 'itunes-1735160201',
     title: 'APT.',
     artist: 'ROSÉ & Bruno Mars',
     playsCount: '15,4 triệu',
-    cover_url: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=300&q=80',
-    preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/6b/c4/88/6bc4882e-60f2-b88d-7fb7-e21544a0e28b/mzaf_1003463991206103004.plus.aac.p.m4a',
+    cover_url: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=200&auto=format&fit=crop&q=80',
+    preview_url: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3',
   },
   {
     id: 'itunes-1735160202',
     title: 'Năng Lượng Tích Cực #1',
     artist: 'QTrung, MeMe Media',
     playsCount: '1,8 triệu',
-    cover_url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=300&q=80',
-    preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/e5/22/df/e522df14-722a-f886-f6b0-ee0b4c73f5a8/mzaf_6380963162791771146.plus.aac.p.m4a',
+    cover_url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=200&auto=format&fit=crop&q=80',
+    preview_url: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3',
   },
 ];
 
-const TrackCoverImage: React.FC<{ src: string; isPlaying: boolean }> = ({ src, isPlaying }) => {
+const TrackCoverImage: React.FC<{ src: string; title: string; isPlaying: boolean }> = ({
+  src,
+  title,
+  isPlaying,
+}) => {
   const [imgError, setImgError] = useState(false);
 
   return (
-    <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-[#2A2A32] flex-shrink-0 border border-zinc-700/50 shadow-sm">
+    <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-zinc-800 to-zinc-900 flex-shrink-0 border border-zinc-700/60 shadow-md flex items-center justify-center">
       {!imgError && src ? (
         <img
           src={src}
@@ -78,13 +83,13 @@ const TrackCoverImage: React.FC<{ src: string; isPlaying: boolean }> = ({ src, i
           className="w-full h-full object-cover"
         />
       ) : (
-        <div className="w-full h-full bg-gradient-to-tr from-[#FFC700] via-[#FF9900] to-purple-600 flex items-center justify-center">
-          <Music className="w-5 h-5 text-black" />
+        <div className="w-full h-full bg-gradient-to-tr from-[#FFC700] via-[#FF8800] to-purple-600 flex items-center justify-center">
+          <Music className="w-5 h-5 text-black stroke-[2.5]" />
         </div>
       )}
       {isPlaying && (
-        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-          <div className="w-2.5 h-2.5 bg-[#FFC700] rounded-full animate-ping" />
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[1px]">
+          <div className="w-3 h-3 bg-[#FFC700] rounded-full animate-ping" />
         </div>
       )}
     </div>
@@ -101,7 +106,7 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const activeAudioHandle = useRef<{ stop: () => void } | null>(null);
 
   // Search iTunes API when user types
   useEffect(() => {
@@ -147,9 +152,9 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
   // Clean up audio player on unmount
   useEffect(() => {
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
+      if (activeAudioHandle.current) {
+        activeAudioHandle.current.stop();
+        activeAudioHandle.current = null;
       }
     };
   }, []);
@@ -158,24 +163,28 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
     e.stopPropagation();
 
     if (playingTrackId === track.id) {
-      audioRef.current?.pause();
+      if (activeAudioHandle.current) {
+        activeAudioHandle.current.stop();
+        activeAudioHandle.current = null;
+      }
       setPlayingTrackId(null);
     } else {
-      if (audioRef.current) {
-        audioRef.current.pause();
+      if (activeAudioHandle.current) {
+        activeAudioHandle.current.stop();
       }
-      const newAudio = new Audio(track.preview_url);
-      newAudio.volume = 0.75;
-      newAudio.play().catch(() => {});
-      newAudio.onended = () => setPlayingTrackId(null);
-      audioRef.current = newAudio;
+
       setPlayingTrackId(track.id);
+      activeAudioHandle.current = createGuaranteedAudio(
+        track.preview_url,
+        () => setPlayingTrackId(null)
+      );
     }
   };
 
   const handleSelect = (track: ExtendedTrack) => {
-    if (audioRef.current) {
-      audioRef.current.pause();
+    if (activeAudioHandle.current) {
+      activeAudioHandle.current.stop();
+      activeAudioHandle.current = null;
     }
     onSelectMusic(track);
     onClose();
@@ -260,7 +269,7 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
                 >
                   {/* Left: Cover Art + Titles */}
                   <div className="flex items-center space-x-3 truncate pr-2 flex-1">
-                    <TrackCoverImage src={track.cover_url} isPlaying={isPlaying} />
+                    <TrackCoverImage src={track.cover_url} title={track.title} isPlaying={isPlaying} />
 
                     <div className="truncate">
                       <h4 className="text-white text-sm font-bold truncate leading-tight">
