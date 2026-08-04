@@ -29,6 +29,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   prevMomentUrl,
 }) => {
   const touchStartY = useRef<number | null>(null);
+  const mouseStartY = useRef<number | null>(null);
+  const [isMouseDown, setIsMouseDown] = useState<boolean>(false);
   const [direction, setDirection] = useState<'up' | 'down'>('up');
   const [floatingEmojis, setFloatingEmojis] = useState<
     { id: number; emoji: string; x: number; rotation: number }[]
@@ -47,6 +49,25 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     }
   }, [nextMomentUrl, prevMomentUrl]);
 
+  // Keyboard Shortcuts (ArrowUp / ArrowDown for PC)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+        if (hasNext && onNext) {
+          setDirection('up');
+          onNext();
+        }
+      } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+        if (hasPrev && onPrev) {
+          setDirection('down');
+          onPrev();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hasNext, hasPrev, onNext, onPrev]);
+
   const sender = moment.sender || {
     id: 'unknown',
     username: 'ban_be',
@@ -64,6 +85,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     return `${Math.floor(diff / 86400)}d`;
   };
 
+  // Touch Swipe Vertical Handlers (Mobile)
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
   };
@@ -84,6 +106,34 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     touchStartY.current = null;
   };
 
+  // Mouse Drag Vertical Handlers (PC Mouse Click & Drag like phone swipe)
+  const handleMouseDown = (e: React.MouseEvent) => {
+    mouseStartY.current = e.clientY;
+    setIsMouseDown(true);
+  };
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (mouseStartY.current === null || !isMouseDown) return;
+    const diffY = mouseStartY.current - e.clientY;
+
+    if (diffY > 35 && hasNext && onNext) {
+      setDirection('up');
+      onNext();
+    } else if (diffY < -35 && hasPrev && onPrev) {
+      setDirection('down');
+      onPrev();
+    }
+
+    mouseStartY.current = null;
+    setIsMouseDown(false);
+  };
+
+  const handleMouseLeave = () => {
+    mouseStartY.current = null;
+    setIsMouseDown(false);
+  };
+
+  // Mouse Wheel Vertical Scroll Handler
   const handleWheel = (e: React.WheelEvent) => {
     if (e.deltaY > 25 && hasNext && onNext) {
       setDirection('up');
@@ -130,7 +180,12 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       onWheel={handleWheel}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="w-full flex-1 flex flex-col items-center justify-center select-none cursor-grab active:cursor-grabbing p-2 my-auto overflow-hidden relative"
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
+      className={`w-full flex-1 flex flex-col items-center justify-center select-none p-2 my-auto overflow-hidden relative ${
+        isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
+      }`}
     >
       {/* 1:1 Perfect Square Photo Card Container */}
       <div
@@ -160,7 +215,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             }}
             transition={{
               duration: 0.28,
-              ease: [0.32, 0.72, 0, 1], // iOS cubic-bezier physics curve
+              ease: [0.32, 0.72, 0, 1],
             }}
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
             className="w-full h-full overflow-hidden"
@@ -171,7 +226,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               className="w-full h-full object-cover select-none pointer-events-none"
             />
 
-            {/* Floating Emoji Reaction Particles with Bounce & Rotation */}
+            {/* Floating Emoji Reaction Particles */}
             {floatingEmojis.map((item) => (
               <motion.div
                 key={item.id}
