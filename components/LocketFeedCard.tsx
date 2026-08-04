@@ -77,18 +77,18 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       onWheel={handleWheel}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="w-full flex-1 flex flex-col items-center justify-center max-w-[390px] mx-auto select-none cursor-grab active:cursor-grabbing px-2 py-1"
+      className="w-full flex flex-col items-center justify-center select-none cursor-grab active:cursor-grabbing px-2 py-1 my-auto overflow-hidden"
     >
-      {/* 1:1 Large Authentic Locket Photo Card (Matching Screenshot 2) */}
-      <div className="relative w-[92vw] sm:w-full aspect-square rounded-[2.75rem] overflow-hidden bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0">
+      {/* 1:1 Large Authentic Locket Photo Card Container with strict Overflow-Hidden */}
+      <div className="relative w-[90vw] max-w-[360px] sm:max-w-[370px] aspect-square rounded-[2.5rem] overflow-hidden bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={moment.id}
-            initial={{ opacity: 0, y: direction === 'up' ? 90 : -90 }}
+            initial={{ opacity: 0, y: direction === 'up' ? 100 : -100 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: direction === 'up' ? -90 : 90 }}
-            transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
-            className="w-full h-full relative"
+            exit={{ opacity: 0, y: direction === 'up' ? -100 : 100 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            className="w-full h-full absolute inset-0 overflow-hidden"
           >
             <img
               src={moment.media_url}
@@ -108,8 +108,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* Sender Avatar & Name Tag Directly Below Photo Card (Matching Screenshot 2) */}
-      <div className="flex items-center space-x-2 mt-2.5 mb-1 flex-shrink-0">
+      {/* Sender Avatar & Name Tag Centered DIRECTLY Below Photo Card */}
+      <div className="flex items-center justify-center space-x-2 mt-3 mb-1 w-full text-center flex-shrink-0">
         <div className="w-5.5 h-5.5 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700 flex-shrink-0">
           <img
             src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
@@ -117,8 +117,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             className="w-full h-full object-cover"
           />
         </div>
-        <span className="text-white text-xs font-bold">{sender.display_name}</span>
-        <span className="text-zinc-500 text-xs font-medium">{formatLocketTime(moment.created_at)}</span>
+        <span className="text-white text-xs font-bold truncate max-w-[150px]">{sender.display_name}</span>
+        <span className="text-zinc-500 text-xs font-medium flex-shrink-0">{formatLocketTime(moment.created_at)}</span>
       </div>
     </div>
   );

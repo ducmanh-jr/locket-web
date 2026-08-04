@@ -33,6 +33,7 @@ export default function HomePage() {
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [showMenuModal, setShowMenuModal] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [friendsList, setFriendsList] = useState<Profile[]>([]);
 
   const currentUser = userProfile || DEMO_CURRENT_USER;
 
@@ -42,6 +43,25 @@ export default function HomePage() {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
   }, []);
+
+  // Fetch real friends and registered users from Supabase
+  const loadFriends = async () => {
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase.from('profiles').select('*');
+        if (!error && data && data.length > 0) {
+          const realOthers = data.filter((p: Profile) => p.id !== currentUser.id);
+          const combined = [...realOthers, ...DEMO_SUGGESTED_USERS];
+          const unique = combined.filter(
+            (user, index, self) => index === self.findIndex((u) => u.username === user.username)
+          );
+          setFriendsList(unique);
+          return;
+        }
+      } catch (e) {}
+    }
+    setFriendsList(DEMO_SUGGESTED_USERS);
+  };
 
   // Fetch moments
   const loadMoments = async () => {
@@ -68,6 +88,7 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    loadFriends();
     loadMoments();
 
     if (isSupabaseConfigured()) {
@@ -86,7 +107,7 @@ export default function HomePage() {
         supabase.removeChannel(channel);
       };
     }
-  }, []);
+  }, [currentUser.id]);
 
   if (authLoading) {
     return (
@@ -197,12 +218,12 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-full flex flex-col justify-between bg-black selection:bg-[#FFC700] selection:text-black">
+    <div className="min-h-full flex flex-col justify-between bg-black selection:bg-[#FFC700] selection:text-black overflow-hidden relative">
       {/* Header */}
       {currentView !== 'chat' && (
         <LocketHeader
           currentUser={currentUser}
-          friends={DEMO_SUGGESTED_USERS.slice(0, 5)}
+          friends={friendsList}
           selectedFriendFilter={selectedFriendFilter}
           onSelectFilter={(friendId) => {
             setSelectedFriendFilter(friendId);
@@ -213,11 +234,11 @@ export default function HomePage() {
         />
       )}
 
-      {/* Main Views */}
-      <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden">
+      {/* Main Views Container with Strict Overflow-Hidden */}
+      <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden w-full">
         {currentView === 'chat' ? (
           <LocketChatView
-            friends={DEMO_SUGGESTED_USERS.slice(0, 5)}
+            friends={friendsList}
             currentUser={currentUser}
             onBack={() => setCurrentView('feed')}
           />
@@ -232,14 +253,14 @@ export default function HomePage() {
             onOpenCamera={() => setShowCamera(true)}
           />
         ) : (
-          <div className="w-full flex-1 flex flex-col justify-between p-2">
+          <div className="w-full flex-1 flex flex-col justify-between items-center overflow-hidden p-1">
             <div className="w-full px-2 pt-1">
               <SupabaseConfigNotice />
               <PWAInstallBanner />
             </div>
 
             {loading ? (
-              <div className="w-full max-w-sm aspect-square my-auto rounded-[2.5rem] bg-[#18181C] border border-zinc-800 flex items-center justify-center animate-pulse">
+              <div className="w-[90vw] max-w-[360px] aspect-square my-auto rounded-[2.5rem] bg-[#18181C] border border-zinc-800 flex items-center justify-center animate-pulse">
                 <div className="w-10 h-10 rounded-full border-4 border-[#FFC700] border-t-transparent animate-spin" />
               </div>
             ) : filteredMoments.length > 0 && currentMoment ? (
@@ -252,7 +273,7 @@ export default function HomePage() {
                 hasNext={currentIndex < filteredMoments.length - 1}
               />
             ) : (
-              <div className="w-full max-w-sm aspect-square my-auto rounded-[2.5rem] bg-[#18181C] border border-zinc-800 p-8 flex flex-col items-center justify-center text-center">
+              <div className="w-[90vw] max-w-[360px] aspect-square my-auto rounded-[2.5rem] bg-[#18181C] border border-zinc-800 p-8 flex flex-col items-center justify-center text-center">
                 <div className="w-14 h-14 rounded-full bg-[#FFC700]/20 text-[#FFC700] flex items-center justify-center mb-3 border border-[#FFC700]/40">
                   <Camera className="w-7 h-7" />
                 </div>
@@ -292,7 +313,7 @@ export default function HomePage() {
           <div className="w-full max-w-sm bg-[#18181C] border border-zinc-800 rounded-t-3xl sm:rounded-3xl p-5 text-left relative">
             <button
               onClick={() => setShowMenuModal(false)}
-              className="absolute top-4 right-4 w-7 h-7 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center"
+              className="absolute top-4 right-4 w-7 h-7 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center hover:text-white"
             >
               <X className="w-4 h-4" />
             </button>
@@ -335,7 +356,7 @@ export default function HomePage() {
       {/* Camera View */}
       {showCamera && (
         <CameraView
-          friends={DEMO_SUGGESTED_USERS.slice(0, 5)}
+          friends={friendsList}
           onClose={() => setShowCamera(false)}
           onSendMoment={handleSendMoment}
         />
