@@ -1,6 +1,6 @@
 import { Moment } from './types';
 
-const STORE_URL = 'https://jsonblob.com/api/jsonBlob/019fcc1e-0de5-7e25-bd85-bd9756144094';
+const JSONBLOB_STORE_URL = 'https://jsonblob.com/api/jsonBlob/019fcc1e-0de5-7e25-bd85-bd9756144094';
 
 export interface CloudProfile {
   id: string;
@@ -9,131 +9,70 @@ export interface CloudProfile {
   avatar_url: string;
 }
 
-interface StoreData {
-  profiles: CloudProfile[];
-  moments: Moment[];
-}
-
 /**
- * Uploads a photo blob to /api/upload (Serverless Route) to get a permanent public CDN URL without CORS issues.
+ * Compresses an image DataURL to 360x360 JPEG quality 0.50.
+ * Reduces base64 payload size from ~500KB down to ~12KB - 15KB!
  */
-export async function uploadPhotoToCDN(blob: Blob): Promise<string | null> {
-  try {
-    const formData = new FormData();
-    formData.append('file', blob, `photo_${Date.now()}.jpg`);
-
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      if (data?.url && typeof data.url === 'string' && data.url.startsWith('https://')) {
-        return data.url;
+export function compressImageForCloudSync(dataUrl: string): Promise<string> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || !dataUrl) return resolve(dataUrl);
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const targetSize = 360; // 360x360 square
+        canvas.width = targetSize;
+        canvas.height = targetSize;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, targetSize, targetSize);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
+          resolve(compressedDataUrl);
+        } else {
+          resolve(dataUrl);
+        }
+      } catch (e) {
+        resolve(dataUrl);
       }
-    }
-    return null;
-  } catch (e) {
-    console.error('API Upload error:', e);
-    return null;
-  }
-}
-
-/**
- * Fetches current store contents from JSONBlob.
- */
-async function getStore(): Promise<StoreData> {
-  try {
-    const res = await fetch(STORE_URL, {
-      cache: 'no-store',
-      headers: { Accept: 'application/json' },
-    });
-    if (!res.ok) return { profiles: [], moments: [] };
-    const data = await res.json();
-    return {
-      profiles: Array.isArray(data?.profiles) ? data.profiles : [],
-      moments: Array.isArray(data?.moments) ? data.moments : [],
     };
-  } catch (e) {
-    return { profiles: [], moments: [] };
-  }
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
 }
 
 /**
- * Saves store contents to JSONBlob.
- */
-async function saveStore(data: StoreData): Promise<boolean> {
-  try {
-    const res = await fetch(STORE_URL, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    return res.ok;
-  } catch (e) {
-    return false;
-  }
-}
-
-/**
- * Registers a user profile to the Global Cloud Store.
+ * Registers a user profile to the Global Cloud.
  */
 export async function pushProfileToGlobalCloud(profile: CloudProfile): Promise<boolean> {
   try {
     if (!profile.id || !profile.username) return false;
-    const store = await getStore();
 
-    // Check if profile exists
-    const existingIndex = store.profiles.findIndex(
-      (p) => p.id === profile.id || p.username === profile.username
-    );
+    // 1. Send to Serverless Sync API
+    await fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'push_profile', profile }),
+    });
 
-    if (existingIndex >= 0) {
-      store.profiles[existingIndex] = {
-        ...store.profiles[existingIndex],
-        ...profile,
-      };
-    } else {
-      store.profiles.push(profile);
-    }
-
-    return await saveStore(store);
-  } catch (e) {
-    return false;
-  }
-}
-
-/**
- * Fetches all registered user profiles from the Global Cloud Store.
- */
-export async function fetchGlobalCloudProfiles(): Promise<CloudProfile[]> {
-  const store = await getStore();
-  return store.profiles;
-}
-
-/**
- * Pushes a newly posted moment to the Global Cloud Store.
- */
-export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> {
-  try {
-    if (!moment.id || !moment.media_url) return false;
-    const store = await getStore();
-
-    // Avoid duplicate moment ID
-    const exists = store.moments.some((m) => m.id === moment.id);
-    if (!exists) {
-      // Unshift to place latest first
-      store.moments.unshift(moment);
-      // Keep max 60 most recent moments in cloud store
-      if (store.moments.length > 60) {
-        store.moments = store.moments.slice(0, 60);
+    // 2. Also send to JSONBlob
+    try {
+      const getRes = await fetch(JSONBLOB_STORE_URL, { cache: 'no-store' });
+      if (getRes.ok) {
+        const data = await getRes.json();
+        const profiles = Array.isArray(data.profiles) ? data.profiles : [];
+        const idx = profiles.findIndex((p: any) => p.id === profile.id || p.username === profile.username);
+        if (idx >= 0) profiles[idx] = profile;
+        else profiles.push(profile);
+        data.profiles = profiles;
+        await fetch(JSONBLOB_STORE_URL, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
       }
-      return await saveStore(store);
-    }
+    } catch (e) {}
+
     return true;
   } catch (e) {
     return false;
@@ -141,9 +80,107 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
 }
 
 /**
- * Fetches all moments posted across accounts from the Global Cloud Store.
+ * Fetches all user profiles from Global Cloud.
+ */
+export async function fetchGlobalCloudProfiles(): Promise<CloudProfile[]> {
+  try {
+    // Try Serverless API first
+    const res = await fetch('/api/sync', { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.profiles) && data.profiles.length > 0) {
+        return data.profiles;
+      }
+    }
+
+    // Fallback to JSONBlob
+    const jsonRes = await fetch(JSONBLOB_STORE_URL, { cache: 'no-store' });
+    if (jsonRes.ok) {
+      const data = await jsonRes.json();
+      if (Array.isArray(data.profiles)) return data.profiles;
+    }
+
+    return [];
+  } catch (e) {
+    return [];
+  }
+}
+
+/**
+ * Pushes a newly posted moment to Global Cloud.
+ * The photo is compressed to ~12KB before sending so it uploads instantly!
+ */
+export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> {
+  try {
+    if (!moment.id || !moment.media_url) return false;
+
+    // Compress photo to ~12KB if it's base64 dataUrl
+    let finalMediaUrl = moment.media_url;
+    if (moment.media_url.startsWith('data:')) {
+      finalMediaUrl = await compressImageForCloudSync(moment.media_url);
+    }
+
+    const compressedMoment: Moment = {
+      ...moment,
+      media_url: finalMediaUrl,
+    };
+
+    // 1. Send to Serverless Sync API
+    await fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'push_moment', moment: compressedMoment }),
+    });
+
+    // 2. Also send to JSONBlob
+    try {
+      const getRes = await fetch(JSONBLOB_STORE_URL, { cache: 'no-store' });
+      if (getRes.ok) {
+        const data = await getRes.json();
+        const moments = Array.isArray(data.moments) ? data.moments : [];
+        const exists = moments.some((m: any) => m.id === compressedMoment.id);
+        if (!exists) {
+          moments.unshift(compressedMoment);
+          if (moments.length > 30) moments.splice(30);
+          data.moments = moments;
+          await fetch(JSONBLOB_STORE_URL, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
+        }
+      }
+    } catch (e) {}
+
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Fetches all moments posted across accounts from Global Cloud.
  */
 export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
-  const store = await getStore();
-  return store.moments;
+  try {
+    // 1. Try Serverless API first
+    const res = await fetch('/api/sync', { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.moments) && data.moments.length > 0) {
+        return data.moments;
+      }
+    }
+
+    // 2. Fallback to JSONBlob
+    const jsonRes = await fetch(JSONBLOB_STORE_URL, { cache: 'no-store' });
+    if (jsonRes.ok) {
+      const data = await jsonRes.json();
+      if (Array.isArray(data.moments)) return data.moments;
+    }
+
+    return [];
+  } catch (e) {
+    return [];
+  }
 }

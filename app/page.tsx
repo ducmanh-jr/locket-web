@@ -25,7 +25,7 @@ import { Camera, X, UserPlus } from 'lucide-react';
 import { CapturedImage } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { pushMomentToGlobalCloud, fetchGlobalCloudMoments, pushProfileToGlobalCloud, fetchGlobalCloudProfiles, uploadPhotoToCDN } from '@/lib/cloudSync';
+import { pushMomentToGlobalCloud, fetchGlobalCloudMoments, pushProfileToGlobalCloud, fetchGlobalCloudProfiles } from '@/lib/cloudSync';
 
 export default function HomePage() {
   const router = useRouter();
@@ -292,13 +292,7 @@ export default function HomePage() {
     let mediaUrl = image.dataUrl;
     const activeSender = userProfile || currentUser;
 
-    // 1. Upload photo to CDN for fast, permanent global access across accounts
-    try {
-      const cdnUrl = await uploadPhotoToCDN(image.blob);
-      if (cdnUrl) {
-        mediaUrl = cdnUrl;
-      }
-    } catch (e) {}
+
 
     if (isSupabaseConfigured()) {
       try {
