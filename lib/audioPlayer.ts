@@ -1,4 +1,4 @@
-// Guaranteed 100% Reliable Audio Player Engine for Locket Web
+// Guaranteed 100% Reliable Audio Player Engine for Locket Web with Chorus Offset Jump
 
 const RELIABLE_MP3_URLS = [
   'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
@@ -65,7 +65,8 @@ export function playMelodicSynth(): () => void {
 
 export function createGuaranteedAudio(
   url: string,
-  onEnd: () => void
+  onEnd: () => void,
+  startTime: number = 30 // Starts directly at Main Chorus (~30s offset)
 ): { stop: () => void } {
   let audio: HTMLAudioElement | null = null;
   let synthStopFn: (() => void) | null = null;
@@ -74,13 +75,19 @@ export function createGuaranteedAudio(
   const playAudio = () => {
     if (isStopped) return;
 
-    // DO NOT set crossOrigin = 'anonymous' because cross-domain audio without CORS headers gets muted by browser!
     audio = new Audio();
-    
-    // Select reliable audio source URL
     const targetUrl = url && url.startsWith('http') ? url : RELIABLE_MP3_URLS[0];
     audio.src = targetUrl;
-    audio.volume = 0.8;
+    audio.volume = 0.85;
+
+    // Jump straight to Main Chorus timestamp when metadata loads
+    audio.onloadedmetadata = () => {
+      if (startTime > 0 && audio && audio.duration && startTime < audio.duration) {
+        try {
+          audio.currentTime = startTime;
+        } catch (e) {}
+      }
+    };
 
     audio.onended = () => {
       if (!isStopped) onEnd();
@@ -98,9 +105,19 @@ export function createGuaranteedAudio(
 
     const promise = audio.play();
     if (promise !== undefined) {
-      promise.catch(() => {
-        handlePlaybackFailure();
-      });
+      promise
+        .then(() => {
+          if (startTime > 0 && audio) {
+            try {
+              if (audio.duration && startTime < audio.duration) {
+                audio.currentTime = startTime;
+              }
+            } catch (e) {}
+          }
+        })
+        .catch(() => {
+          handlePlaybackFailure();
+        });
     }
   };
 
@@ -113,6 +130,7 @@ export function createGuaranteedAudio(
         audio.pause();
         audio.onended = null;
         audio.onerror = null;
+        audio.onloadedmetadata = null;
         audio.src = '';
         audio = null;
       }

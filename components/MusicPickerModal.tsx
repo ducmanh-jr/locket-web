@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { MusicTrack } from '@/lib/types';
-import { Search, Play, Pause, Bookmark, MoreHorizontal, X, Check, Music } from 'lucide-react';
+import { Search, Play, Pause, Bookmark, MoreHorizontal, X, Check, Music, Sparkles } from 'lucide-react';
 import { createGuaranteedAudio } from '@/lib/audioPlayer';
 
 interface MusicPickerModalProps {
@@ -13,64 +13,95 @@ interface MusicPickerModalProps {
 
 interface ExtendedTrack extends MusicTrack {
   playsCount?: string;
+  chorusOffset?: number; // Start timestamp in seconds for main chorus snippet
 }
 
+// Curated FB Story Trending Light & Gentle Music List (Acoustic, Chill Lofi, V-Pop & US-UK Hits)
 const PRESET_TRENDING_TRACKS: ExtendedTrack[] = [
   {
     id: 'itunes-1734543789',
-    title: 'Thế Mà Lại Hay',
-    artist: 'Guxxi',
-    playsCount: '1,1 triệu',
+    title: 'Từng Cho Nhau',
+    artist: 'Hà Nhi (Acoustic Chill)',
+    playsCount: '1,8 triệu',
+    chorusOffset: 35,
     cover_url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200&auto=format&fit=crop&q=80',
     preview_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
   },
   {
     id: 'itunes-1763782910',
-    title: 'Dù Có Cách Xa (NVT Remix)',
-    artist: 'Kim Phương Anh',
-    playsCount: '575.450',
+    title: 'Tình Cờ Thích Em',
+    artist: 'Vũ. (Indie Chill)',
+    playsCount: '2,4 triệu',
+    chorusOffset: 40,
     cover_url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200&auto=format&fit=crop&q=80',
     preview_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
   },
   {
     id: 'itunes-1736173001',
-    title: 'Chấp Niệm Trong Em (Remix)',
-    artist: 'Ngân Ngân',
-    playsCount: '749.245',
+    title: 'Mặt Trời Của Em',
+    artist: 'Phương Ly',
+    playsCount: '3,1 triệu',
+    chorusOffset: 30,
     cover_url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200&auto=format&fit=crop&q=80',
     preview_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-  },
-  {
-    id: 'itunes-1735160200',
-    title: 'Chúng Ta Của Tương Lai',
-    artist: 'Sơn Tùng M-TP',
-    playsCount: '2,8 triệu',
-    cover_url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&auto=format&fit=crop&q=80',
-    preview_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
   },
   {
     id: 'itunes-1735160201',
     title: 'APT.',
     artist: 'ROSÉ & Bruno Mars',
     playsCount: '15,4 triệu',
+    chorusOffset: 25,
     cover_url: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=200&auto=format&fit=crop&q=80',
     preview_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
   },
   {
-    id: 'itunes-1735160202',
-    title: 'Năng Lượng Tích Cực #1',
-    artist: 'QTrung, MeMe Media',
-    playsCount: '1,8 triệu',
+    id: 'itunes-1735160203',
+    title: 'Until I Found You',
+    artist: 'Stephen Sanchez (Retro Vibe)',
+    playsCount: '8,5 triệu',
+    chorusOffset: 35,
+    cover_url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&auto=format&fit=crop&q=80',
+    preview_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+  },
+  {
+    id: 'itunes-1735160204',
+    title: 'Golden Hour',
+    artist: 'JVKE (Piano Lofi)',
+    playsCount: '12,1 triệu',
+    chorusOffset: 45,
     cover_url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=200&auto=format&fit=crop&q=80',
     preview_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
   },
+  {
+    id: 'itunes-1735160205',
+    title: 'Chưa Quên Người Yêu Cũ',
+    artist: 'Hà Nhi',
+    playsCount: '4,2 triệu',
+    chorusOffset: 30,
+    cover_url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200&auto=format&fit=crop&q=80',
+    preview_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+  },
+  {
+    id: 'itunes-1735160206',
+    title: 'Nối Với Nhau Bằng Nụ Cười',
+    artist: 'Chillies',
+    playsCount: '1,5 triệu',
+    chorusOffset: 35,
+    cover_url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200&auto=format&fit=crop&q=80',
+    preview_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+  },
+  {
+    id: 'itunes-1735160200',
+    title: 'Chúng Ta Của Tương Lai',
+    artist: 'Sơn Tùng M-TP',
+    playsCount: '9,8 triệu',
+    chorusOffset: 30,
+    cover_url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200&auto=format&fit=crop&q=80',
+    preview_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+  },
 ];
 
-const TrackCoverImage: React.FC<{ src: string; title: string; isPlaying: boolean }> = ({
-  src,
-  title,
-  isPlaying,
-}) => {
+const TrackCoverImage: React.FC<{ src: string; isPlaying: boolean }> = ({ src, isPlaying }) => {
   const [imgError, setImgError] = useState(false);
 
   return (
@@ -134,6 +165,7 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
               title: item.trackName,
               artist: item.artistName,
               playsCount: `${Math.floor(Math.random() * 800 + 100)}k`,
+              chorusOffset: 30, // Main chorus snippet default
               cover_url: item.artworkUrl100 || item.artworkUrl60,
               preview_url: item.previewUrl,
             }));
@@ -174,9 +206,11 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
       }
 
       setPlayingTrackId(track.id);
+      // Play starting directly at Main Chorus snippet offset (~30s)
       activeAudioHandle.current = createGuaranteedAudio(
         track.preview_url,
-        () => setPlayingTrackId(null)
+        () => setPlayingTrackId(null),
+        track.chorusOffset || 30
       );
     }
   };
@@ -200,13 +234,13 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header: Search Bar & Bookmark Icon Matching Screenshot */}
-        <div className="flex items-center space-x-2.5 mb-4 flex-shrink-0">
+        <div className="flex items-center space-x-2.5 mb-3 flex-shrink-0">
           <div className="relative flex-1">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm kiếm nghệ sĩ"
+              placeholder="Tìm kiếm bài hát, nghệ sĩ..."
               className="w-full bg-[#2C2C34]/80 text-white text-sm font-medium rounded-full pl-10 pr-10 py-2.5 focus:outline-none focus:ring-1 focus:ring-zinc-600 placeholder-zinc-400"
             />
             <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3" />
@@ -234,9 +268,12 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
           </button>
         </div>
 
-        {/* Section Header: "Dành cho bạn" & "Xem tất cả" */}
+        {/* Section Header: "Nhạc nhẹ Trend FB Stories" & "Xem tất cả" */}
         <div className="flex items-center justify-between mb-3 px-1 flex-shrink-0">
-          <h3 className="text-white text-base font-bold tracking-tight">Dành cho bạn</h3>
+          <h3 className="text-white text-base font-bold tracking-tight flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4 text-[#FFC700]" />
+            <span>Nhạc nhẹ Trend FB Stories</span>
+          </h3>
           <button className="text-[#5B9DF6] hover:underline text-xs font-semibold">
             Xem tất cả
           </button>
@@ -269,11 +306,14 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
                 >
                   {/* Left: Cover Art + Titles */}
                   <div className="flex items-center space-x-3 truncate pr-2 flex-1">
-                    <TrackCoverImage src={track.cover_url} title={track.title} isPlaying={isPlaying} />
+                    <TrackCoverImage src={track.cover_url} isPlaying={isPlaying} />
 
                     <div className="truncate">
-                      <h4 className="text-white text-sm font-bold truncate leading-tight">
-                        {track.title}
+                      <h4 className="text-white text-sm font-bold truncate leading-tight flex items-center gap-1.5">
+                        <span className="truncate">{track.title}</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#FFC700]/15 text-[#FFC700] font-semibold flex-shrink-0">
+                          Điệp khúc 🔥
+                        </span>
                       </h4>
                       <p className="text-zinc-400 text-xs truncate mt-1 font-medium">
                         {track.artist}
@@ -301,7 +341,7 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
                           ? 'bg-[#FFC700] text-black shadow-lg scale-105'
                           : 'bg-[#2C2C34] text-zinc-200 hover:bg-white hover:text-black'
                       }`}
-                      title={isPlaying ? 'Tạm dừng' : 'Nghe thử'}
+                      title={isPlaying ? 'Tạm dừng' : 'Nghe điệp khúc'}
                     >
                       {isPlaying ? (
                         <Pause className="w-4 h-4 fill-current" />
