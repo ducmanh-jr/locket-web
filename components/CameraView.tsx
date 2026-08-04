@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { MusicTrack } from '@/lib/types';
 import { MusicPickerModal } from './MusicPickerModal';
+import { killGlobalAudio } from '@/lib/audioPlayer';
 
 interface CameraViewProps {
   friends: Profile[];
@@ -45,6 +46,14 @@ export const CameraView: React.FC<CameraViewProps> = ({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [selectedMusic, setSelectedMusic] = useState<MusicTrack | null>(null);
   const [showMusicPicker, setShowMusicPicker] = useState<boolean>(false);
+
+  // Kill any feed audio when camera opens, and clean up when it closes
+  useEffect(() => {
+    killGlobalAudio();
+    return () => {
+      killGlobalAudio();
+    };
+  }, []);
 
   // Auto-select all friends when friends prop finishes loading
   useEffect(() => {
@@ -215,7 +224,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
                     {selectedMusic.title} • {selectedMusic.artist}
                   </span>
                   <button
-                    onClick={() => setSelectedMusic(null)}
+                    onClick={() => { killGlobalAudio(); setSelectedMusic(null); }}
                     className="text-zinc-400 hover:text-white p-0.5"
                     title="Gỡ bài hát"
                   >

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MusicTrack } from '@/lib/types';
 import { Search, Play, Pause, Bookmark, MoreHorizontal, X, Check, Music, Sparkles } from 'lucide-react';
-import { createGuaranteedAudio } from '@/lib/audioPlayer';
+import { killGlobalAudio, playGlobalAudio } from '@/lib/audioPlayer';
 
 interface MusicPickerModalProps {
   onSelectMusic: (track: MusicTrack) => void;
@@ -120,7 +120,6 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const activeAudioHandle = useRef<{ stop: () => void } | null>(null);
 
   // Search iTunes API when user types
   useEffect(() => {
@@ -164,13 +163,11 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Clean up audio player on unmount
+  // Kill audio when modal unmounts
   useEffect(() => {
     return () => {
-      if (activeAudioHandle.current) {
-        activeAudioHandle.current.stop();
-        activeAudioHandle.current = null;
-      }
+      killGlobalAudio();
+      setPlayingTrackId(null);
     };
   }, []);
 
@@ -178,31 +175,19 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
     e.stopPropagation();
 
     if (playingTrackId === track.id) {
-      if (activeAudioHandle.current) {
-        activeAudioHandle.current.stop();
-        activeAudioHandle.current = null;
-      }
+      // Currently playing this track → stop it
+      killGlobalAudio();
       setPlayingTrackId(null);
     } else {
-      if (activeAudioHandle.current) {
-        activeAudioHandle.current.stop();
-      }
-
+      // Play a new track (killGlobalAudio is called inside playGlobalAudio)
       setPlayingTrackId(track.id);
-      // Play starting directly at Main Chorus snippet offset (~30s)
-      activeAudioHandle.current = createGuaranteedAudio(
-        track.preview_url,
-        () => setPlayingTrackId(null),
-        track.chorusOffset || 30
-      );
+      playGlobalAudio(track.preview_url, () => setPlayingTrackId(null));
     }
   };
 
   const handleSelect = (track: ExtendedTrack) => {
-    if (activeAudioHandle.current) {
-      activeAudioHandle.current.stop();
-      activeAudioHandle.current = null;
-    }
+    killGlobalAudio();
+    setPlayingTrackId(null);
     onSelectMusic(track);
     onClose();
   };
