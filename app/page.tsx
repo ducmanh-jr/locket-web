@@ -25,7 +25,7 @@ import { Camera, X, UserPlus } from 'lucide-react';
 import { CapturedImage } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { pushMomentToGlobalCloud, fetchGlobalCloudMoments, pushProfileToGlobalCloud, fetchGlobalCloudProfiles } from '@/lib/cloudSync';
+import { pushMomentToGlobalCloud, fetchGlobalCloudMoments, pushProfileToGlobalCloud, fetchGlobalCloudProfiles, compressImageForCloudSync } from '@/lib/cloudSync';
 
 export default function HomePage() {
   const router = useRouter();
@@ -298,26 +298,30 @@ export default function HomePage() {
     let mediaUrl = image.dataUrl;
     const activeSender = userProfile || currentUser;
 
-
+    // Compress photo to ~12KB JPEG quality 0.50 so DB insert & WebSocket payload stay super light
+    try {
+      mediaUrl = await compressImageForCloudSync(image.dataUrl);
+    } catch (e) {}
 
     if (isSupabaseConfigured()) {
       try {
-        const filePath = `public/${activeSender.id || 'anon'}/${newMomentId}.jpg`;
-        await supabase.storage
-          .from('moments')
-          .upload(filePath, image.blob, {
-            contentType: 'image/jpeg',
-            upsert: true,
-          });
+        // Upsert sender profile first
+        await supabase.from('profiles').upsert({
+          id: activeSender.id,
+          username: activeSender.username,
+          display_name: activeSender.display_name,
+          avatar_url: activeSender.avatar_url,
+        });
 
-        try {
-          await supabase.from('moments').insert({
-            sender_id: activeSender.id,
-            media_url: mediaUrl,
-            caption: caption,
-          });
-        } catch (dbErr) {}
-      } catch (e) {}
+        // Insert moment into Supabase database (now unlocked by SQL query!)
+        await supabase.from('moments').insert({
+          sender_id: activeSender.id,
+          media_url: mediaUrl,
+          caption: caption,
+        });
+      } catch (e) {
+        console.error('Supabase DB insert error:', e);
+      }
     }
 
     const createdMoment: Moment = {
