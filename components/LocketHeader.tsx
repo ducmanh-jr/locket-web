@@ -27,11 +27,11 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
   const labelText = selectedFriend ? selectedFriend.display_name : 'Tất cả bạn bè';
 
   return (
-    <div className="relative w-full z-40 px-4 pt-8 pb-2 flex items-center justify-between bg-black">
+    <div className="relative w-full z-40 px-4 pt-3 sm:pt-8 pb-1 flex items-center justify-between bg-black flex-shrink-0">
       {/* Left: User Avatar */}
       <button
         onClick={onOpenProfile}
-        className="w-10 h-10 rounded-full overflow-hidden border border-zinc-800 bg-zinc-900 flex items-center justify-center active:scale-95 transition-transform"
+        className="w-9 h-9 rounded-full overflow-hidden border border-zinc-800 bg-zinc-900 flex items-center justify-center active:scale-95 transition-transform flex-shrink-0"
         title="Trang cá nhân"
       >
         {currentUser.avatar_url ? (
@@ -41,17 +41,17 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
             className="w-full h-full object-cover"
           />
         ) : (
-          <User className="w-5 h-5 text-zinc-400" />
+          <User className="w-4 h-4 text-zinc-400" />
         )}
       </button>
 
-      {/* Center: Filter Pill Dropdown */}
+      {/* Center: Filter Pill Dropdown matching Screenshot 2 */}
       <div className="relative">
         <button
           onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="flex items-center space-x-1.5 bg-[#262626] hover:bg-[#333333] text-white text-xs font-semibold px-4 py-2 rounded-full border border-zinc-800 transition-all active:scale-95 shadow-md"
+          className="flex items-center space-x-1.5 bg-[#262626] hover:bg-[#333333] text-white text-xs font-semibold px-4 py-1.5 rounded-full border border-zinc-800/80 transition-all active:scale-95 shadow-md"
         >
-          <span className="max-w-[120px] truncate">{labelText}</span>
+          <span className="max-w-[130px] truncate">{labelText}</span>
           {dropdownOpen ? (
             <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />
           ) : (
@@ -61,7 +61,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
 
         {/* Dropdown Menu Modal */}
         {dropdownOpen && (
-          <div className="absolute top-12 left-1/2 -translate-x-1/2 w-64 bg-[#262626] border border-zinc-700/80 rounded-2xl p-1.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
+          <div className="absolute top-11 left-1/2 -translate-x-1/2 w-64 bg-[#262626] border border-zinc-700/80 rounded-2xl p-1.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
             {/* Option: Tất cả bạn bè */}
             <button
               onClick={() => {
@@ -116,13 +116,13 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
         )}
       </div>
 
-      {/* Right: Message / Chat Icon */}
+      {/* Right: Message / Chat Icon matching Screenshot 2 */}
       <button
         onClick={onOpenChat}
-        className="w-10 h-10 rounded-full bg-[#262626] hover:bg-[#333333] text-white flex items-center justify-center border border-zinc-800 active:scale-95 transition-all"
+        className="w-9 h-9 rounded-full bg-[#262626] hover:bg-[#333333] text-white flex items-center justify-center border border-zinc-800/80 active:scale-95 transition-all flex-shrink-0"
         title="Tin nhắn"
       >
-        <MessageCircle className="w-5 h-5 stroke-[2]" />
+        <MessageCircle className="w-4.5 h-4.5 stroke-[2]" />
       </button>
     </div>
   );
