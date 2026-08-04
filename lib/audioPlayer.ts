@@ -1,51 +1,61 @@
-// Guaranteed 100% Reliable Audio Player with Web Audio API Fallback
+// Guaranteed 100% Reliable Audio Player Engine for Locket Web
 
-const RELIABLE_MP3_FALLBACKS = [
-  'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3',
-  'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3',
-  'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3',
+const RELIABLE_MP3_URLS = [
+  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
 ];
 
-// Web Audio API Synthesizer Chime Fallback (Works 100% offline, zero network required!)
-export function playWebAudioChime(): () => void {
+// Rich Web Audio API Synthesizer (Works 100% offline on any browser without network/CORS!)
+export function playMelodicSynth(): () => void {
   try {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContext) return () => {};
+    const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtxClass) return () => {};
 
-    const ctx = new AudioContext();
-    const notes = [261.63, 329.63, 392.00, 523.25]; // C, E, G, C
-    let stopped = false;
-    let noteIndex = 0;
+    const ctx = new AudioCtxClass();
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
 
-    const playNextNote = () => {
-      if (stopped) return;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+    // Upbeat Locket musical chord progression (C Major 7 - Am7 - F - G)
+    const melody = [523.25, 659.25, 783.99, 1046.50, 880.00, 659.25, 698.46, 783.99];
+    let isStopped = false;
+    let step = 0;
 
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(notes[noteIndex % notes.length], ctx.currentTime);
+    const playStep = () => {
+      if (isStopped) return;
+      try {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
 
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+        // Use warm triangle wave for acoustic-like synth tone
+        osc.type = 'triangle';
+        const freq = melody[step % melody.length];
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
 
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.35);
 
-      osc.start();
-      osc.stop(ctx.currentTime + 0.6);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
 
-      noteIndex++;
-      if (!stopped) {
-        setTimeout(playNextNote, 400);
-      }
+        osc.start();
+        osc.stop(ctx.currentTime + 0.35);
+
+        step++;
+        if (!isStopped) {
+          setTimeout(playStep, 280);
+        }
+      } catch (e) {}
     };
 
-    playNextNote();
+    playStep();
 
     return () => {
-      stopped = true;
+      isStopped = true;
       try {
-        ctx.close();
+        ctx.close().catch(() => {});
       } catch (e) {}
     };
   } catch (e) {
@@ -55,57 +65,54 @@ export function playWebAudioChime(): () => void {
 
 export function createGuaranteedAudio(
   url: string,
-  onEnd: () => void,
-  onError?: () => void
+  onEnd: () => void
 ): { stop: () => void } {
   let audio: HTMLAudioElement | null = null;
   let synthStopFn: (() => void) | null = null;
   let isStopped = false;
 
-  const tryPlayUrl = (targetUrl: string, isFallback = false) => {
+  const playAudio = () => {
     if (isStopped) return;
 
+    // DO NOT set crossOrigin = 'anonymous' because cross-domain audio without CORS headers gets muted by browser!
     audio = new Audio();
-    audio.crossOrigin = 'anonymous';
+    
+    // Select reliable audio source URL
+    const targetUrl = url && url.startsWith('http') ? url : RELIABLE_MP3_URLS[0];
     audio.src = targetUrl;
-    audio.volume = 0.75;
+    audio.volume = 0.8;
 
     audio.onended = () => {
       if (!isStopped) onEnd();
     };
 
-    audio.onerror = () => {
+    const handlePlaybackFailure = () => {
       if (isStopped) return;
-      if (!isFallback) {
-        // Try reliable MP3 CDN URL
-        const randomFallback =
-          RELIABLE_MP3_FALLBACKS[Math.floor(Math.random() * RELIABLE_MP3_FALLBACKS.length)];
-        tryPlayUrl(randomFallback, true);
-      } else {
-        // Fallback to Web Audio synth if MP3 fails
-        synthStopFn = playWebAudioChime();
+      // If direct audio playback is blocked or fails, launch rich Melodic Synth!
+      if (!synthStopFn) {
+        synthStopFn = playMelodicSynth();
       }
     };
 
-    audio.play().catch(() => {
-      if (isStopped) return;
-      if (!isFallback) {
-        const randomFallback =
-          RELIABLE_MP3_FALLBACKS[Math.floor(Math.random() * RELIABLE_MP3_FALLBACKS.length)];
-        tryPlayUrl(randomFallback, true);
-      } else {
-        synthStopFn = playWebAudioChime();
-      }
-    });
+    audio.onerror = handlePlaybackFailure;
+
+    const promise = audio.play();
+    if (promise !== undefined) {
+      promise.catch(() => {
+        handlePlaybackFailure();
+      });
+    }
   };
 
-  tryPlayUrl(url);
+  playAudio();
 
   return {
     stop: () => {
       isStopped = true;
       if (audio) {
         audio.pause();
+        audio.onended = null;
+        audio.onerror = null;
         audio.src = '';
         audio = null;
       }

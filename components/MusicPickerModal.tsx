@@ -22,7 +22,7 @@ const PRESET_TRENDING_TRACKS: ExtendedTrack[] = [
     artist: 'Guxxi',
     playsCount: '1,1 triệu',
     cover_url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200&auto=format&fit=crop&q=80',
-    preview_url: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3',
+    preview_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
   },
   {
     id: 'itunes-1763782910',
@@ -30,7 +30,7 @@ const PRESET_TRENDING_TRACKS: ExtendedTrack[] = [
     artist: 'Kim Phương Anh',
     playsCount: '575.450',
     cover_url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200&auto=format&fit=crop&q=80',
-    preview_url: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3',
+    preview_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
   },
   {
     id: 'itunes-1736173001',
@@ -38,7 +38,7 @@ const PRESET_TRENDING_TRACKS: ExtendedTrack[] = [
     artist: 'Ngân Ngân',
     playsCount: '749.245',
     cover_url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200&auto=format&fit=crop&q=80',
-    preview_url: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3',
+    preview_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
   },
   {
     id: 'itunes-1735160200',
@@ -46,7 +46,7 @@ const PRESET_TRENDING_TRACKS: ExtendedTrack[] = [
     artist: 'Sơn Tùng M-TP',
     playsCount: '2,8 triệu',
     cover_url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&auto=format&fit=crop&q=80',
-    preview_url: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3',
+    preview_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
   },
   {
     id: 'itunes-1735160201',
@@ -54,7 +54,7 @@ const PRESET_TRENDING_TRACKS: ExtendedTrack[] = [
     artist: 'ROSÉ & Bruno Mars',
     playsCount: '15,4 triệu',
     cover_url: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=200&auto=format&fit=crop&q=80',
-    preview_url: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3',
+    preview_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
   },
   {
     id: 'itunes-1735160202',
@@ -62,7 +62,7 @@ const PRESET_TRENDING_TRACKS: ExtendedTrack[] = [
     artist: 'QTrung, MeMe Media',
     playsCount: '1,8 triệu',
     cover_url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=200&auto=format&fit=crop&q=80',
-    preview_url: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3',
+    preview_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
   },
 ];
 
