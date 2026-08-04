@@ -239,7 +239,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               duration: 0.28,
               ease: [0.32, 0.72, 0, 1],
             }}
-            className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.5rem]"
+            className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.5rem] transform-gpu will-change-[transform,opacity]"
           >
             <img
               src={moment.media_url}

@@ -295,80 +295,83 @@ export default function HomePage() {
     recipientIds: string[]
   ) => {
     const newMomentId = `m-photo-v5-${Date.now()}`;
-    let mediaUrl = image.dataUrl;
     const activeSender = userProfile || currentUser;
 
-    // Compress photo to ~12KB JPEG quality 0.50 so DB insert & WebSocket payload stay super light
-    try {
-      mediaUrl = await compressImageForCloudSync(image.dataUrl);
-    } catch (e) {}
-
-    if (isSupabaseConfigured()) {
-      try {
-        // Upsert sender profile first
-        await supabase.from('profiles').upsert({
-          id: activeSender.id,
-          username: activeSender.username,
-          display_name: activeSender.display_name,
-          avatar_url: activeSender.avatar_url,
-        });
-
-        // Insert moment into Supabase database (now unlocked by SQL query!)
-        await supabase.from('moments').insert({
-          sender_id: activeSender.id,
-          media_url: mediaUrl,
-          caption: caption,
-        });
-      } catch (e) {
-        console.error('Supabase DB insert error:', e);
-      }
-    }
-
-    const createdMoment: Moment = {
+    const initialMoment: Moment = {
       id: newMomentId,
       sender_id: activeSender.id,
       sender: activeSender,
-      media_url: mediaUrl,
+      media_url: image.dataUrl,
       caption: caption,
       created_at: new Date().toISOString(),
       reactions: [],
     };
 
-    // 3. Push to Global Cloud Sync (CRITICAL - this is what enables Account A -> B sharing)
-    try {
-      await pushMomentToGlobalCloud(createdMoment);
-    } catch (e) {}
-
-    // 4. Instant Realtime WebSocket Broadcast to all other logged-in accounts (< 50ms)
-    if (broadcastChannelRef.current) {
-      try {
-        broadcastChannelRef.current.send({
-          type: 'broadcast',
-          event: 'new_moment',
-          payload: createdMoment,
-        });
-      } catch (e) {}
-    } else if (isSupabaseConfigured()) {
-      try {
-        const ch = supabase.channel('locket-live-broadcast');
-        ch.subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            ch.send({
-              type: 'broadcast',
-              event: 'new_moment',
-              payload: createdMoment,
-            });
-          }
-        });
-      } catch (e) {}
-    }
-
-    const updatedMoments = addDemoMoment(createdMoment);
+    // ⚡ Optimistic UI: Close camera & update feed INSTANTLY (0ms latency!)
+    const updatedMoments = addDemoMoment(initialMoment);
     setSelectedFriendFilter(null);
     setMoments(updatedMoments);
     setCurrentIndex(0);
     setShowCamera(false);
     setCurrentView('feed');
+
+    // 🚀 Background Sync: Compress photo & sync via DB + WebSockets without blocking UI
+    (async () => {
+      let mediaUrl = image.dataUrl;
+      try {
+        mediaUrl = await compressImageForCloudSync(image.dataUrl);
+      } catch (e) {}
+
+      const createdMoment: Moment = {
+        ...initialMoment,
+        media_url: mediaUrl,
+      };
+
+      if (isSupabaseConfigured()) {
+        try {
+          await supabase.from('profiles').upsert({
+            id: activeSender.id,
+            username: activeSender.username,
+            display_name: activeSender.display_name,
+            avatar_url: activeSender.avatar_url,
+          });
+
+          await supabase.from('moments').insert({
+            sender_id: activeSender.id,
+            media_url: mediaUrl,
+            caption: caption,
+          });
+        } catch (e) {}
+      }
+
+      try {
+        await pushMomentToGlobalCloud(createdMoment);
+      } catch (e) {}
+
+      // Instant Realtime WebSocket Broadcast to all online accounts (< 50ms)
+      if (broadcastChannelRef.current) {
+        try {
+          broadcastChannelRef.current.send({
+            type: 'broadcast',
+            event: 'new_moment',
+            payload: createdMoment,
+          });
+        } catch (e) {}
+      } else if (isSupabaseConfigured()) {
+        try {
+          const ch = supabase.channel('locket-live-broadcast');
+          ch.subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              ch.send({
+                type: 'broadcast',
+                event: 'new_moment',
+                payload: createdMoment,
+              });
+            }
+          });
+        } catch (e) {}
+      }
+    })();
   };
 
   return (
