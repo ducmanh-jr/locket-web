@@ -19,7 +19,7 @@ import {
   addDemoMoment,
   addDemoReaction,
 } from '@/lib/demoStore';
-import { Moment, Profile } from '@/lib/types';
+import { Moment, Profile, MusicTrack } from '@/lib/types';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/lib/auth';
 import { Camera, X, UserPlus } from 'lucide-react';
@@ -342,7 +342,8 @@ export default function HomePage() {
   const handleSendMoment = async (
     image: CapturedImage,
     caption: string,
-    recipientIds: string[]
+    recipientIds: string[],
+    music?: MusicTrack
   ) => {
     const newMomentId = `m-photo-v5-${Date.now()}`;
     const activeSender = userProfile || currentUser;
@@ -355,6 +356,7 @@ export default function HomePage() {
       caption: caption,
       created_at: new Date().toISOString(),
       reactions: [],
+      music: music,
     };
 
     // ⚡ Optimistic UI: Close camera & update feed INSTANTLY (0ms latency!)

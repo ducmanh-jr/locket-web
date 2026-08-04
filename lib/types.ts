@@ -15,6 +15,14 @@ export interface Friendship {
   friend?: Profile;
 }
 
+export interface MusicTrack {
+  id: string;
+  title: string;
+  artist: string;
+  cover_url: string;
+  preview_url: string;
+}
+
 export interface Moment {
   id: string;
   sender_id: string;
@@ -24,6 +32,7 @@ export interface Moment {
   created_at: string;
   recipients?: MomentRecipient[];
   reactions?: Reaction[];
+  music?: MusicTrack;
 }
 
 export interface MomentRecipient {

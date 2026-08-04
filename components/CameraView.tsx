@@ -13,7 +13,10 @@ import {
   Square,
   Users,
   Sparkles,
+  Music,
 } from 'lucide-react';
+import { MusicTrack } from '@/lib/types';
+import { MusicPickerModal } from './MusicPickerModal';
 
 interface CameraViewProps {
   friends: Profile[];
@@ -21,7 +24,8 @@ interface CameraViewProps {
   onSendMoment: (
     image: CapturedImage,
     caption: string,
-    recipientIds: string[]
+    recipientIds: string[],
+    music?: MusicTrack
   ) => Promise<void>;
 }
 
@@ -39,6 +43,8 @@ export const CameraView: React.FC<CameraViewProps> = ({
   );
   const [isSending, setIsSending] = useState<boolean>(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [selectedMusic, setSelectedMusic] = useState<MusicTrack | null>(null);
+  const [showMusicPicker, setShowMusicPicker] = useState<boolean>(false);
 
   // Auto-select all friends when friends prop finishes loading
   useEffect(() => {
@@ -112,6 +118,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
   const handleRetake = () => {
     setCapturedPhoto(null);
     setCaption('');
+    setSelectedMusic(null);
   };
 
   // Toggle Friend Selection
@@ -134,7 +141,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
     if (!capturedPhoto || selectedFriendIds.length === 0) return;
     setIsSending(true);
     try {
-      await onSendMoment(capturedPhoto, caption, selectedFriendIds);
+      await onSendMoment(capturedPhoto, caption, selectedFriendIds, selectedMusic || undefined);
       onClose();
     } catch (err) {
       console.error('Failed to send moment:', err);
@@ -197,6 +204,35 @@ export const CameraView: React.FC<CameraViewProps> = ({
               alt="Locket Snapshot"
               className="w-full h-full object-cover"
             />
+            {/* Music Badge Sticker at Top Center of Photo */}
+            <div className="absolute top-4 left-4 right-4 flex items-center justify-center">
+              {selectedMusic ? (
+                <div className="flex items-center space-x-2 bg-black/80 backdrop-blur-md border border-[#FFC700]/50 text-white text-xs px-3.5 py-1.5 rounded-full shadow-lg max-w-[90%]">
+                  <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-[#FFC700]/60 animate-spin">
+                    <img src={selectedMusic.cover_url} alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <span className="font-semibold text-xs truncate">
+                    {selectedMusic.title} • {selectedMusic.artist}
+                  </span>
+                  <button
+                    onClick={() => setSelectedMusic(null)}
+                    className="text-zinc-400 hover:text-white p-0.5"
+                    title="Gỡ bài hát"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowMusicPicker(true)}
+                  className="bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/20 text-[#FFC700] text-xs font-bold px-3.5 py-1.5 rounded-full flex items-center space-x-1.5 transition-all active:scale-95 shadow-md"
+                >
+                  <Music className="w-3.5 h-3.5 text-[#FFC700]" />
+                  <span>Thêm nhạc 🎵</span>
+                </button>
+              )}
+            </div>
+
             {/* Caption Input Pill inside Photo at Bottom Center */}
             <div className="absolute bottom-4 left-4 right-4 text-center">
               <input
@@ -299,6 +335,14 @@ export const CameraView: React.FC<CameraViewProps> = ({
           </div>
         )}
       </div>
+      {/* Music Picker Modal */}
+      {showMusicPicker && (
+        <MusicPickerModal
+          selectedTrackId={selectedMusic?.id}
+          onSelectMusic={(track) => setSelectedMusic(track)}
+          onClose={() => setShowMusicPicker(false)}
+        />
+      )}
     </div>
   );
 };

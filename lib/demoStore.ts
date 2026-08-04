@@ -89,6 +89,30 @@ const PHOTO_DATASET = [
   { file: "1785829400531_567716528849713056_g276929852367586455_261f5f986f1964cf559f0bc556387985.jpg", caption: "📸✨" },
 ];
 
+const SAMPLE_TRACKS = [
+  {
+    id: 'itunes-1734543789',
+    title: 'APT.',
+    artist: 'ROSÉ & Bruno Mars',
+    cover_url: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/bf/13/be/bf13be02-4ec4-51e9-9fa9-fae26c117b4c/5054197992928.jpg/100x100bb.jpg',
+    preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/6b/c4/88/6bc4882e-60f2-b88d-7fb7-e21544a0e28b/mzaf_1003463991206103004.plus.aac.p.m4a',
+  },
+  {
+    id: 'itunes-1763782910',
+    title: 'Die With A Smile',
+    artist: 'Lady Gaga & Bruno Mars',
+    cover_url: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/d9/39/33/d93933c0-e717-380d-85e8-54c30294e7ed/24UMGIM88005.rgb.jpg/100x100bb.jpg',
+    preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/e5/22/df/e522df14-722a-f886-f6b0-ee0b4c73f5a8/mzaf_6380963162791771146.plus.aac.p.m4a',
+  },
+  {
+    id: 'itunes-1736173001',
+    title: 'Chúng Ta Của Tương Lai',
+    artist: 'Sơn Tùng M-TP',
+    cover_url: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/ca/8f/c9/ca8fc99c-29b1-ec06-8d18-97e3a2db77df/840391487679.jpg/100x100bb.jpg',
+    preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/58/b7/66/58b7661b-91c9-6f94-6d9b-73599e52e5a7/mzaf_4079815049386348126.plus.aac.p.m4a',
+  },
+];
+
 // Generate 47 unique moments using accurate context-matched captions & images
 export const DEMO_50_MOMENTS: Moment[] = PHOTO_DATASET.map((item, index) => {
   const sender = DEFAULT_3_FRIENDS[index % 3];
@@ -102,6 +126,7 @@ export const DEMO_50_MOMENTS: Moment[] = PHOTO_DATASET.map((item, index) => {
     caption: item.caption,
     created_at: new Date(Date.now() - 1000 * 60 * timeOffsetMinutes).toISOString(),
     reactions: [],
+    music: index % 3 === 0 ? SAMPLE_TRACKS[(index / 3) % SAMPLE_TRACKS.length] : undefined,
   };
 });
 

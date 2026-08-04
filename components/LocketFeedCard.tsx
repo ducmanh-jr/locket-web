@@ -3,7 +3,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Moment, Profile } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, Trash2, MoreVertical } from 'lucide-react';
+import { Download, Trash2, MoreVertical, Volume2, VolumeX, Music } from 'lucide-react';
 
 interface LocketFeedCardProps {
   moment: Moment;
@@ -39,6 +39,56 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     { id: number; emoji: string; x: number; rotation: number }[]
   >([]);
   const [showOptionsModal, setShowOptionsModal] = useState<boolean>(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Auto Play & Manage Audio snippet for Moment Music
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+      setIsPlayingAudio(false);
+    }
+
+    if (moment.music?.preview_url) {
+      const audio = new Audio(moment.music.preview_url);
+      audio.volume = 0.65;
+      audio.loop = true;
+      audioRef.current = audio;
+
+      audio
+        .play()
+        .then(() => setIsPlayingAudio(true))
+        .catch(() => setIsPlayingAudio(false));
+
+      return () => {
+        audio.pause();
+        audioRef.current = null;
+        setIsPlayingAudio(false);
+      };
+    }
+  }, [moment.id, moment.music?.preview_url]);
+
+  const toggleAudio = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!audioRef.current && moment.music?.preview_url) {
+      const audio = new Audio(moment.music.preview_url);
+      audio.volume = 0.65;
+      audio.loop = true;
+      audioRef.current = audio;
+    }
+    if (!audioRef.current) return;
+
+    if (isPlayingAudio) {
+      audioRef.current.pause();
+      setIsPlayingAudio(false);
+    } else {
+      audioRef.current
+        .play()
+        .then(() => setIsPlayingAudio(true))
+        .catch(() => {});
+    }
+  };
 
   // Trigger Floating Emoji Fountain Effect when user clicks quick reaction emojis
   useEffect(() => {
@@ -316,6 +366,31 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                 {item.emoji}
               </motion.div>
             ))}
+
+            {/* Music Badge Sticker on Photo */}
+            {moment.music && (
+              <button
+                onClick={toggleAudio}
+                className="absolute top-3.5 left-3.5 bg-black/75 backdrop-blur-md border border-[#FFC700]/50 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-2 z-20 shadow-lg active:scale-95 transition-all max-w-[70%]"
+                title="Bật/Tắt nhạc"
+              >
+                <div
+                  className={`w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-[#FFC700] ${
+                    isPlayingAudio ? 'animate-spin' : ''
+                  }`}
+                >
+                  <img src={moment.music.cover_url} alt="" className="w-full h-full object-cover" />
+                </div>
+                <span className="font-semibold text-xs truncate">
+                  {moment.music.title} • {moment.music.artist}
+                </span>
+                {isPlayingAudio ? (
+                  <Volume2 className="w-3.5 h-3.5 text-[#FFC700] flex-shrink-0 animate-pulse" />
+                ) : (
+                  <VolumeX className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
+                )}
+              </button>
+            )}
 
             {/* Options button on top right of photo */}
             <button
