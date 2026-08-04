@@ -470,8 +470,8 @@ export default function HomePage() {
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
-              className="w-full h-full absolute inset-0 bg-black z-30"
+              transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+              className="w-full h-full absolute inset-0 bg-black z-30 transform-gpu will-change-transform"
             >
               <LocketHistoryGrid
                 moments={filteredMoments}

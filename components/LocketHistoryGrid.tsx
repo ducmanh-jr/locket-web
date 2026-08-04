@@ -47,23 +47,24 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
             <p className="text-zinc-500 text-xs">Chụp khoảnh khắc đầu tiên cùng bạn bè!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-2 transform-gpu">
             {moments.map((moment) => (
               <div
                 key={moment.id}
                 onClick={() => onSelectMoment(moment)}
-                className="relative aspect-square rounded-2xl overflow-hidden bg-[#18181C] border border-zinc-800/80 cursor-pointer active:scale-95 transition-transform group"
+                className="relative aspect-square rounded-2xl overflow-hidden bg-[#18181C] border border-zinc-800/80 cursor-pointer active:scale-95 transition-transform group transform-gpu"
               >
                 <img
                   src={moment.media_url}
                   alt={moment.caption || 'Khoảnh khắc Locket'}
                   loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                 />
 
                 {/* Caption Tag Overlay at bottom */}
                 {moment.caption && (
-                  <div className="absolute bottom-1 left-1 right-1 bg-black/70 backdrop-blur-sm text-[9px] text-zinc-200 px-1.5 py-0.5 rounded-lg truncate font-medium text-center border border-white/10">
+                  <div className="absolute bottom-1 left-1 right-1 bg-black/85 text-[9px] text-zinc-200 px-1.5 py-0.5 rounded-lg truncate font-medium text-center border border-white/10">
                     {moment.caption}
                   </div>
                 )}
