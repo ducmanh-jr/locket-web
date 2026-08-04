@@ -91,9 +91,14 @@ export const CameraView: React.FC<CameraViewProps> = ({
     setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
   };
 
-  // Capture Snapshot (With Front Camera Mirroring Fix!)
+  // Capture Snapshot (With Front Camera Mirroring Fix & Haptic Shutter!)
   const handleShutter = async () => {
     if (!videoRef.current) return;
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(35);
+      } catch (e) {}
+    }
     try {
       const isFront = facingMode === 'user';
       const captured = await captureSquarePhoto(videoRef.current, 0.85, 1080, isFront);
