@@ -126,20 +126,24 @@ export default function HomePage() {
       } catch (e) {}
     }
 
-    const allProfiles = [...cloudProfiles, ...supabaseProfiles, ...DEFAULT_3_FRIENDS];
+    const allProfiles = [...cloudProfiles, ...supabaseProfiles];
 
-    const others = allProfiles.filter(
+    const googleAccountsOnly = allProfiles.filter(
       (p) =>
+        p &&
+        p.id &&
+        !p.id.startsWith('user-') &&
+        !p.id.startsWith('user_dev_') &&
+        p.username !== 'manh_locket' &&
         p.id !== currentUser.id &&
         p.username !== currentUser.username
     );
 
-    const unique = others.filter(
+    const unique = googleAccountsOnly.filter(
       (user, index, self) => index === self.findIndex((u) => u.username === user.username)
     );
 
-    const targetList = unique.length > 0 ? unique : DEFAULT_3_FRIENDS;
-    setFriendsList((prev) => (areProfilesEqual(prev, targetList) ? prev : targetList));
+    setFriendsList((prev) => (areProfilesEqual(prev, unique) ? prev : unique));
   };
 
   // Fetch moments with full bidirectional cloud↔local sync so ALL accounts see the SAME feed

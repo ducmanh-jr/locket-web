@@ -14,7 +14,17 @@ async function fetchFromGlobalStore() {
     });
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data.profiles)) memoryProfiles = data.profiles;
+      if (Array.isArray(data.profiles)) {
+        // Purge non-Google dummy profiles - ONLY keep Google Accounts
+        memoryProfiles = data.profiles.filter(
+          (p: any) =>
+            p &&
+            p.id &&
+            !p.id.startsWith('user-') &&
+            !p.id.startsWith('user_dev_') &&
+            p.username !== 'manh_locket'
+        );
+      }
       if (Array.isArray(data.moments)) memoryMoments = data.moments;
     }
   } catch (e) {}
@@ -22,10 +32,19 @@ async function fetchFromGlobalStore() {
 
 async function saveToGlobalStore(profiles: any[], moments: any[]) {
   try {
+    // Purge non-Google dummy profiles before saving
+    const googleProfilesOnly = profiles.filter(
+      (p: any) =>
+        p &&
+        p.id &&
+        !p.id.startsWith('user-') &&
+        !p.id.startsWith('user_dev_') &&
+        p.username !== 'manh_locket'
+    );
     await fetch(JSONBLOB_STORE_URL, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profiles, moments }),
+      body: JSON.stringify({ profiles: googleProfilesOnly, moments }),
     });
   } catch (e) {}
 }

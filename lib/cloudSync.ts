@@ -50,6 +50,10 @@ export function compressImageForCloudSync(dataUrl: string): Promise<string> {
 export async function pushProfileToGlobalCloud(profile: CloudProfile): Promise<boolean> {
   try {
     if (!profile.id || !profile.username) return false;
+    // Reject non-Google dummy accounts
+    if (profile.id.startsWith('user-') || profile.id.startsWith('user_dev_') || profile.username === 'manh_locket') {
+      return false;
+    }
 
     // 1. Send to Serverless Sync API
     await fetch('/api/sync', {
@@ -63,7 +67,8 @@ export async function pushProfileToGlobalCloud(profile: CloudProfile): Promise<b
       const getRes = await fetch(JSONBLOB_STORE_URL, { cache: 'no-store' });
       if (getRes.ok) {
         const data = await getRes.json();
-        const profiles = Array.isArray(data.profiles) ? data.profiles : [];
+        let profiles = Array.isArray(data.profiles) ? data.profiles : [];
+        profiles = profiles.filter((p: any) => p && p.id && !p.id.startsWith('user-') && !p.id.startsWith('user_dev_'));
         const idx = profiles.findIndex((p: any) => p.id === profile.id || p.username === profile.username);
         if (idx >= 0) profiles[idx] = profile;
         else profiles.push(profile);
@@ -83,27 +88,33 @@ export async function pushProfileToGlobalCloud(profile: CloudProfile): Promise<b
 }
 
 /**
- * Fetches all user profiles from Global Cloud.
+ * Fetches all user profiles from Global Cloud (Google Accounts Only).
  */
 export async function fetchGlobalCloudProfiles(): Promise<CloudProfile[]> {
   try {
+    let rawProfiles: CloudProfile[] = [];
     // Try Serverless API first
     const res = await fetch('/api/sync', { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data.profiles) && data.profiles.length > 0) {
-        return data.profiles;
+        rawProfiles = data.profiles;
       }
     }
 
-    // Fallback to JSONBlob
-    const jsonRes = await fetch(JSONBLOB_STORE_URL, { cache: 'no-store' });
-    if (jsonRes.ok) {
-      const data = await jsonRes.json();
-      if (Array.isArray(data.profiles)) return data.profiles;
+    if (rawProfiles.length === 0) {
+      // Fallback to JSONBlob
+      const jsonRes = await fetch(JSONBLOB_STORE_URL, { cache: 'no-store' });
+      if (jsonRes.ok) {
+        const data = await jsonRes.json();
+        if (Array.isArray(data.profiles)) rawProfiles = data.profiles;
+      }
     }
 
-    return [];
+    // Filter out non-Google accounts
+    return rawProfiles.filter(
+      (p) => p && p.id && !p.id.startsWith('user-') && !p.id.startsWith('user_dev_') && p.username !== 'manh_locket'
+    );
   } catch (e) {
     return [];
   }

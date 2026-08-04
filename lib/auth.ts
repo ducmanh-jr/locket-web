@@ -26,13 +26,25 @@ function getOrCreateDeviceProfile(): Profile {
 export function useAuth() {
   const router = useRouter();
   const pathname = usePathname();
-  const [userProfile, setUserProfile] = useState<Profile | null>(DEMO_CURRENT_USER);
-  const [loading, setLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function checkUserSession() {
       if (!isSupabaseConfigured()) {
-        setUserProfile(getOrCreateDeviceProfile());
+        // If Supabase is not configured, check for Google user in localStorage
+        const storedGoogleUser = localStorage.getItem('locket_google_user_v1');
+        if (storedGoogleUser) {
+          try {
+            const parsed = JSON.parse(storedGoogleUser);
+            if (parsed && parsed.id && parsed.id.length > 10) {
+              setUserProfile(parsed);
+              setLoading(false);
+              return;
+            }
+          } catch (e) {}
+        }
+        setUserProfile(null);
         setLoading(false);
         return;
       }
@@ -43,7 +55,19 @@ export function useAuth() {
         } = await supabase.auth.getUser();
 
         if (!user) {
-          setUserProfile(getOrCreateDeviceProfile());
+          // Check for cached Google session
+          const storedGoogleUser = localStorage.getItem('locket_google_user_v1');
+          if (storedGoogleUser) {
+            try {
+              const parsed = JSON.parse(storedGoogleUser);
+              if (parsed && parsed.id && parsed.id.length > 10) {
+                setUserProfile(parsed);
+                setLoading(false);
+                return;
+              }
+            } catch (e) {}
+          }
+          setUserProfile(null);
         } else {
           const name =
             user.user_metadata?.full_name ||
