@@ -15,28 +15,27 @@ interface StoreData {
 }
 
 /**
- * Uploads a photo blob to Catbox CDN to get a permanent public direct image URL.
+ * Uploads a photo blob to /api/upload (Serverless Route) to get a permanent public CDN URL without CORS issues.
  */
 export async function uploadPhotoToCDN(blob: Blob): Promise<string | null> {
   try {
     const formData = new FormData();
-    formData.append('reqtype', 'fileupload');
-    formData.append('fileToUpload', blob, `photo_${Date.now()}.jpg`);
+    formData.append('file', blob, `photo_${Date.now()}.jpg`);
 
-    const res = await fetch('https://catbox.moe/user/api.php', {
+    const res = await fetch('/api/upload', {
       method: 'POST',
       body: formData,
     });
 
     if (res.ok) {
-      const url = await res.text();
-      if (url && url.startsWith('https://')) {
-        return url.trim();
+      const data = await res.json();
+      if (data?.url && typeof data.url === 'string' && data.url.startsWith('https://')) {
+        return data.url;
       }
     }
     return null;
   } catch (e) {
-    console.error('Catbox upload error:', e);
+    console.error('API Upload error:', e);
     return null;
   }
 }
