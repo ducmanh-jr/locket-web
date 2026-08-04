@@ -63,6 +63,9 @@ export default function ProfilePage() {
     if (isSupabaseConfigured()) {
       await supabase.auth.signOut();
     }
+    try {
+      localStorage.removeItem('locket_google_user_v1');
+    } catch (e) {}
     router.push('/login');
   };
 

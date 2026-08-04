@@ -106,7 +106,7 @@ export const DEMO_50_MOMENTS: Moment[] = PHOTO_DATASET.map((item, index) => {
   };
 });
 
-const CACHE_KEYS = [
+const LEGACY_CACHE_KEYS = [
   'locket_demo_moments_v5',
   'locket_demo_moments_v6',
   'locket_demo_moments_v7',
@@ -114,59 +114,84 @@ const CACHE_KEYS = [
   'locket_user_moments_permanent_v1',
 ];
 
-export function getStoredDemoMoments(): Moment[] {
+const ACTIVE_CACHE_KEY = 'locket_moments_shared_cache_v9';
+const ACCOUNT_CACHE_PREFIX = 'locket_moments_account_v1_';
+
+function getAccountCacheKey(userId?: string): string | null {
+  if (!userId) return null;
+  return `${ACCOUNT_CACHE_PREFIX}${encodeURIComponent(userId)}`;
+}
+
+function readMomentsFromKey(key: string): Moment[] {
+  try {
+    const stored = localStorage.getItem(key);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed.filter((m) => m && m.id && m.media_url) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function dedupeMoments(moments: Moment[]): Moment[] {
+  return moments.filter(
+    (m, i, self) => m && m.id && i === self.findIndex((x) => x && x.id === m.id)
+  );
+}
+
+export function getStoredDemoMoments(userId?: string): Moment[] {
   if (typeof window === 'undefined') return DEMO_50_MOMENTS;
 
-  // Scan ALL cache keys to recover user data!
+  const accountCacheKey = getAccountCacheKey(userId);
   let storedMoments: Moment[] = [];
-  for (const key of CACHE_KEYS) {
-    try {
-      const stored = localStorage.getItem(key);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          storedMoments = [...parsed, ...storedMoments];
-        }
-      }
-    } catch (e) {}
+
+  if (accountCacheKey) {
+    storedMoments = [...readMomentsFromKey(accountCacheKey), ...storedMoments];
+  }
+
+  storedMoments = [...readMomentsFromKey(ACTIVE_CACHE_KEY), ...storedMoments];
+
+  // One-time legacy recovery for installs that used the old shared cache keys.
+  for (const key of LEGACY_CACHE_KEYS) {
+    storedMoments = [...readMomentsFromKey(key), ...storedMoments];
   }
 
   if (storedMoments.length > 0) {
-    // Deduplicate moments by ID
-    const unique = storedMoments.filter(
-      (m, i, self) => m && m.id && i === self.findIndex((x) => x && x.id === m.id)
-    );
-
     // Merge default dataset so 47 photos are always present
-    const combined = [...unique, ...DEMO_50_MOMENTS];
-    return combined.filter(
-      (m, i, self) => m && m.id && i === self.findIndex((x) => x && x.id === m.id)
-    );
+    return dedupeMoments([...storedMoments, ...DEMO_50_MOMENTS]);
   }
 
-  saveStoredDemoMoments(DEMO_50_MOMENTS);
+  saveStoredDemoMoments(DEMO_50_MOMENTS, userId);
   return DEMO_50_MOMENTS;
 }
 
-export function saveStoredDemoMoments(moments: Moment[]): void {
+export function saveStoredDemoMoments(moments: Moment[], userId?: string): void {
   if (typeof window === 'undefined') return;
 
-  for (const key of CACHE_KEYS) {
+  const normalized = dedupeMoments(moments).filter((m) => !m.media_url?.startsWith('blob:'));
+  const payload = JSON.stringify(normalized);
+
+  try {
+    localStorage.setItem(ACTIVE_CACHE_KEY, payload);
+  } catch (e) {}
+
+  const accountCacheKey = getAccountCacheKey(userId);
+  if (accountCacheKey) {
     try {
-      localStorage.setItem(key, JSON.stringify(moments));
+      localStorage.setItem(accountCacheKey, payload);
     } catch (e) {}
   }
 }
 
-export function addDemoMoment(newMoment: Moment): Moment[] {
-  const current = getStoredDemoMoments();
-  const updated = [newMoment, ...current];
-  saveStoredDemoMoments(updated);
+export function addDemoMoment(newMoment: Moment, userId?: string): Moment[] {
+  const current = getStoredDemoMoments(userId);
+  const updated = dedupeMoments([newMoment, ...current]);
+  saveStoredDemoMoments(updated, userId);
   return updated;
 }
 
-export function addDemoReaction(momentId: string, emoji: string, user: Profile): Moment[] {
-  const current = getStoredDemoMoments();
+export function addDemoReaction(momentId: string, emoji: string, user: Profile, cacheUserId?: string): Moment[] {
+  const current = getStoredDemoMoments(cacheUserId);
   const updated = current.map((m) => {
     if (m.id === momentId) {
       const existingReactions = m.reactions || [];
@@ -185,6 +210,6 @@ export function addDemoReaction(momentId: string, emoji: string, user: Profile):
     }
     return m;
   });
-  saveStoredDemoMoments(updated);
+  saveStoredDemoMoments(updated, cacheUserId);
   return updated;
 }

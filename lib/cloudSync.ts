@@ -9,6 +9,54 @@ export interface CloudProfile {
   avatar_url: string;
 }
 
+function dataUrlToFile(dataUrl: string, fallbackName: string): File | null {
+  try {
+    const [header, base64] = dataUrl.split(',');
+    const mime = header.match(/^data:([^;]+);base64$/)?.[1];
+    if (!mime || !base64) return null;
+
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const ext = mime.includes('webm')
+      ? 'webm'
+      : mime.includes('mp4')
+        ? 'mp4'
+        : mime.includes('png')
+          ? 'png'
+          : 'jpg';
+
+    return new File([bytes], `${fallbackName}.${ext}`, { type: mime });
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function uploadMediaToPublicUrl(dataUrl: string, fallbackName: string): Promise<string | null> {
+  if (typeof window === 'undefined' || !dataUrl.startsWith('data:')) return null;
+
+  const file = dataUrlToFile(dataUrl, fallbackName);
+  if (!file) return null;
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    return typeof data.url === 'string' && data.url.startsWith('https://') ? data.url : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 /**
  * Compresses an image DataURL to 360x360 JPEG quality 0.50.
  * Reduces base64 payload size from ~500KB down to ~12KB - 15KB!
@@ -132,15 +180,34 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
     // references that become black screens on any other tab/device/account
     if (moment.media_url.startsWith('blob:')) return false;
 
-    // Compress photo to ~12KB if it's base64 dataUrl (skip for videos)
+    // Public cloud stores must not receive browser-local media references.
+    // Upload videos and oversized photos first so other accounts can play them.
     let finalMediaUrl = moment.media_url;
+    let finalThumbnailUrl = moment.thumbnail_url;
+
+    if (moment.media_url.startsWith('data:video/')) {
+      const uploadedUrl = await uploadMediaToPublicUrl(moment.media_url, `locket_${moment.id}`);
+      if (!uploadedUrl) return false;
+      finalMediaUrl = uploadedUrl;
+    }
+
+    if (moment.thumbnail_url?.startsWith('data:image/') && moment.thumbnail_url.length > 250000) {
+      const uploadedThumb = await uploadMediaToPublicUrl(moment.thumbnail_url, `locket_${moment.id}_thumb`);
+      if (uploadedThumb) finalThumbnailUrl = uploadedThumb;
+    }
+
     if (moment.media_url.startsWith('data:') && moment.media_type !== 'video' && !moment.media_url.startsWith('data:video/')) {
       finalMediaUrl = await compressImageForCloudSync(moment.media_url);
+      if (finalMediaUrl.length > 450000) {
+        const uploadedUrl = await uploadMediaToPublicUrl(finalMediaUrl, `locket_${moment.id}`);
+        if (uploadedUrl) finalMediaUrl = uploadedUrl;
+      }
     }
 
     const compressedMoment: Moment = {
       ...moment,
       media_url: finalMediaUrl,
+      thumbnail_url: finalThumbnailUrl,
     };
 
     // 1. Send to Serverless Sync API
@@ -206,6 +273,6 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
 
   // Deduplicate by moment ID
   return allMoments
-    .filter((m) => m && m.id && m.media_url)
+    .filter((m) => m && m.id && m.media_url && !m.media_url.startsWith('blob:'))
     .filter((m, i, self) => i === self.findIndex((x) => x && x.id === m.id));
 }

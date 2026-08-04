@@ -26,7 +26,7 @@ import { Camera, X, UserPlus } from 'lucide-react';
 import { CapturedMedia, captureVideoThumbnail } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { pushMomentToGlobalCloud, fetchGlobalCloudMoments, pushProfileToGlobalCloud, fetchGlobalCloudProfiles, compressImageForCloudSync } from '@/lib/cloudSync';
+import { pushMomentToGlobalCloud, fetchGlobalCloudMoments, pushProfileToGlobalCloud, fetchGlobalCloudProfiles, compressImageForCloudSync, uploadMediaToPublicUrl } from '@/lib/cloudSync';
 
 export default function HomePage() {
   const router = useRouter();
@@ -89,7 +89,7 @@ export default function HomePage() {
   const handleDeleteMoment = (momentId: string) => {
     setMoments((prev) => {
       const updated = prev.filter((m) => m.id !== momentId);
-      saveStoredDemoMoments(updated);
+      saveStoredDemoMoments(updated, currentUser.id);
       return updated;
     });
   };
@@ -149,7 +149,7 @@ export default function HomePage() {
   // Fetch moments with full bidirectional cloud↔local sync so ALL accounts see the SAME feed
   const loadMoments = async () => {
     // 1. Get local moments (from localStorage)
-    const localMoments = getStoredDemoMoments();
+    const localMoments = getStoredDemoMoments(currentUser.id);
 
     // 2. Get cloud moments (the global shared source of truth)
     let cloudMoments: Moment[] = [];
@@ -234,7 +234,7 @@ export default function HomePage() {
 
     // 6. Save the full combined dataset back to localStorage
     //    so next reload is instant even if cloud is slow
-    saveStoredDemoMoments(unique);
+    saveStoredDemoMoments(unique, currentUser.id);
 
     const targetMoments = unique.length > 0 ? unique : localMoments;
     setMoments((prev) => (areMomentsEqual(prev, targetMoments) ? prev : targetMoments));
@@ -287,7 +287,7 @@ export default function HomePage() {
               const exists = prev.some((m) => m.id === payload.id);
               if (exists) return prev;
               const updated = [payload, ...prev];
-              addDemoMoment(payload);
+              addDemoMoment(payload, currentUser.id);
               return updated;
             });
           }
@@ -420,7 +420,7 @@ export default function HomePage() {
         });
       } catch (e) {}
     }
-    const updated = addDemoReaction(momentId, emoji, currentUser);
+    const updated = addDemoReaction(momentId, emoji, currentUser, currentUser.id);
     setMoments(updated);
   };
 
@@ -441,10 +441,22 @@ export default function HomePage() {
     if (media.type === 'photo' && media.dataUrl.startsWith('data:image/')) {
       try {
         mediaUrl = await compressImageForCloudSync(media.dataUrl);
+        if (mediaUrl.length > 450000) {
+          const uploadedPhotoUrl = await uploadMediaToPublicUrl(mediaUrl, `locket_${newMomentId}`);
+          if (uploadedPhotoUrl) mediaUrl = uploadedPhotoUrl;
+        }
       } catch (e) {}
     } else if (media.type === 'video') {
       try {
         thumbnailUrl = await captureVideoThumbnail(media.dataUrl);
+        const uploadedVideoUrl = await uploadMediaToPublicUrl(media.dataUrl, `locket_${newMomentId}`);
+        if (uploadedVideoUrl) {
+          mediaUrl = uploadedVideoUrl;
+        }
+        if (thumbnailUrl?.startsWith('data:image/') && thumbnailUrl.length > 250000) {
+          const uploadedThumbUrl = await uploadMediaToPublicUrl(thumbnailUrl, `locket_${newMomentId}_thumb`);
+          if (uploadedThumbUrl) thumbnailUrl = uploadedThumbUrl;
+        }
       } catch (e) {}
     }
 
@@ -463,7 +475,7 @@ export default function HomePage() {
     };
 
     // 1. Optimistic Local Save (40KB fits easily without localStorage quota errors!)
-    const updatedMoments = addDemoMoment(newMoment);
+    const updatedMoments = addDemoMoment(newMoment, currentUser.id);
     setSelectedFriendFilter(null);
     setMoments(updatedMoments);
     setSelectedMomentId(newMomentId);

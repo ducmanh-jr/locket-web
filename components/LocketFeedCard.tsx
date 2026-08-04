@@ -47,6 +47,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   // Track current moment ID for cleanup
   currentMomentIdRef.current = moment.id;
 
+  useEffect(() => {
+    setVideoError(false);
+  }, [moment.id, moment.media_url]);
+
   // Auto-play music when moment changes, auto-stop when switching away
   useEffect(() => {
     // Kill any previous audio immediately

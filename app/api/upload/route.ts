@@ -1,5 +1,26 @@
 import { NextResponse } from 'next/server';
 
+function getUploadName(file: File): string {
+  const mime = file.type || 'application/octet-stream';
+  const ext = mime.includes('webm')
+    ? 'webm'
+    : mime.includes('mp4')
+      ? 'mp4'
+      : mime.includes('png')
+        ? 'png'
+        : mime.includes('jpeg') || mime.includes('jpg')
+          ? 'jpg'
+          : 'bin';
+
+  const originalName = typeof file.name === 'string' ? file.name : '';
+  const safeBaseName = originalName
+    .replace(/\.[^.]+$/, '')
+    .replace(/[^a-zA-Z0-9_-]/g, '_')
+    .slice(0, 60);
+
+  return `${safeBaseName || 'locket_media'}_${Date.now()}.${ext}`;
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -15,8 +36,8 @@ export async function POST(request: Request) {
     // Upload server-to-server to Catbox (no CORS limitations in Node.js runtime)
     const catboxData = new FormData();
     catboxData.append('reqtype', 'fileupload');
-    const blob = new Blob([buffer], { type: file.type || 'image/jpeg' });
-    catboxData.append('fileToUpload', blob, `photo_${Date.now()}.jpg`);
+    const blob = new Blob([buffer], { type: file.type || 'application/octet-stream' });
+    catboxData.append('fileToUpload', blob, getUploadName(file));
 
     const res = await fetch('https://catbox.moe/user/api.php', {
       method: 'POST',
