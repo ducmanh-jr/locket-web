@@ -158,8 +158,9 @@ export default function HomePage() {
     loadFriends();
     loadMoments();
 
-    // 4s polling timer so Account B automatically gets Account A's photos without reloading
+    // 4s polling timer so Account B automatically gets Account A's photos & profile without reloading
     const syncTimer = setInterval(() => {
+      loadFriends();
       loadMoments();
     }, 4000);
 
@@ -171,6 +172,7 @@ export default function HomePage() {
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'moments' },
           () => {
+            loadFriends();
             loadMoments();
           }
         )
