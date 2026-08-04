@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { MusicTrack } from '@/lib/types';
-import { Search, Play, Pause, Bookmark, MoreHorizontal, X, Check } from 'lucide-react';
+import { Search, Play, Pause, Bookmark, MoreHorizontal, X, Check, Music } from 'lucide-react';
 
 interface MusicPickerModalProps {
   onSelectMusic: (track: MusicTrack) => void;
@@ -20,7 +20,7 @@ const PRESET_TRENDING_TRACKS: ExtendedTrack[] = [
     title: 'Thế Mà Lại Hay',
     artist: 'Guxxi',
     playsCount: '1,1 triệu',
-    cover_url: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/bf/13/be/bf13be02-4ec4-51e9-9fa9-fae26c117b4c/5054197992928.jpg/100x100bb.jpg',
+    cover_url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&q=80',
     preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/6b/c4/88/6bc4882e-60f2-b88d-7fb7-e21544a0e28b/mzaf_1003463991206103004.plus.aac.p.m4a',
   },
   {
@@ -28,7 +28,7 @@ const PRESET_TRENDING_TRACKS: ExtendedTrack[] = [
     title: 'Dù Có Cách Xa (NVT Remix)',
     artist: 'Kim Phương Anh',
     playsCount: '575.450',
-    cover_url: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/d9/39/33/d93933c0-e717-380d-85e8-54c30294e7ed/24UMGIM88005.rgb.jpg/100x100bb.jpg',
+    cover_url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&q=80',
     preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/e5/22/df/e522df14-722a-f886-f6b0-ee0b4c73f5a8/mzaf_6380963162791771146.plus.aac.p.m4a',
   },
   {
@@ -36,7 +36,7 @@ const PRESET_TRENDING_TRACKS: ExtendedTrack[] = [
     title: 'Chấp Niệm Trong Em (Remix)',
     artist: 'Ngân Ngân',
     playsCount: '749.245',
-    cover_url: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/ca/8f/c9/ca8fc99c-29b1-ec06-8d18-97e3a2db77df/840391487679.jpg/100x100bb.jpg',
+    cover_url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&q=80',
     preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/58/b7/66/58b7661b-91c9-6f94-6d9b-73599e52e5a7/mzaf_4079815049386348126.plus.aac.p.m4a',
   },
   {
@@ -44,7 +44,7 @@ const PRESET_TRENDING_TRACKS: ExtendedTrack[] = [
     title: 'Chúng Ta Của Tương Lai',
     artist: 'Sơn Tùng M-TP',
     playsCount: '2,8 triệu',
-    cover_url: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/57/95/92/579592bd-5561-26c7-31ef-8d655f41261d/840391489006.jpg/100x100bb.jpg',
+    cover_url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&q=80',
     preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/31/53/35/3153359d-648b-3e58-f3ff-568b6b15e4f4/mzaf_16480572573215570535.plus.aac.p.m4a',
   },
   {
@@ -52,7 +52,7 @@ const PRESET_TRENDING_TRACKS: ExtendedTrack[] = [
     title: 'APT.',
     artist: 'ROSÉ & Bruno Mars',
     playsCount: '15,4 triệu',
-    cover_url: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/bf/13/be/bf13be02-4ec4-51e9-9fa9-fae26c117b4c/5054197992928.jpg/100x100bb.jpg',
+    cover_url: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=300&q=80',
     preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/6b/c4/88/6bc4882e-60f2-b88d-7fb7-e21544a0e28b/mzaf_1003463991206103004.plus.aac.p.m4a',
   },
   {
@@ -60,10 +60,36 @@ const PRESET_TRENDING_TRACKS: ExtendedTrack[] = [
     title: 'Năng Lượng Tích Cực #1',
     artist: 'QTrung, MeMe Media',
     playsCount: '1,8 triệu',
-    cover_url: 'https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/d9/39/33/d93933c0-e717-380d-85e8-54c30294e7ed/24UMGIM88005.rgb.jpg/100x100bb.jpg',
+    cover_url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=300&q=80',
     preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/e5/22/df/e522df14-722a-f886-f6b0-ee0b4c73f5a8/mzaf_6380963162791771146.plus.aac.p.m4a',
   },
 ];
+
+const TrackCoverImage: React.FC<{ src: string; isPlaying: boolean }> = ({ src, isPlaying }) => {
+  const [imgError, setImgError] = useState(false);
+
+  return (
+    <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-[#2A2A32] flex-shrink-0 border border-zinc-700/50 shadow-sm">
+      {!imgError && src ? (
+        <img
+          src={src}
+          alt=""
+          onError={() => setImgError(true)}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-tr from-[#FFC700] via-[#FF9900] to-purple-600 flex items-center justify-center">
+          <Music className="w-5 h-5 text-black" />
+        </div>
+      )}
+      {isPlaying && (
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+          <div className="w-2.5 h-2.5 bg-[#FFC700] rounded-full animate-ping" />
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
   onSelectMusic,
@@ -234,18 +260,7 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
                 >
                   {/* Left: Cover Art + Titles */}
                   <div className="flex items-center space-x-3 truncate pr-2 flex-1">
-                    <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-800 flex-shrink-0 border border-zinc-800">
-                      <img
-                        src={track.cover_url}
-                        alt={track.title}
-                        className="w-full h-full object-cover"
-                      />
-                      {isPlaying && (
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                          <div className="w-2 h-2 bg-[#FFC700] rounded-full animate-ping" />
-                        </div>
-                      )}
-                    </div>
+                    <TrackCoverImage src={track.cover_url} isPlaying={isPlaying} />
 
                     <div className="truncate">
                       <h4 className="text-white text-sm font-bold truncate leading-tight">
