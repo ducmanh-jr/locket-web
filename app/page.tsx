@@ -40,6 +40,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [friendsList, setFriendsList] = useState<Profile[]>([]);
   const [lastReaction, setLastReaction] = useState<{ emoji: string; timestamp: number } | null>(null);
+  const broadcastChannelRef = React.useRef<any>(null);
 
   const currentUser = userProfile || DEMO_CURRENT_USER;
 
@@ -181,17 +182,22 @@ export default function HomePage() {
       const broadcastChannel = supabase.channel('locket-live-broadcast');
       broadcastChannel
         .on('broadcast', { event: 'new_moment' }, ({ payload }) => {
-          if (payload) {
+          if (payload && payload.id) {
             setMoments((prev) => {
               const exists = prev.some((m) => m.id === payload.id);
               if (exists) return prev;
               const updated = [payload, ...prev];
               updated.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+              addDemoMoment(payload);
               return updated;
             });
           }
         })
-        .subscribe();
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            broadcastChannelRef.current = broadcastChannel;
+          }
+        });
 
       return () => {
         clearInterval(syncTimer);
@@ -329,13 +335,26 @@ export default function HomePage() {
       await pushMomentToGlobalCloud(createdMoment);
     } catch (e) {}
 
-    // 4. Instant Realtime Broadcast to all other logged-in accounts
-    if (isSupabaseConfigured()) {
+    // 4. Instant Realtime WebSocket Broadcast to all other logged-in accounts (< 50ms)
+    if (broadcastChannelRef.current) {
       try {
-        supabase.channel('locket-live-broadcast').send({
+        broadcastChannelRef.current.send({
           type: 'broadcast',
           event: 'new_moment',
           payload: createdMoment,
+        });
+      } catch (e) {}
+    } else if (isSupabaseConfigured()) {
+      try {
+        const ch = supabase.channel('locket-live-broadcast');
+        ch.subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            ch.send({
+              type: 'broadcast',
+              event: 'new_moment',
+              payload: createdMoment,
+            });
+          }
         });
       } catch (e) {}
     }
