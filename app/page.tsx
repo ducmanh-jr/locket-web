@@ -360,15 +360,12 @@ export default function HomePage() {
       } catch (e) {}
     } else if (media.type === 'video') {
       try {
-        thumbnailUrl = await captureVideoThumbnail(media.dataUrl);
-        const uploadedVideoUrl = await uploadMediaToPublicUrl(media.dataUrl, `locket_${newMomentId}`);
-        if (uploadedVideoUrl) {
-          mediaUrl = uploadedVideoUrl;
-        }
-        if (thumbnailUrl?.startsWith('data:image/') && thumbnailUrl.length > 250000) {
-          const uploadedThumbUrl = await uploadMediaToPublicUrl(thumbnailUrl, `locket_${newMomentId}_thumb`);
-          if (uploadedThumbUrl) thumbnailUrl = uploadedThumbUrl;
-        }
+        const [uploadedVideoUrl, thumb] = await Promise.all([
+          uploadMediaToPublicUrl(media.dataUrl, `locket_${newMomentId}`),
+          captureVideoThumbnail(media.dataUrl),
+        ]);
+        if (uploadedVideoUrl) mediaUrl = uploadedVideoUrl;
+        if (thumb) thumbnailUrl = thumb;
       } catch (e) {}
     }
 

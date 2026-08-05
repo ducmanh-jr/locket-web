@@ -196,19 +196,26 @@ export function createVideoRecorder(stream: MediaStream): {
 export function captureVideoThumbnail(videoDataUrl: string): Promise<string> {
   return new Promise((resolve) => {
     if (typeof window === 'undefined' || !videoDataUrl) return resolve('');
+    let resolved = false;
+    const safeResolve = (val: string) => {
+      if (!resolved) {
+        resolved = true;
+        resolve(val);
+      }
+    };
+
+    // 1.5s max safety timeout so thumbnail extraction NEVER blocks posting
+    const timer = setTimeout(() => {
+      safeResolve('');
+    }, 1500);
+
     try {
       const video = document.createElement('video');
       video.muted = true;
       video.playsInline = true;
       video.crossOrigin = 'anonymous';
 
-      video.onloadeddata = () => {
-        try {
-          video.currentTime = 0.1;
-        } catch (e) {}
-      };
-
-      video.onseeked = () => {
+      const generateSnap = () => {
         try {
           const canvas = document.createElement('canvas');
           const size = 720;
@@ -217,19 +224,37 @@ export function captureVideoThumbnail(videoDataUrl: string): Promise<string> {
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.drawImage(video, 0, 0, size, size);
-            resolve(canvas.toDataURL('image/jpeg', 0.82));
+            clearTimeout(timer);
+            safeResolve(canvas.toDataURL('image/jpeg', 0.82));
           } else {
-            resolve('');
+            clearTimeout(timer);
+            safeResolve('');
           }
         } catch (e) {
-          resolve('');
+          clearTimeout(timer);
+          safeResolve('');
         }
       };
 
-      video.onerror = () => resolve('');
+      video.onloadedmetadata = () => {
+        try {
+          video.currentTime = 0.05;
+        } catch (e) {
+          generateSnap();
+        }
+      };
+
+      video.onseeked = generateSnap;
+      video.onerror = () => {
+        clearTimeout(timer);
+        safeResolve('');
+      };
+
       video.src = videoDataUrl;
+      video.load();
     } catch (e) {
-      resolve('');
+      clearTimeout(timer);
+      safeResolve('');
     }
   });
 }
