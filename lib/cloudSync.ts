@@ -52,15 +52,17 @@ export async function uploadMediaToPublicUrl(dataUrl: string, fallbackName: stri
 
     if (!res.ok) return null;
     const data = await res.json();
-    return typeof data.url === 'string' && data.url.startsWith('https://') ? data.url : null;
+    if (typeof data.url === 'string' && (data.url.startsWith('http://') || data.url.startsWith('https://') || data.url.startsWith('/'))) {
+      return data.url;
+    }
+    return null;
   } catch (e) {
     return null;
   }
 }
 
 /**
- * Compresses an image DataURL to 360x360 JPEG quality 0.50.
- * Reduces base64 payload size from ~500KB down to ~12KB - 15KB!
+ * Compresses an image DataURL to 1080x1080 JPEG quality 0.90.
  */
 export function compressImageForCloudSync(dataUrl: string): Promise<string> {
   return new Promise((resolve) => {
@@ -71,7 +73,7 @@ export function compressImageForCloudSync(dataUrl: string): Promise<string> {
     img.onload = () => {
       try {
         const canvas = document.createElement('canvas');
-        const targetSize = 1080; // 1080x1080 Full HD High Quality Crisp Square
+        const targetSize = 1080;
         canvas.width = targetSize;
         canvas.height = targetSize;
         const ctx = canvas.getContext('2d');
@@ -99,7 +101,6 @@ export function compressImageForCloudSync(dataUrl: string): Promise<string> {
 export async function pushProfileToGlobalCloud(profile: CloudProfile): Promise<boolean> {
   try {
     if (!profile.id || !profile.username) return false;
-    // Reject non-Google dummy accounts
     if (profile.id.startsWith('user-') || profile.id.startsWith('user_dev_') || profile.username === 'manh_locket') {
       return false;
     }
@@ -121,7 +122,6 @@ export async function pushProfileToGlobalCloud(profile: CloudProfile): Promise<b
 export async function fetchGlobalCloudProfiles(): Promise<CloudProfile[]> {
   try {
     let rawProfiles: CloudProfile[] = [];
-    // Try Serverless API first
     const res = await fetch('/api/sync', { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
@@ -131,7 +131,6 @@ export async function fetchGlobalCloudProfiles(): Promise<CloudProfile[]> {
     }
 
     if (rawProfiles.length === 0) {
-      // Fallback to JSONBlob
       const jsonRes = await fetch(JSONBLOB_STORE_URL, { cache: 'no-store' });
       if (jsonRes.ok) {
         const data = await jsonRes.json();
@@ -139,7 +138,6 @@ export async function fetchGlobalCloudProfiles(): Promise<CloudProfile[]> {
       }
     }
 
-    // Filter out non-Google accounts
     return rawProfiles.filter(
       (p) => p && p.id && !p.id.startsWith('user-') && !p.id.startsWith('user_dev_') && p.username !== 'manh_locket'
     );
@@ -150,7 +148,7 @@ export async function fetchGlobalCloudProfiles(): Promise<CloudProfile[]> {
 
 /**
  * Pushes a newly posted moment to Global Cloud.
- * Reliable public upload fallback ensures photos/videos are never lost.
+ * Reliable public upload fallback ensures photos/videos are converted to lightweight URLs.
  */
 export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> {
   try {
@@ -159,24 +157,19 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
     let finalMediaUrl = moment.media_url;
     let finalThumbnailUrl = moment.thumbnail_url;
 
-    if (moment.media_url.startsWith('data:video/')) {
+    // Convert data: URLs into short durable HTTP/HTTPS URLs
+    if (moment.media_url.startsWith('data:')) {
       const uploadedUrl = await uploadMediaToPublicUrl(moment.media_url, `locket_${moment.id}`);
       if (uploadedUrl) {
         finalMediaUrl = uploadedUrl;
+      } else if (moment.media_type !== 'video') {
+        finalMediaUrl = await compressImageForCloudSync(moment.media_url);
       }
     }
 
-    if (moment.thumbnail_url?.startsWith('data:image/') && moment.thumbnail_url.length > 250000) {
+    if (moment.thumbnail_url?.startsWith('data:')) {
       const uploadedThumb = await uploadMediaToPublicUrl(moment.thumbnail_url, `locket_${moment.id}_thumb`);
       if (uploadedThumb) finalThumbnailUrl = uploadedThumb;
-    }
-
-    if (moment.media_url.startsWith('data:') && moment.media_type !== 'video' && !moment.media_url.startsWith('data:video/')) {
-      finalMediaUrl = await compressImageForCloudSync(moment.media_url);
-      if (finalMediaUrl.length > 450000) {
-        const uploadedUrl = await uploadMediaToPublicUrl(finalMediaUrl, `locket_${moment.id}`);
-        if (uploadedUrl) finalMediaUrl = uploadedUrl;
-      }
     }
 
     const compressedMoment: Moment = {
