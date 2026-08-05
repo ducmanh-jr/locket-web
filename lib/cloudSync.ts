@@ -79,6 +79,36 @@ export async function uploadMediaToPublicUrl(mediaUrl: string, fallbackName: str
 }
 
 /**
+ * Uploads a raw Blob directly to public URL without base64 conversion.
+ * This is critical for video files to avoid huge data URL overhead.
+ */
+export async function uploadBlobToPublicUrl(blob: Blob, fallbackName: string): Promise<string | null> {
+  if (typeof window === 'undefined' || !blob || blob.size === 0) return null;
+
+  try {
+    const mime = blob.type || 'video/mp4';
+    const ext = mime.includes('webm') ? 'webm' : mime.includes('mp4') ? 'mp4' : mime.includes('png') ? 'png' : 'jpg';
+    const file = new File([blob], `${fallbackName}.${ext}`, { type: mime });
+
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (typeof data.url === 'string' && (data.url.startsWith('http://') || data.url.startsWith('https://') || data.url.startsWith('/'))) {
+      return data.url;
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
  * Compresses an image DataURL to 1080x1080 JPEG quality 0.90.
  */
 export function compressImageForCloudSync(dataUrl: string): Promise<string> {

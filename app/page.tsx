@@ -23,7 +23,7 @@ import { Camera, X, User, LogOut } from 'lucide-react';
 import { CapturedMedia, captureVideoThumbnail } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { pushMomentToGlobalCloud, pushMomentToGlobalCloudWithRetry, fetchGlobalCloudMoments, pushProfileToGlobalCloud, deleteMomentFromGlobalCloud, compressImageForCloudSync, uploadMediaToPublicUrl } from '@/lib/cloudSync';
+import { pushMomentToGlobalCloud, pushMomentToGlobalCloudWithRetry, fetchGlobalCloudMoments, pushProfileToGlobalCloud, deleteMomentFromGlobalCloud, compressImageForCloudSync, uploadMediaToPublicUrl, uploadBlobToPublicUrl } from '@/lib/cloudSync';
 import { sanitizeMoments } from '@/lib/media';
 
 export default function HomePage() {
@@ -174,6 +174,8 @@ export default function HomePage() {
           (payload) => {
             if (payload?.new) {
               const newMoment = payload.new as Moment;
+              // Skip moments sent by self to prevent duplicates
+              if (newMoment.sender_id === currentUser.id) return;
               setMoments((prev) => {
                 const exists = prev.some((m) => m.id === newMoment.id);
                 if (exists) return prev;
@@ -360,8 +362,9 @@ export default function HomePage() {
       } catch (e) {}
     } else if (media.type === 'video') {
       try {
+        // Upload video blob directly (not base64) for reliability
         const [uploadedVideoUrl, thumb] = await Promise.all([
-          uploadMediaToPublicUrl(media.dataUrl, `locket_${newMomentId}`),
+          uploadBlobToPublicUrl(media.blob, `locket_${newMomentId}`),
           captureVideoThumbnail(media.dataUrl),
         ]);
         if (uploadedVideoUrl) mediaUrl = uploadedVideoUrl;
@@ -411,8 +414,10 @@ export default function HomePage() {
           });
 
           await supabase.from('moments').insert({
+            id: newMomentId,
             sender_id: activeSender.id,
             media_url: mediaUrl,
+            media_type: media.type,
             caption: caption,
           });
         } catch (e) {}
