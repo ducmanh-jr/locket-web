@@ -6,6 +6,43 @@ const JSONBLOB_STORE_URL = 'https://jsonblob.com/api/jsonBlob/019fcc1e-0de5-7e25
 let memoryProfiles: any[] = [];
 let memoryMoments: any[] = [];
 
+function isVideoMoment(moment: any): boolean {
+  return (
+    moment?.media_type === 'video' ||
+    String(moment?.id || '').includes('video') ||
+    String(moment?.media_url || '').startsWith('data:video/')
+  );
+}
+
+function hasRenderableMedia(moment: any): boolean {
+  const mediaUrl = String(moment?.media_url || '');
+  if (!moment?.id || !mediaUrl) return false;
+  if (mediaUrl.startsWith('blob:')) return false;
+
+  if (isVideoMoment(moment)) {
+    return (
+      mediaUrl.startsWith('https://') ||
+      mediaUrl.startsWith('http://') ||
+      mediaUrl.startsWith('/') ||
+      mediaUrl.startsWith('data:video/')
+    );
+  }
+
+  return (
+    mediaUrl.startsWith('https://') ||
+    mediaUrl.startsWith('http://') ||
+    mediaUrl.startsWith('/') ||
+    mediaUrl.startsWith('data:image/')
+  );
+}
+
+function sanitizeMoments(moments: any[]): any[] {
+  return moments
+    .filter(hasRenderableMedia)
+    .filter((m, i, self) => i === self.findIndex((x) => x?.id === m?.id))
+    .slice(0, 200);
+}
+
 async function fetchFromGlobalStore() {
   try {
     const res = await fetch(JSONBLOB_STORE_URL, {
@@ -25,7 +62,7 @@ async function fetchFromGlobalStore() {
             p.username !== 'manh_locket'
         );
       }
-      if (Array.isArray(data.moments)) memoryMoments = data.moments;
+      if (Array.isArray(data.moments)) memoryMoments = sanitizeMoments(data.moments);
     }
   } catch (e) {}
 }
@@ -44,7 +81,7 @@ async function saveToGlobalStore(profiles: any[], moments: any[]) {
     await fetch(JSONBLOB_STORE_URL, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profiles: googleProfilesOnly, moments }),
+      body: JSON.stringify({ profiles: googleProfilesOnly, moments: sanitizeMoments(moments) }),
     });
   } catch (e) {}
 }
@@ -86,16 +123,21 @@ export async function POST(request: Request) {
     }
 
     if (action === 'push_moment' && moment?.id && moment?.media_url) {
+      if (!hasRenderableMedia(moment)) {
+        return NextResponse.json(
+          { error: 'Moment media must be a durable, renderable URL' },
+          { status: 422 }
+        );
+      }
       const exists = memoryMoments.some((m: any) => m.id === moment.id);
       if (!exists) {
         memoryMoments.unshift(moment);
-        if (memoryMoments.length > 200) {
-          memoryMoments = memoryMoments.slice(0, 200);
-        }
+        memoryMoments = sanitizeMoments(memoryMoments);
       }
     }
 
     // Persist merged profiles and moments safely
+    memoryMoments = sanitizeMoments(memoryMoments);
     await saveToGlobalStore(memoryProfiles, memoryMoments);
 
     return NextResponse.json(

@@ -5,15 +5,12 @@ import { LocketHeader } from '@/components/LocketHeader';
 import { LocketDock } from '@/components/LocketDock';
 import { LocketFeedCard } from '@/components/LocketFeedCard';
 import { LocketHistoryGrid } from '@/components/LocketHistoryGrid';
-import { LocketChatView } from '@/components/LocketChatView';
-import { FriendProfileModal } from '@/components/FriendProfileModal';
 import { CameraView } from '@/components/CameraView';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 import { SupabaseConfigNotice } from '@/components/SupabaseConfigNotice';
 import {
   DEMO_CURRENT_USER,
-  DEFAULT_3_FRIENDS,
-  DEMO_SUGGESTED_USERS,
+  DEMO_50_MOMENTS,
   getStoredDemoMoments,
   saveStoredDemoMoments,
   addDemoMoment,
@@ -22,31 +19,28 @@ import {
 import { Moment, Profile, MusicTrack } from '@/lib/types';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/lib/auth';
-import { Camera, X, UserPlus } from 'lucide-react';
+import { Camera, X, User, LogOut } from 'lucide-react';
 import { CapturedMedia, captureVideoThumbnail } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { pushMomentToGlobalCloud, fetchGlobalCloudMoments, pushProfileToGlobalCloud, fetchGlobalCloudProfiles, compressImageForCloudSync, uploadMediaToPublicUrl } from '@/lib/cloudSync';
+import { pushMomentToGlobalCloud, fetchGlobalCloudMoments, pushProfileToGlobalCloud, compressImageForCloudSync, uploadMediaToPublicUrl } from '@/lib/cloudSync';
+import { sanitizeMoments } from '@/lib/media';
 
 export default function HomePage() {
   const router = useRouter();
   const { userProfile, loading: authLoading } = useAuth();
   const [moments, setMoments] = useState<Moment[]>([]);
   const [selectedMomentId, setSelectedMomentId] = useState<string | null>(null);
-  const [currentView, setCurrentView] = useState<'feed' | 'grid' | 'chat'>('feed');
-  const [selectedFriendFilter, setSelectedFriendFilter] = useState<string | null>(null);
-  const [selectedFriendForModal, setSelectedFriendForModal] = useState<Profile | null>(null);
-  const [selectedChatFriend, setSelectedChatFriend] = useState<Profile | null>(null);
+  const [currentView, setCurrentView] = useState<'feed' | 'grid'>('feed');
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [showMenuModal, setShowMenuModal] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [friendsList, setFriendsList] = useState<Profile[]>([]);
   const [lastReaction, setLastReaction] = useState<{ emoji: string; timestamp: number } | null>(null);
   const broadcastChannelRef = useRef<any>(null);
 
   const currentUser = userProfile || DEMO_CURRENT_USER;
 
-  // Require Login: Redirect unauthenticated sessions to Google Login screen (/login)
+  // Enforce Google Login: Redirect unauthenticated sessions immediately to /login
   useEffect(() => {
     if (!authLoading && !userProfile) {
       router.push('/login');
@@ -59,17 +53,6 @@ export default function HomePage() {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
   }, []);
-
-  // Smart Data Diffing Helpers to prevent unnecessary React re-renders & flickering
-  const areProfilesEqual = (a: Profile[], b: Profile[]): boolean => {
-    if (a.length !== b.length) return false;
-    for (let i = 0; i < a.length; i++) {
-      if (a[i].id !== b[i].id || a[i].display_name !== b[i].display_name || a[i].avatar_url !== b[i].avatar_url) {
-        return false;
-      }
-    }
-    return true;
-  };
 
   const areMomentsEqual = (a: Moment[], b: Moment[]): boolean => {
     if (a.length !== b.length) return false;
@@ -94,131 +77,38 @@ export default function HomePage() {
     });
   };
 
-  // Fetch real friends from Global Cloud + Supabase + push current user profile
-  const loadFriends = async () => {
-    try {
-      await pushProfileToGlobalCloud({
-        id: currentUser.id,
-        username: currentUser.username,
-        display_name: currentUser.display_name,
-        avatar_url: currentUser.avatar_url || '',
-      });
-    } catch (e) {}
-
-    let cloudProfiles: Profile[] = [];
-    try {
-      const rawCloud = await fetchGlobalCloudProfiles();
-      cloudProfiles = rawCloud.map((p) => ({
-        id: p.id,
-        username: p.username,
-        display_name: p.display_name,
-        avatar_url: p.avatar_url,
-      }));
-    } catch (e) {}
-
-    let supabaseProfiles: Profile[] = [];
-    if (isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase.from('profiles').select('*');
-        if (!error && data && data.length > 0) {
-          supabaseProfiles = data as Profile[];
-        }
-      } catch (e) {}
+  // Sync profile to Global Cloud
+  useEffect(() => {
+    if (userProfile) {
+      pushProfileToGlobalCloud({
+        id: userProfile.id,
+        username: userProfile.username,
+        display_name: userProfile.display_name,
+        avatar_url: userProfile.avatar_url || '',
+      }).catch(() => {});
     }
+  }, [userProfile]);
 
-    const allProfiles = [...cloudProfiles, ...supabaseProfiles];
-
-    const googleAccountsOnly = allProfiles.filter(
-      (p) =>
-        p &&
-        p.id &&
-        !p.id.startsWith('user-') &&
-        !p.id.startsWith('user_dev_') &&
-        p.username !== 'manh_locket' &&
-        p.id !== currentUser.id &&
-        p.username !== currentUser.username
-    );
-
-    const unique = googleAccountsOnly.filter(
-      (user, index, self) => index === self.findIndex((u) => u.username === user.username)
-    );
-
-    setFriendsList((prev) => (areProfilesEqual(prev, unique) ? prev : unique));
-  };
-
-  // Fetch moments with full bidirectional cloud↔local sync so ALL accounts see the SAME feed
+  // Fetch moments with full bidirectional cloud sync so ALL accounts see the SAME feed
   const loadMoments = async () => {
-    // 1. Get local moments (from localStorage)
-    const localMoments = getStoredDemoMoments(currentUser.id);
-
-    // 2. Get cloud moments (the global shared source of truth)
     let cloudMoments: Moment[] = [];
     try {
       cloudMoments = await fetchGlobalCloudMoments();
     } catch (e) {}
 
-    // 3. Find local USER-captured moments that are NOT yet in the cloud
-    //    (these are moments this user captured but haven't been synced yet)
-    //    CRITICAL: Skip blob: URLs - they are dead after page reload
-    const cloudIds = new Set(cloudMoments.map((m) => m.id));
-    const localOnlyUserMoments = localMoments.filter(
-      (m) =>
-        !cloudIds.has(m.id) &&
-        !m.id.startsWith('m-photo-v5-') && // exclude default sample photos
-        !m.media_url?.startsWith('blob:') // blob: URLs can't be synced - they're dead
-    );
-
-    // 4. Push any local-only user moments to cloud so ALL accounts can see them
-    if (localOnlyUserMoments.length > 0) {
-      await Promise.all(
-        localOnlyUserMoments.map(async (moment) => {
-          try {
-            await pushMomentToGlobalCloud(moment);
-          } catch (e) {}
-        })
-      );
-      // Re-fetch cloud moments to get the unified global state after pushing
-      try {
-        const updatedCloud = await fetchGlobalCloudMoments();
-        if (updatedCloud.length > cloudMoments.length) {
-          cloudMoments = updatedCloud;
-        }
-      } catch (e) {}
-    }
-
-    // 5. Combine: cloud moments + local moments + sample dataset
-    //    Filter out ALL blob: URL moments at this stage
-    let validSupabaseMoments: Moment[] = [];
-    if (isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase
-          .from('moments')
-          .select('*, sender:profiles(*), reactions(*, user:profiles(*))')
-          .order('created_at', { ascending: false });
-
-        if (!error && data) {
-          validSupabaseMoments = (data as Moment[]).filter(
-            (m) => !m.media_url?.includes('1785829393992_')
-          );
-        }
-      } catch (e) {}
-    }
-
-    const combined = [...cloudMoments, ...localOnlyUserMoments, ...localMoments, ...validSupabaseMoments];
+    const cachedMoments = getStoredDemoMoments(currentUser.id);
+    const sharedMoments = cloudMoments.length > 0 ? cloudMoments : cachedMoments;
+    const combined = sanitizeMoments([...sharedMoments, ...DEMO_50_MOMENTS]);
 
     const sanitized = combined.map((m) => {
       let item = m;
-      // Guarantee sample dataset photos (including cat photo) NEVER have fake music stickers
       if (item.id.startsWith('m-photo-v5-') || item.caption?.includes('mèo cưng')) {
         item = { ...item, music: undefined };
       }
-
       if (!item.sender) {
         if (item.sender_id === currentUser.id || item.sender_id === 'user-me') {
           return { ...item, sender: currentUser };
         }
-        const match = DEFAULT_3_FRIENDS.find((f) => f.id === item.sender_id);
-        if (match) return { ...item, sender: match };
         return { ...item, sender: currentUser };
       }
       return item;
@@ -228,24 +118,27 @@ export default function HomePage() {
       (m, i, self) => i === self.findIndex((x) => x.id === m.id)
     );
 
+    // Newest moments at the top of the stack
     unique.sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
 
-    // 6. Save the full combined dataset back to localStorage
-    //    so next reload is instant even if cloud is slow
     saveStoredDemoMoments(unique, currentUser.id);
 
-    const targetMoments = unique.length > 0 ? unique : localMoments;
+    const targetMoments = unique.length > 0 ? unique : DEMO_50_MOMENTS;
     setMoments((prev) => (areMomentsEqual(prev, targetMoments) ? prev : targetMoments));
     setLoading(false);
   };
 
   useEffect(() => {
-    loadFriends();
     loadMoments();
 
-    // Native BroadcastChannel for instant <2ms cross-tab real-time sync
+    // Auto-polling interval: Sync cloud moments every 3.5s so all Google accounts stay 100% updated
+    const pollInterval = setInterval(() => {
+      loadMoments();
+    }, 3500);
+
+    // Native BroadcastChannel for instant cross-tab real-time sync
     let tabChannel: BroadcastChannel | null = null;
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
       tabChannel = new BroadcastChannel('locket_tab_sync');
@@ -299,6 +192,7 @@ export default function HomePage() {
         });
 
       return () => {
+        clearInterval(pollInterval);
         if (tabChannel) tabChannel.close();
         supabase.removeChannel(dbChannel);
         supabase.removeChannel(broadcastChannel);
@@ -306,6 +200,7 @@ export default function HomePage() {
     }
 
     return () => {
+      clearInterval(pollInterval);
       if (tabChannel) tabChannel.close();
     };
   }, [currentUser.id]);
@@ -329,60 +224,39 @@ export default function HomePage() {
         <p className="text-xs text-zinc-400 max-w-xs">Chuyển hướng đến màn hình đăng nhập...</p>
         <button
           onClick={() => router.push('/login')}
-          className="mt-2 px-4 py-2 bg-[#FFC700] text-black font-bold text-xs rounded-xl"
+          className="mt-2 px-4 py-2 bg-[#FFC700] text-black font-bold text-xs rounded-xl shadow-locket-glow"
         >
-          Đăng nhập ngay 🚀
+          Đăng nhập bằng Google 🚀
         </button>
       </div>
     );
   }
 
-  // Filter moments by selected friend dropdown
-  const isFilteringCurrentUser =
-    selectedFriendFilter === currentUser.id ||
-    selectedFriendFilter === currentUser.username;
+  // Pure Shared Room Stack (All Google Account Photos/Videos)
+  const roomMoments = moments;
 
-  const filteredMoments = selectedFriendFilter
-    ? moments.filter((m) => {
-        const sender = m.sender;
-        if (isFilteringCurrentUser) {
-          return (
-            m.sender_id === currentUser.id ||
-            sender?.id === currentUser.id ||
-            sender?.username === currentUser.username
-          );
-        }
-        return (
-          m.sender_id === selectedFriendFilter ||
-          sender?.username === selectedFriendFilter ||
-          sender?.id === selectedFriendFilter
-        );
-      })
-    : moments;
-
-  // Derive Current Moment & Index 100% Purely from selectedMomentId!
   const currentMoment = selectedMomentId
-    ? filteredMoments.find((m) => m.id === selectedMomentId) || filteredMoments[0]
-    : filteredMoments[0];
+    ? roomMoments.find((m) => m.id === selectedMomentId) || roomMoments[0]
+    : roomMoments[0];
 
   const currentIndex = currentMoment
-    ? filteredMoments.findIndex((m) => m.id === currentMoment.id)
+    ? roomMoments.findIndex((m) => m.id === currentMoment.id)
     : 0;
 
   const safeIndex = currentIndex >= 0 ? currentIndex : 0;
-  const nextMoment = filteredMoments[safeIndex + 1];
-  const prevMoment = filteredMoments[safeIndex - 1];
+  const nextMoment = roomMoments[safeIndex + 1];
+  const prevMoment = roomMoments[safeIndex - 1];
 
   const handleNext = () => {
-    if (safeIndex < filteredMoments.length - 1) {
-      const nextM = filteredMoments[safeIndex + 1];
+    if (safeIndex < roomMoments.length - 1) {
+      const nextM = roomMoments[safeIndex + 1];
       if (nextM) setSelectedMomentId(nextM.id);
     }
   };
 
   const handlePrev = () => {
     if (safeIndex > 0) {
-      const prevM = filteredMoments[safeIndex - 1];
+      const prevM = roomMoments[safeIndex - 1];
       if (prevM) setSelectedMomentId(prevM.id);
     }
   };
@@ -390,22 +264,6 @@ export default function HomePage() {
   const handleSendDirectMessage = (text: string) => {
     if (currentMoment) {
       handleReact(currentMoment.id, '💬');
-      const sender = currentMoment.sender;
-      if (sender && sender.id !== currentUser.id) {
-        try {
-          const stored = localStorage.getItem('locket_chat_messages_v1');
-          const msgs = stored ? JSON.parse(stored) : {};
-          const senderId = sender.id;
-          const newMsg = {
-            id: `msg-${Date.now()}`,
-            senderId: currentUser.id,
-            text: text,
-            timestamp: 'Vừa xong',
-          };
-          msgs[senderId] = [...(msgs[senderId] || []), newMsg];
-          localStorage.setItem('locket_chat_messages_v1', JSON.stringify(msgs));
-        } catch (e) {}
-      }
     }
   };
 
@@ -431,10 +289,9 @@ export default function HomePage() {
     music?: MusicTrack,
     audioOption?: 'mute' | 'original' | 'music'
   ) => {
-    const newMomentId = `m-${media.type}-v8-${Date.now()}`;
+    const newMomentId = `m-${media.type}-v9-${Date.now()}`;
     const activeSender = userProfile || currentUser;
 
-    // Compress photo immediately to ~40KB so localStorage NEVER hits QuotaExceededError!
     let mediaUrl = media.dataUrl;
     let thumbnailUrl: string | undefined = undefined;
 
@@ -474,15 +331,14 @@ export default function HomePage() {
       thumbnail_url: thumbnailUrl,
     };
 
-    // 1. Optimistic Local Save (40KB fits easily without localStorage quota errors!)
+    // 1. Optimistic Local Save - Put new photo on TOP of the room stack
     const updatedMoments = addDemoMoment(newMoment, currentUser.id);
-    setSelectedFriendFilter(null);
     setMoments(updatedMoments);
     setSelectedMomentId(newMomentId);
     setShowCamera(false);
     setCurrentView('feed');
 
-    // 2. Broadcast to all open tabs via native BroadcastChannel (< 2ms cross-tab sync!)
+    // 2. Broadcast to all open tabs
     try {
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
         const tabChannel = new BroadcastChannel('locket_tab_sync');
@@ -526,47 +382,29 @@ export default function HomePage() {
     })();
   };
 
+  const handleLogout = async () => {
+    try {
+      localStorage.removeItem('locket_google_user_v1');
+      localStorage.removeItem('locket_device_profile');
+      if (isSupabaseConfigured()) {
+        await supabase.auth.signOut();
+      }
+    } catch (e) {}
+    router.push('/login');
+  };
+
   return (
     <div className="h-full flex flex-col justify-between bg-black selection:bg-[#FFC700] selection:text-black overflow-hidden relative">
-      {/* Header */}
-      {currentView !== 'chat' && (
-        <LocketHeader
-          currentUser={currentUser}
-          friends={friendsList}
-          selectedFriendFilter={selectedFriendFilter}
-          onSelectFilter={(friendId) => {
-            setSelectedFriendFilter(friendId);
-            setSelectedMomentId(null);
-          }}
-          onOpenChat={() => {
-            setSelectedChatFriend(null);
-            setCurrentView('chat');
-          }}
-          onOpenProfile={() => router.push('/profile')}
-          onViewFriendProfile={(friend) => setSelectedFriendForModal(friend)}
-        />
-      )}
+      {/* Shared Room Header */}
+      <LocketHeader
+        currentUser={currentUser}
+        onOpenProfile={() => router.push('/profile')}
+      />
 
       {/* Main Views Container */}
       <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden w-full">
         <AnimatePresence mode="wait">
-          {currentView === 'chat' ? (
-            <motion.div
-              key="view-chat"
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
-              className="w-full h-full absolute inset-0"
-            >
-              <LocketChatView
-                friends={friendsList}
-                currentUser={currentUser}
-                onBack={() => setCurrentView('feed')}
-                initialFriend={selectedChatFriend}
-              />
-            </motion.div>
-          ) : currentView === 'grid' ? (
+          {currentView === 'grid' ? (
             <motion.div
               key="view-grid"
               initial={{ y: '100%' }}
@@ -576,7 +414,7 @@ export default function HomePage() {
               className="w-full h-full absolute inset-0 bg-black z-30 transform-gpu will-change-transform"
             >
               <LocketHistoryGrid
-                moments={filteredMoments}
+                moments={roomMoments}
                 onSelectMoment={(moment) => {
                   setSelectedMomentId(moment.id);
                   setCurrentView('feed');
@@ -602,14 +440,14 @@ export default function HomePage() {
                 <div className="w-[310px] h-[310px] my-auto rounded-[2.5rem] bg-[#18181C] border border-zinc-800 flex items-center justify-center animate-pulse">
                   <div className="w-10 h-10 rounded-full border-4 border-[#FFC700] border-t-transparent animate-spin" />
                 </div>
-              ) : filteredMoments.length > 0 && currentMoment ? (
+              ) : roomMoments.length > 0 && currentMoment ? (
                 <LocketFeedCard
                   moment={currentMoment}
                   currentUser={currentUser}
                   onNext={handleNext}
                   onPrev={handlePrev}
                   hasPrev={safeIndex > 0}
-                  hasNext={safeIndex < filteredMoments.length - 1}
+                  hasNext={safeIndex < roomMoments.length - 1}
                   onDeleteMoment={handleDeleteMoment}
                   nextMomentUrl={nextMoment?.media_url}
                   prevMomentUrl={prevMoment?.media_url}
@@ -620,9 +458,9 @@ export default function HomePage() {
                   <div className="w-14 h-14 rounded-full bg-[#FFC700]/20 text-[#FFC700] flex items-center justify-center mb-3 border border-[#FFC700]/40">
                     <Camera className="w-7 h-7" />
                   </div>
-                  <h3 className="text-white font-bold text-sm mb-1">Chưa có khoảnh khắc nào</h3>
+                  <h3 className="text-white font-bold text-sm mb-1">Chưa có khoảnh khắc nào trong phòng</h3>
                   <p className="text-zinc-400 text-xs mb-4">
-                    Bấm nút chụp bên dưới để gửi khoảnh khắc đầu tiên!
+                    Bấm nút chụp bên dưới để đặt ảnh đầu tiên vào tệp ảnh chung!
                   </p>
                   <button
                     onClick={() => setShowCamera(true)}
@@ -638,48 +476,25 @@ export default function HomePage() {
       </div>
 
       {/* Bottom Dock */}
-      {currentView !== 'chat' && (
-        <LocketDock
-          currentView={currentView}
-          onToggleView={(view) => setCurrentView(view)}
-          onOpenCamera={() => setShowCamera(true)}
-          onOpenMenu={() => setShowMenuModal(true)}
-          onSendDirectMessage={handleSendDirectMessage}
-          onReactEmoji={(emoji) => {
-            if (currentMoment) handleReact(currentMoment.id, emoji);
-          }}
-          isMyMoment={
-            currentMoment
-              ? (currentMoment.sender_id === currentUser.id) ||
-                (currentMoment.sender?.id === currentUser.id) ||
-                (currentMoment.sender?.username === currentUser.username)
-              : false
-          }
-        />
-      )}
+      <LocketDock
+        currentView={currentView}
+        onToggleView={(view) => setCurrentView(view)}
+        onOpenCamera={() => setShowCamera(true)}
+        onOpenMenu={() => setShowMenuModal(true)}
+        onSendDirectMessage={handleSendDirectMessage}
+        onReactEmoji={(emoji) => {
+          if (currentMoment) handleReact(currentMoment.id, emoji);
+        }}
+        isMyMoment={
+          currentMoment
+            ? (currentMoment.sender_id === currentUser.id) ||
+              (currentMoment.sender?.id === currentUser.id) ||
+              (currentMoment.sender?.username === currentUser.username)
+            : false
+        }
+      />
 
-      {/* Friend Profile Modal */}
-      {selectedFriendForModal && (
-        <FriendProfileModal
-          friend={selectedFriendForModal}
-          friendMoments={moments.filter(
-            (m) =>
-              m.sender_id === selectedFriendForModal.id ||
-              m.sender?.username === selectedFriendForModal.username
-          )}
-          onClose={() => setSelectedFriendForModal(null)}
-          onOpenChatWithFriend={(friend) => {
-            setSelectedChatFriend(friend);
-            setCurrentView('chat');
-          }}
-          onSelectMoment={(moment) => {
-            setSelectedMomentId(moment.id);
-            setCurrentView('feed');
-          }}
-        />
-      )}
-
-      {/* Menu Modal */}
+      {/* Options Menu Modal */}
       <AnimatePresence>
         {showMenuModal && (
           <motion.div
@@ -704,23 +519,9 @@ export default function HomePage() {
                 <X className="w-4 h-4" />
               </button>
 
-              <h3 className="text-white text-base font-bold mb-4">Tùy chọn & Bạn bè</h3>
+              <h3 className="text-white text-base font-bold mb-4">Tùy chọn Căn phòng</h3>
 
               <div className="space-y-2">
-                <button
-                  onClick={() => {
-                    setShowMenuModal(false);
-                    router.push('/friends');
-                  }}
-                  className="w-full p-3 bg-[#262626] hover:bg-[#333333] rounded-2xl text-white text-xs font-semibold flex items-center justify-between"
-                >
-                  <div className="flex items-center space-x-2.5">
-                    <UserPlus className="w-4 h-4 text-[#FFC700]" />
-                    <span>Quản lý & Gợi ý kết bạn</span>
-                  </div>
-                  <span className="text-zinc-500">&gt;</span>
-                </button>
-
                 <button
                   onClick={() => {
                     setShowMenuModal(false);
@@ -729,8 +530,22 @@ export default function HomePage() {
                   className="w-full p-3 bg-[#262626] hover:bg-[#333333] rounded-2xl text-white text-xs font-semibold flex items-center justify-between"
                 >
                   <div className="flex items-center space-x-2.5">
-                    <Camera className="w-4 h-4 text-[#FFC700]" />
-                    <span>Trang cá nhân của tôi</span>
+                    <User className="w-4 h-4 text-[#FFC700]" />
+                    <span>Trang cá nhân của bạn</span>
+                  </div>
+                  <span className="text-zinc-500">&gt;</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowMenuModal(false);
+                    handleLogout();
+                  }}
+                  className="w-full p-3 bg-[#262626] hover:bg-red-950/40 rounded-2xl text-red-400 text-xs font-semibold flex items-center justify-between"
+                >
+                  <div className="flex items-center space-x-2.5">
+                    <LogOut className="w-4 h-4 text-red-400" />
+                    <span>Đăng xuất Google</span>
                   </div>
                   <span className="text-zinc-500">&gt;</span>
                 </button>
@@ -740,10 +555,10 @@ export default function HomePage() {
         )}
       </AnimatePresence>
 
-      {/* Camera View */}
+      {/* Camera View Modal */}
       {showCamera && (
         <CameraView
-          friends={friendsList}
+          friends={[]}
           onClose={() => setShowCamera(false)}
           onSendMoment={handleSendMoment}
         />
@@ -751,3 +566,4 @@ export default function HomePage() {
     </div>
   );
 }
+

@@ -4,8 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { LayoutGrid, MoreHorizontal, Smile, Send, Sparkles } from 'lucide-react';
 
 interface LocketDockProps {
-  currentView: 'feed' | 'grid' | 'chat';
-  onToggleView: (view: 'feed' | 'grid' | 'chat') => void;
+  currentView: 'feed' | 'grid';
+  onToggleView: (view: 'feed' | 'grid') => void;
   onOpenCamera: () => void;
   onOpenMenu: () => void;
   onSendDirectMessage?: (text: string) => void;

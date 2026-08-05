@@ -1,4 +1,5 @@
 import { Profile, Moment, Reaction } from './types';
+import { sanitizeMoments } from './media';
 
 // Distinct Avatar Photos for Main Users (Zero overlap with feed moments)
 const AVATAR_DM = "/user-photos/1785829393992_567716528849713056_g276929852367586455_e887fb48d4d113fc528e29488435b6f7.jpg";
@@ -127,7 +128,7 @@ function readMomentsFromKey(key: string): Moment[] {
     const stored = localStorage.getItem(key);
     if (!stored) return [];
     const parsed = JSON.parse(stored);
-    return Array.isArray(parsed) ? parsed.filter((m) => m && m.id && m.media_url) : [];
+    return Array.isArray(parsed) ? sanitizeMoments(parsed) : [];
   } catch (e) {
     return [];
   }
@@ -168,7 +169,7 @@ export function getStoredDemoMoments(userId?: string): Moment[] {
 export function saveStoredDemoMoments(moments: Moment[], userId?: string): void {
   if (typeof window === 'undefined') return;
 
-  const normalized = dedupeMoments(moments).filter((m) => !m.media_url?.startsWith('blob:'));
+  const normalized = sanitizeMoments(dedupeMoments(moments));
   const payload = JSON.stringify(normalized);
 
   try {

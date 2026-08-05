@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Navbar } from '@/components/Navbar';
 import { CameraView } from '@/components/CameraView';
-import { DEMO_CURRENT_USER, DEMO_SUGGESTED_USERS, addDemoMoment } from '@/lib/demoStore';
+import { DEMO_CURRENT_USER, addDemoMoment } from '@/lib/demoStore';
 import { Profile } from '@/lib/types';
 import {
   ArrowLeft,
@@ -250,7 +249,7 @@ export default function ProfilePage() {
 
       {showCamera && (
         <CameraView
-          friends={DEMO_SUGGESTED_USERS.slice(0, 5)}
+          friends={[]}
           onClose={() => setShowCamera(false)}
           onSendMoment={handleSendMoment}
         />

@@ -20,20 +20,20 @@ export interface CapturedMedia {
  */
 export async function captureSquarePhoto(
   videoElement: HTMLVideoElement,
-  quality: number = 0.82,
+  quality: number = 0.92,
   maxDimension: number = 1080,
   isFrontCamera: boolean = true
 ): Promise<CapturedMedia> {
   const canvas = document.createElement('canvas');
-  const videoWidth = videoElement.videoWidth || 640;
-  const videoHeight = videoElement.videoHeight || 480;
+  const videoWidth = videoElement.videoWidth || 1280;
+  const videoHeight = videoElement.videoHeight || 720;
 
   // Determine square dimensions
   const minDimension = Math.min(videoWidth, videoHeight);
   const startX = (videoWidth - minDimension) / 2;
   const startY = (videoHeight - minDimension) / 2;
 
-  // Output target size (e.g., max 1080x1080)
+  // Output target size (e.g., crisp 1080x1080 HD)
   const targetSize = Math.min(minDimension, maxDimension);
   canvas.width = targetSize;
   canvas.height = targetSize;
@@ -42,6 +42,10 @@ export async function captureSquarePhoto(
   if (!ctx) {
     throw new Error('Could not get 2d context from canvas');
   }
+
+  // High quality image smoothing
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
 
   // Fix Front Camera Inversion: Flip canvas horizontally if front camera
   if (isFrontCamera) {
@@ -81,7 +85,7 @@ export async function captureSquarePhoto(
 
 /**
  * Helper to record a video clip from MediaStream up to maxDurationMs (5000ms max).
- * Capped at 600kbps bitrate (5s = ~350KB ultra-lightweight portable video), preventing black screen bugs!
+ * Bitrate set to 3.5 Mbps HD for crystal clear video and crisp audio!
  */
 export function createVideoRecorder(stream: MediaStream): {
   start: () => void;
@@ -109,7 +113,8 @@ export function createVideoRecorder(stream: MediaStream): {
   }
 
   const options: MediaRecorderOptions = {
-    videoBitsPerSecond: 600000, // 600 kbps: 5s video = ~350KB lightweight video!
+    videoBitsPerSecond: 3500000, // 3.5 Mbps HD crisp video quality
+    audioBitsPerSecond: 128000,  // 128 kbps crystal clear audio
   };
   if (selectedType) options.mimeType = selectedType;
 

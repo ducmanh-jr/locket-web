@@ -1,32 +1,32 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Profile } from '@/lib/types';
-import { ChevronDown, ChevronUp, MessageCircle, Users, User, Info } from 'lucide-react';
+import { Users, LogOut } from 'lucide-react';
+import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
+import { useRouter } from 'next/navigation';
 
 interface LocketHeaderProps {
   currentUser: Profile;
-  friends: Profile[];
-  selectedFriendFilter: string | null;
-  onSelectFilter: (friendId: string | null) => void;
-  onOpenChat: () => void;
   onOpenProfile: () => void;
-  onViewFriendProfile?: (friend: Profile) => void;
 }
 
 export const LocketHeader: React.FC<LocketHeaderProps> = ({
   currentUser,
-  friends,
-  selectedFriendFilter,
-  onSelectFilter,
-  onOpenChat,
   onOpenProfile,
-  onViewFriendProfile,
 }) => {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const router = useRouter();
 
-  const selectedFriend = friends.find((f) => f.id === selectedFriendFilter);
-  const labelText = selectedFriend ? selectedFriend.display_name : 'Tất cả bạn bè';
+  const handleLogout = async () => {
+    try {
+      localStorage.removeItem('locket_google_user_v1');
+      localStorage.removeItem('locket_device_profile');
+      if (isSupabaseConfigured()) {
+        await supabase.auth.signOut();
+      }
+    } catch (e) {}
+    router.push('/login');
+  };
 
   const avatarSrc =
     currentUser.avatar_url && currentUser.avatar_url.trim() !== ''
@@ -34,137 +34,45 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
       : `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
 
   return (
-    <div className="relative w-full z-40 px-4 pt-3 sm:pt-8 pb-1 flex items-center justify-between bg-black flex-shrink-0">
-      {/* Left: User Avatar with Instant Fallback */}
+    <div className="relative w-full z-40 px-4 pt-3 sm:pt-6 pb-2 flex items-center justify-between bg-black flex-shrink-0 border-b border-zinc-900">
+      {/* Left: User Profile Avatar & Name */}
       <button
         onClick={onOpenProfile}
-        className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#FFC700] bg-zinc-900 flex items-center justify-center active:scale-95 transition-transform flex-shrink-0 shadow-md"
-        title="Trang cá nhân của tôi"
+        className="flex items-center space-x-2.5 bg-zinc-900/90 hover:bg-zinc-800 p-1.5 pr-3 rounded-full border border-zinc-800 active:scale-95 transition-transform"
+        title="Trang cá nhân của bạn"
       >
-        <img
-          src={avatarSrc}
-          alt={currentUser.display_name}
-          onError={(e) => {
-            e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
-          }}
-          className="w-full h-full object-cover"
-        />
+        <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#FFC700] bg-zinc-900 flex-shrink-0">
+          <img
+            src={avatarSrc}
+            alt={currentUser.display_name}
+            onError={(e) => {
+              e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
+            }}
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <span className="text-xs font-bold text-white max-w-[100px] truncate">
+          {currentUser.display_name}
+        </span>
       </button>
 
-      {/* Center: Filter Pill Dropdown */}
-      <div className="relative">
-        <button
-          onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="flex items-center space-x-1.5 bg-[#262626] hover:bg-[#333333] text-white text-xs font-semibold px-4 py-1.5 rounded-full border border-zinc-800/80 transition-all active:scale-95 shadow-md"
-        >
-          <span className="max-w-[130px] truncate">{labelText}</span>
-          {dropdownOpen ? (
-            <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />
-          ) : (
-            <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
-          )}
-        </button>
+      {/* Center: Global Room Badge */}
+      <div className="flex items-center space-x-1.5 bg-[#FFC700]/15 border border-[#FFC700]/30 px-3.5 py-1.5 rounded-full shadow-md">
+        <Users className="w-3.5 h-3.5 text-[#FFC700]" />
+        <span className="text-xs font-black tracking-tight text-white">
+          Căn phòng <span className="text-[#FFC700]">Locket</span>
+        </span>
+      </div>
 
-        {/* Dropdown Menu Modal */}
-        {dropdownOpen && (
-          <>
-            <div
-              className="fixed inset-0 z-40 bg-black/20"
-              onClick={() => setDropdownOpen(false)}
-            />
-            <div className="absolute top-11 left-1/2 -translate-x-1/2 w-64 bg-[#262626] border border-zinc-700/80 rounded-2xl p-1.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
-            {/* Option: Tất cả bạn bè */}
-            <button
-              onClick={() => {
-                onSelectFilter(null);
-                setDropdownOpen(false);
-              }}
-              className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold transition-all ${
-                selectedFriendFilter === null
-                  ? 'bg-[#FFC700]/20 text-[#FFC700] border border-[#FFC700]/30'
-                  : 'text-zinc-300 hover:bg-zinc-700/40'
-              }`}
-            >
-              <div className="flex items-center space-x-2.5">
-                <div className="w-7 h-7 rounded-full bg-zinc-600 flex items-center justify-center text-white">
-                  <Users className="w-3.5 h-3.5" />
-                </div>
-                <span>Tất cả bạn bè</span>
-              </div>
-              <span className="text-zinc-400 text-[10px]">&gt;</span>
-            </button>
-
-            <div className="my-1 border-t border-zinc-700/50" />
-
-            {/* Individual Friends (dm, system32, admin) */}
-            <div className="space-y-0.5 max-h-56 overflow-y-auto custom-scrollbar">
-              {friends.map((friend) => {
-                const fAvatar =
-                  friend.avatar_url && friend.avatar_url.trim() !== ''
-                    ? friend.avatar_url
-                    : `https://api.dicebear.com/7.x/avataaars/svg?seed=${friend.username}`;
-                return (
-                  <div
-                    key={friend.id}
-                    className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold transition-all ${
-                      selectedFriendFilter === friend.id
-                        ? 'bg-[#FFC700]/20 text-[#FFC700] border border-[#FFC700]/30'
-                        : 'text-zinc-300 hover:bg-zinc-700/40'
-                    }`}
-                  >
-                    <button
-                      onClick={() => {
-                        onSelectFilter(friend.id);
-                        setDropdownOpen(false);
-                      }}
-                      className="flex-1 flex items-center space-x-2.5 text-left"
-                    >
-                      <img
-                        src={fAvatar}
-                        alt={friend.display_name}
-                        onError={(e) => {
-                          e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${friend.username}`;
-                        }}
-                        className="w-7 h-7 rounded-full object-cover border border-zinc-600 flex-shrink-0"
-                      />
-                      <span className="truncate max-w-[130px]">
-                        {friend.id === currentUser.id || friend.username === currentUser.username
-                          ? `${friend.display_name} (Bạn)`
-                          : friend.display_name}
-                      </span>
-                    </button>
-
-                    {/* View Friend Profile Icon */}
-                    {onViewFriendProfile && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDropdownOpen(false);
-                          onViewFriendProfile(friend);
-                        }}
-                        className="p-1 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-600 transition-colors"
-                        title="Xem trang cá nhân bạn bè"
-                      >
-                        <Info className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-
-      {/* Right: Message / Chat Icon */}
+      {/* Right: Logout Button */}
       <button
-        onClick={onOpenChat}
-        className="w-9 h-9 rounded-full bg-[#262626] hover:bg-[#333333] text-white flex items-center justify-center border border-zinc-800/80 active:scale-95 transition-all flex-shrink-0"
-        title="Tin nhắn"
+        onClick={handleLogout}
+        className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-red-400 flex items-center justify-center border border-zinc-800 active:scale-95 transition-all flex-shrink-0"
+        title="Đăng xuất tài khoản Google"
       >
-        <MessageCircle className="w-5 h-5 stroke-[2]" />
+        <LogOut className="w-4 h-4" />
       </button>
     </div>
   );
 };
+
