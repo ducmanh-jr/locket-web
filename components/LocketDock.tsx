@@ -66,30 +66,23 @@ export const LocketDock: React.FC<LocketDockProps> = ({
 
   return (
     <div className="w-full flex flex-col items-center z-40 px-4 pb-6 pt-2 bg-black space-y-3">
-      {/* Quick Message & Emoji Bar (Visible in Feed View - Matching Screenshot 3) */}
+      {/* Quick Message & Emoji Bar (Visible in Feed View) */}
       {currentView === 'feed' && (
         <div className="w-full max-w-sm flex items-center space-x-2 bg-[#262626] border border-zinc-800 rounded-full px-4 py-2 shadow-lg">
-          {!isMyMoment ? (
-            <form onSubmit={handleSendMessage} className="flex-1 flex items-center">
-              <input
-                type="text"
-                value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
-                placeholder="Gửi tin nhắn..."
-                className="w-full bg-transparent text-white text-xs font-medium placeholder-zinc-400 focus:outline-none"
-              />
-              {messageText.trim() && (
-                <button type="submit" className="text-[#FFC700] hover:text-[#FFD633] p-1">
-                  <Send className="w-4 h-4 stroke-[2.5]" />
-                </button>
-              )}
-            </form>
-          ) : (
-            <div className="flex-1 flex items-center space-x-1.5 text-zinc-300 text-xs font-semibold px-1">
-              <Sparkles className="w-3.5 h-3.5 text-[#FFC700]" />
-              <span>Khoảnh khắc của bạn</span>
-            </div>
-          )}
+          <form onSubmit={handleSendMessage} className="flex-1 flex items-center">
+            <input
+              type="text"
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              placeholder="Gửi tin nhắn..."
+              className="w-full bg-transparent text-white text-xs font-medium placeholder-zinc-400 focus:outline-none"
+            />
+            {messageText.trim() && (
+              <button type="submit" className="text-[#FFC700] hover:text-[#FFD633] p-1">
+                <Send className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            )}
+          </form>
 
           {/* Quick Reaction Emojis matching Screenshot 3: 💛 😂 💖 ☺ */}
           <div className="flex items-center space-x-1.5 border-l border-zinc-700/60 pl-2">
