@@ -41,15 +41,31 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   >([]);
   const [showOptionsModal, setShowOptionsModal] = useState<boolean>(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
-  const [videoError, setVideoError] = useState<boolean>(false);
+  const [isMuted, setIsMuted] = useState<boolean>(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const currentMomentIdRef = useRef<string>(moment.id);
+
+  const isVideo =
+    moment.media_type === 'video' ||
+    moment.id?.includes('video') ||
+    moment.media_url?.startsWith('data:video/') ||
+    moment.media_url?.endsWith('.mp4') ||
+    moment.media_url?.endsWith('.webm');
 
   // Track current moment ID for cleanup
   currentMomentIdRef.current = moment.id;
 
   useEffect(() => {
-    setVideoError(false);
+    setIsMuted(true);
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {});
+    }
   }, [moment.id, moment.media_url]);
+
+  const toggleVideoMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsMuted((prev) => !prev);
+  };
 
   // Auto-play music when moment changes, auto-stop when switching away
   useEffect(() => {
@@ -348,38 +364,42 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             }}
             className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.5rem] transform-gpu will-change-[transform,opacity]"
           >
-            {(moment.media_type === 'video' ||
-            moment.id?.includes('video') ||
-            moment.media_url?.startsWith('data:video/')) &&
-            !videoError ? (
-              <video
-                src={moment.media_url}
-                poster={moment.thumbnail_url}
-                autoPlay
-                loop
-                playsInline
-                muted={moment.audio_option !== 'original'}
-                controls={false}
-                preload="auto"
-                onError={() => setVideoError(true)}
-                className="w-full h-full object-cover rounded-[2.5rem] select-none pointer-events-none"
-              />
-            ) : moment.thumbnail_url ? (
-              <img
-                src={moment.thumbnail_url}
-                alt={moment.caption || 'Khoảnh khắc Locket'}
-                className="w-full h-full object-cover rounded-[2.5rem] select-none pointer-events-none"
-              />
-            ) : moment.media_type === 'video' || moment.id?.includes('video') ? (
-              <div className="w-full h-full bg-zinc-900 flex items-center justify-center rounded-[2.5rem]">
-                <div className="text-center p-4">
-                  <Video className="w-10 h-10 text-[#FFC700] mx-auto mb-2" />
-                  <p className="text-zinc-400 text-xs font-semibold">Khoảnh khắc Video</p>
-                </div>
+            {isVideo ? (
+              <div className="relative w-full h-full">
+                <video
+                  ref={videoRef}
+                  src={moment.media_url}
+                  poster={moment.thumbnail_url}
+                  autoPlay
+                  loop
+                  playsInline
+                  muted={isMuted}
+                  controls={false}
+                  preload="auto"
+                  className="w-full h-full object-cover rounded-[2.5rem] select-none pointer-events-none"
+                />
+                {moment.audio_option === 'original' && (
+                  <button
+                    onClick={toggleVideoMute}
+                    className="absolute top-3.5 left-3.5 bg-black/75 backdrop-blur-md border border-[#FFC700]/50 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-1.5 z-20 shadow-lg active:scale-95 transition-all"
+                  >
+                    {!isMuted ? (
+                      <>
+                        <Volume2 className="w-3.5 h-3.5 text-[#FFC700] animate-pulse" />
+                        <span className="font-semibold text-xs text-[#FFC700]">Âm gốc 🎙️</span>
+                      </>
+                    ) : (
+                      <>
+                        <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
+                        <span className="font-semibold text-xs text-zinc-300">Bật âm thanh 🔊</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             ) : (
               <img
-                src={moment.media_url}
+                src={moment.media_url || moment.thumbnail_url}
                 alt={moment.caption || 'Khoảnh khắc Locket'}
                 className="w-full h-full object-cover rounded-[2.5rem] select-none pointer-events-none"
               />
