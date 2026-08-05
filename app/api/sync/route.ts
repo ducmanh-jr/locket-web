@@ -136,6 +136,10 @@ export async function POST(request: Request) {
       }
     }
 
+    if (action === 'delete_moment' && body.moment_id) {
+      memoryMoments = memoryMoments.filter((m: any) => m.id !== body.moment_id);
+    }
+
     // Persist merged profiles and moments safely
     memoryMoments = sanitizeMoments(memoryMoments);
     await saveToGlobalStore(memoryProfiles, memoryMoments);

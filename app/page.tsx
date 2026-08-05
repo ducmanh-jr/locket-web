@@ -23,7 +23,7 @@ import { Camera, X, User, LogOut } from 'lucide-react';
 import { CapturedMedia, captureVideoThumbnail } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { pushMomentToGlobalCloud, fetchGlobalCloudMoments, pushProfileToGlobalCloud, compressImageForCloudSync, uploadMediaToPublicUrl } from '@/lib/cloudSync';
+import { pushMomentToGlobalCloud, fetchGlobalCloudMoments, pushProfileToGlobalCloud, deleteMomentFromGlobalCloud, compressImageForCloudSync, uploadMediaToPublicUrl } from '@/lib/cloudSync';
 import { sanitizeMoments } from '@/lib/media';
 
 export default function HomePage() {
@@ -70,6 +70,7 @@ export default function HomePage() {
 
   // Delete moment handler
   const handleDeleteMoment = (momentId: string) => {
+    deleteMomentFromGlobalCloud(momentId).catch(() => {});
     setMoments((prev) => {
       const updated = prev.filter((m) => m.id !== momentId);
       saveStoredDemoMoments(updated, currentUser.id);
@@ -97,8 +98,7 @@ export default function HomePage() {
     } catch (e) {}
 
     const cachedMoments = getStoredDemoMoments(currentUser.id);
-    const sharedMoments = cloudMoments.length > 0 ? cloudMoments : cachedMoments;
-    const combined = sanitizeMoments([...sharedMoments, ...DEMO_50_MOMENTS]);
+    const combined = sanitizeMoments([...cloudMoments, ...cachedMoments, ...DEMO_50_MOMENTS]);
 
     const sanitized = combined.map((m) => {
       let item = m;
@@ -109,7 +109,15 @@ export default function HomePage() {
         if (item.sender_id === currentUser.id || item.sender_id === 'user-me') {
           return { ...item, sender: currentUser };
         }
-        return { ...item, sender: currentUser };
+        return {
+          ...item,
+          sender: {
+            id: item.sender_id || 'user-locket',
+            username: item.sender_id || 'locket_user',
+            display_name: 'Thành viên Locket',
+            avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${item.sender_id || 'locket'}`,
+          },
+        };
       }
       return item;
     });

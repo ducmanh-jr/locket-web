@@ -230,3 +230,20 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
     (m, i, self) => i === self.findIndex((x) => x && x.id === m.id)
   );
 }
+
+/**
+ * Deletes a moment from Global Cloud store.
+ */
+export async function deleteMomentFromGlobalCloud(momentId: string): Promise<boolean> {
+  try {
+    const res = await fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete_moment', moment_id: momentId }),
+    });
+    return res.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
