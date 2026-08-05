@@ -127,10 +127,13 @@ export default function HomePage() {
       (m, i, self) => i === self.findIndex((x) => x.id === m.id)
     );
 
-    // Newest moments at the top of the stack
-    unique.sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
+    // Newest moments at the top of the stack (seq_id descending, then created_at)
+    unique.sort((a: any, b: any) => {
+      const seqA = Number(a.seq_id || 0);
+      const seqB = Number(b.seq_id || 0);
+      if (seqA && seqB && seqA !== seqB) return seqB - seqA;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
     saveStoredDemoMoments(unique, currentUser.id);
 
