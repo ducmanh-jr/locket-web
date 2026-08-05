@@ -23,7 +23,7 @@ import { Camera, X, User, LogOut } from 'lucide-react';
 import { CapturedMedia, captureVideoThumbnail } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { pushMomentToGlobalCloud, fetchGlobalCloudMoments, pushProfileToGlobalCloud, deleteMomentFromGlobalCloud, compressImageForCloudSync, uploadMediaToPublicUrl } from '@/lib/cloudSync';
+import { pushMomentToGlobalCloud, pushMomentToGlobalCloudWithRetry, fetchGlobalCloudMoments, pushProfileToGlobalCloud, deleteMomentFromGlobalCloud, compressImageForCloudSync, uploadMediaToPublicUrl } from '@/lib/cloudSync';
 import { sanitizeMoments } from '@/lib/media';
 
 export default function HomePage() {
@@ -145,10 +145,10 @@ export default function HomePage() {
   useEffect(() => {
     loadMoments();
 
-    // Auto-polling interval: Sync cloud moments every 3.5s so all Google accounts stay 100% updated
+    // 60-second background stabilization sync interval for maximum server stability
     const pollInterval = setInterval(() => {
       loadMoments();
-    }, 3500);
+    }, 60000);
 
     // Native BroadcastChannel for instant cross-tab real-time sync
     let tabChannel: BroadcastChannel | null = null;
@@ -422,7 +422,8 @@ export default function HomePage() {
       }
 
       try {
-        await pushMomentToGlobalCloud(newMoment);
+        // 60-Second Stabilization Sync Worker with Retries & Exponential Backoff
+        await pushMomentToGlobalCloudWithRetry(newMoment, 60000);
       } catch (e) {}
 
       if (broadcastChannelRef.current) {

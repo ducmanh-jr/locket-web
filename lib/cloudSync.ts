@@ -240,3 +240,29 @@ export async function deleteMomentFromGlobalCloud(momentId: string): Promise<boo
   }
 }
 
+/**
+ * Retries pushing a newly posted moment to Global Cloud within a 60-second stabilization window.
+ */
+export async function pushMomentToGlobalCloudWithRetry(
+  moment: Moment,
+  maxDurationMs: number = 60000
+): Promise<boolean> {
+  const startTime = Date.now();
+  let attempt = 0;
+
+  while (Date.now() - startTime < maxDurationMs) {
+    attempt += 1;
+    try {
+      const ok = await pushMomentToGlobalCloud(moment);
+      if (ok) return true;
+    } catch (e) {}
+
+    // Exponential backoff delay (1.5s, 3s, 6s, max 10s)
+    const delay = Math.min(1500 * Math.pow(2, attempt - 1), 10000);
+    await new Promise((resolve) => setTimeout(resolve, delay));
+  }
+
+  return false;
+}
+
+
