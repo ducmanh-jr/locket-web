@@ -12,9 +12,15 @@ export interface CloudProfile {
 
 function dataUrlToFile(dataUrl: string, fallbackName: string): File | null {
   try {
-    const [header, base64] = dataUrl.split(',');
-    const mime = header.match(/^data:([^;]+);base64$/)?.[1];
-    if (!mime || !base64) return null;
+    const commaIdx = dataUrl.indexOf(',');
+    if (commaIdx === -1) return null;
+
+    const header = dataUrl.slice(0, commaIdx);
+    const base64 = dataUrl.slice(commaIdx + 1);
+    if (!base64) return null;
+
+    const mimeMatch = header.match(/^data:([^;,]+)/);
+    const mime = mimeMatch ? mimeMatch[1] : 'video/mp4';
 
     const binary = atob(base64);
     const bytes = new Uint8Array(binary.length);
@@ -36,15 +42,26 @@ function dataUrlToFile(dataUrl: string, fallbackName: string): File | null {
   }
 }
 
-export async function uploadMediaToPublicUrl(dataUrl: string, fallbackName: string): Promise<string | null> {
-  if (typeof window === 'undefined' || !dataUrl.startsWith('data:')) return null;
-
-  const file = dataUrlToFile(dataUrl, fallbackName);
-  if (!file) return null;
+export async function uploadMediaToPublicUrl(mediaUrl: string, fallbackName: string): Promise<string | null> {
+  if (typeof window === 'undefined' || !mediaUrl) return null;
 
   try {
+    let fileToUpload: File | Blob | null = null;
+
+    if (mediaUrl.startsWith('blob:')) {
+      const blobRes = await fetch(mediaUrl);
+      const blobData = await blobRes.blob();
+      const mime = blobData.type || 'video/mp4';
+      const ext = mime.includes('webm') ? 'webm' : mime.includes('mp4') ? 'mp4' : mime.includes('png') ? 'png' : 'jpg';
+      fileToUpload = new File([blobData], `${fallbackName}.${ext}`, { type: mime });
+    } else if (mediaUrl.startsWith('data:')) {
+      fileToUpload = dataUrlToFile(mediaUrl, fallbackName);
+    }
+
+    if (!fileToUpload) return null;
+
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', fileToUpload);
     const res = await fetch('/api/upload', {
       method: 'POST',
       body: formData,
@@ -157,17 +174,17 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
     let finalMediaUrl = moment.media_url;
     let finalThumbnailUrl = moment.thumbnail_url;
 
-    // Convert data: URLs into short durable HTTP/HTTPS URLs
-    if (moment.media_url.startsWith('data:')) {
+    // Convert data: or blob: URLs into short durable HTTP/HTTPS URLs
+    if (moment.media_url.startsWith('data:') || moment.media_url.startsWith('blob:')) {
       const uploadedUrl = await uploadMediaToPublicUrl(moment.media_url, `locket_${moment.id}`);
       if (uploadedUrl) {
         finalMediaUrl = uploadedUrl;
-      } else if (moment.media_type !== 'video') {
+      } else if (moment.media_type !== 'video' && moment.media_url.startsWith('data:')) {
         finalMediaUrl = await compressImageForCloudSync(moment.media_url);
       }
     }
 
-    if (moment.thumbnail_url?.startsWith('data:')) {
+    if (moment.thumbnail_url?.startsWith('data:') || moment.thumbnail_url?.startsWith('blob:')) {
       const uploadedThumb = await uploadMediaToPublicUrl(moment.thumbnail_url, `locket_${moment.id}_thumb`);
       if (uploadedThumb) finalThumbnailUrl = uploadedThumb;
     }

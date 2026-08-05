@@ -166,10 +166,10 @@ export function createVideoRecorder(stream: MediaStream): {
               reject(new Error('FileReader produced empty result for video'));
               return;
             }
-            // Clean up MIME type header
-            if (dataUrl && !dataUrl.startsWith('data:video/')) {
-              const actualMime = finalMime.split(';')[0] || 'video/mp4';
-              dataUrl = dataUrl.replace(/^data:[^;]*;/, `data:${actualMime};`);
+            // Clean up MIME type header to standard data:video/mp4;base64,... or data:video/webm;base64,...
+            const actualMime = (finalMime || 'video/mp4').split(';')[0];
+            if (dataUrl && dataUrl.startsWith('data:')) {
+              dataUrl = dataUrl.replace(/^data:[^;,]+(?:;[^;,]+)*;/, `data:${actualMime};`);
             }
             resolve({ type: 'video', dataUrl, blob });
           };
