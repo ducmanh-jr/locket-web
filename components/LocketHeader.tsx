@@ -2,8 +2,6 @@
 
 import React from 'react';
 import { Profile } from '@/lib/types';
-import { Users, LogOut } from 'lucide-react';
-import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 
 interface LocketHeaderProps {
@@ -15,19 +13,6 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
   currentUser,
   onOpenProfile,
 }) => {
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    try {
-      localStorage.removeItem('locket_google_user_v1');
-      localStorage.removeItem('locket_device_profile');
-      if (isSupabaseConfigured()) {
-        await supabase.auth.signOut();
-      }
-    } catch (e) {}
-    router.push('/login');
-  };
-
   const avatarSrc =
     currentUser.avatar_url && currentUser.avatar_url.trim() !== ''
       ? currentUser.avatar_url
@@ -51,28 +36,12 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
             className="w-full h-full object-cover"
           />
         </div>
-        <span className="text-xs font-bold text-white max-w-[100px] truncate">
+        <span className="text-xs font-bold text-white max-w-[120px] truncate">
           {currentUser.display_name}
         </span>
-      </button>
-
-      {/* Center: Global Room Badge */}
-      <div className="flex items-center space-x-1.5 bg-[#FFC700]/15 border border-[#FFC700]/30 px-3.5 py-1.5 rounded-full shadow-md">
-        <Users className="w-3.5 h-3.5 text-[#FFC700]" />
-        <span className="text-xs font-black tracking-tight text-white">
-          Căn phòng <span className="text-[#FFC700]">Locket</span>
-        </span>
-      </div>
-
-      {/* Right: Logout Button */}
-      <button
-        onClick={handleLogout}
-        className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-red-400 flex items-center justify-center border border-zinc-800 active:scale-95 transition-all flex-shrink-0"
-        title="Đăng xuất tài khoản Google"
-      >
-        <LogOut className="w-4 h-4" />
       </button>
     </div>
   );
 };
+
 
