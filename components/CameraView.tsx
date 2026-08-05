@@ -299,13 +299,13 @@ export const CameraView: React.FC<CameraViewProps> = ({
 
   // Final Send Moment
   const handleSend = async () => {
-    if (!capturedMedia || selectedFriendIds.length === 0) return;
+    if (!capturedMedia) return;
     setIsSending(true);
     try {
       await onSendMoment(
         capturedMedia,
         caption,
-        selectedFriendIds,
+        selectedFriendIds.length > 0 ? selectedFriendIds : ['all'],
         audioOption === 'music' ? (selectedMusic || undefined) : undefined,
         audioOption
       );
@@ -560,56 +560,13 @@ export const CameraView: React.FC<CameraViewProps> = ({
             </span>
           </div>
         ) : (
-          /* Post Capture: Select Friends & Send Buttons */
+          /* Post Capture: Action Buttons (Retake & Send directly to Shared Room) */
           <div className="space-y-3">
-            {/* Friends Selector Pill List */}
-            <div className="bg-[#18181C] border border-zinc-800 rounded-2xl p-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-zinc-400 text-xs font-bold flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-[#FFC700]" />
-                  Gửi đến: ({selectedFriendIds.length}/{friends.length})
-                </span>
-                <button
-                  onClick={handleSelectAll}
-                  className="text-[#FFC700] text-[11px] font-semibold hover:underline"
-                >
-                  {selectedFriendIds.length === friends.length
-                    ? 'Bỏ chọn tất cả'
-                    : 'Chọn tất cả'}
-                </button>
-              </div>
-
-              <div className="flex items-center space-x-2 overflow-x-auto custom-scrollbar pb-1">
-                {friends.map((friend) => {
-                  const isSelected = selectedFriendIds.includes(friend.id);
-                  return (
-                    <button
-                      key={friend.id}
-                      onClick={() => handleToggleFriend(friend.id)}
-                      className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all active:scale-95 flex-shrink-0 ${
-                        isSelected
-                          ? 'bg-[#FFC700] text-black border-[#FFC700]'
-                          : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:text-white'
-                      }`}
-                    >
-                      <img
-                        src={friend.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${friend.username}`}
-                        alt={friend.display_name}
-                        className="w-4 h-4 rounded-full object-cover"
-                      />
-                      <span>{friend.display_name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Action Buttons: Retake & Send */}
             <div className="flex items-center space-x-3">
               <button
                 onClick={handleRetake}
                 disabled={isSending}
-                className="flex-1 py-3 bg-[#18181C] hover:bg-[#262626] border border-zinc-800 text-zinc-300 font-bold text-xs rounded-2xl flex items-center justify-center space-x-1.5 transition-all active:scale-95"
+                className="flex-1 py-3.5 bg-[#18181C] hover:bg-[#262626] border border-zinc-800 text-zinc-300 font-bold text-xs rounded-2xl flex items-center justify-center space-x-1.5 transition-all active:scale-95"
               >
                 <RotateCcw className="w-4 h-4 text-zinc-400" />
                 <span>Quay/Chụp lại</span>
@@ -617,8 +574,8 @@ export const CameraView: React.FC<CameraViewProps> = ({
 
               <button
                 onClick={handleSend}
-                disabled={isSending || selectedFriendIds.length === 0}
-                className="flex-1 py-3 bg-[#FFC700] hover:bg-[#FFD633] text-black font-bold text-xs rounded-2xl flex items-center justify-center space-x-1.5 shadow-locket-glow transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSending}
+                className="flex-1 py-3.5 bg-[#FFC700] hover:bg-[#FFD633] text-black font-extrabold text-xs rounded-2xl flex items-center justify-center space-x-1.5 shadow-locket-glow transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSending ? (
                   <div className="w-4 h-4 rounded-full border-2 border-black border-t-transparent animate-spin" />
