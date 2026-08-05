@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LocketHeader } from '@/components/LocketHeader';
+import { LocketHeader, MemberFilterOption } from '@/components/LocketHeader';
 import { LocketDock } from '@/components/LocketDock';
 import { LocketFeedCard } from '@/components/LocketFeedCard';
 import { LocketHistoryGrid } from '@/components/LocketHistoryGrid';
@@ -36,6 +36,7 @@ export default function HomePage() {
   const [showMenuModal, setShowMenuModal] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [lastReaction, setLastReaction] = useState<{ emoji: string; timestamp: number } | null>(null);
+  const [selectedFriendFilter, setSelectedFriendFilter] = useState<string>('all');
   const broadcastChannelRef = useRef<any>(null);
 
   const currentUser = userProfile || DEMO_CURRENT_USER;
@@ -240,8 +241,51 @@ export default function HomePage() {
     );
   }
 
-  // Pure Shared Room Stack (All Google Account Photos/Videos)
-  const roomMoments = moments;
+  // Members Filter Options for "Tất cả bạn bè" Selector Modal Sheet
+  const membersFilterOptions: MemberFilterOption[] = React.useMemo(() => {
+    const list: MemberFilterOption[] = [
+      { id: 'all', name: 'Tất cả bạn bè', count: moments.length },
+    ];
+    const sendersMap = new Map<string, { name: string; avatar_url?: string; count: number }>();
+    moments.forEach((m) => {
+      const sid = m.sender?.id || m.sender_id || 'unknown';
+      const sname =
+        m.sender?.display_name ||
+        (sid === currentUser.id ? currentUser.display_name : 'Thành viên Locket');
+      const savatar =
+        m.sender?.avatar_url ||
+        (sid === currentUser.id ? currentUser.avatar_url : undefined);
+      if (!sendersMap.has(sid)) {
+        sendersMap.set(sid, { name: sname, avatar_url: savatar, count: 1 });
+      } else {
+        const existing = sendersMap.get(sid)!;
+        existing.count += 1;
+      }
+    });
+    sendersMap.forEach((val, key) => {
+      list.push({
+        id: key,
+        name: val.name,
+        avatar_url: val.avatar_url,
+        count: val.count,
+      });
+    });
+    return list;
+  }, [moments, currentUser]);
+
+  // Filter moments according to selected friend option
+  const filteredMoments = React.useMemo(() => {
+    if (selectedFriendFilter === 'all') return moments;
+    return moments.filter(
+      (m) =>
+        m.sender_id === selectedFriendFilter ||
+        m.sender?.id === selectedFriendFilter ||
+        m.sender?.username === selectedFriendFilter
+    );
+  }, [moments, selectedFriendFilter]);
+
+  // Pure Shared Room Stack filtered by selection
+  const roomMoments = filteredMoments.length > 0 ? filteredMoments : moments;
 
   const currentMoment = selectedMomentId
     ? roomMoments.find((m) => m.id === selectedMomentId) || roomMoments[0]
@@ -407,6 +451,9 @@ export default function HomePage() {
       <LocketHeader
         currentUser={currentUser}
         onOpenProfile={() => router.push('/profile')}
+        selectedFilterId={selectedFriendFilter}
+        onSelectFilter={setSelectedFriendFilter}
+        members={membersFilterOptions}
       />
 
       {/* Main Views Container */}
