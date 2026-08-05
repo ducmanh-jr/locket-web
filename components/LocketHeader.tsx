@@ -43,40 +43,35 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
 
   return (
     <>
-      <div className="relative w-full z-40 px-4 pt-3 sm:pt-6 pb-2 flex items-center justify-between bg-black flex-shrink-0 border-b border-zinc-900">
-        {/* Left: User Profile Avatar & Name */}
+      <div className="relative w-full z-40 px-4 pt-3 sm:pt-5 pb-2 flex items-center justify-between bg-black flex-shrink-0 border-b border-zinc-900">
+        {/* Left: Pure Circular User Avatar (Official Locket Style) */}
         <button
           onClick={onOpenProfile}
-          className="flex items-center space-x-2 bg-zinc-900/90 hover:bg-zinc-800 p-1.5 pr-3 rounded-full border border-zinc-800 active:scale-95 transition-transform"
+          className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#FFC700] bg-zinc-900 flex-shrink-0 active:scale-95 transition-transform p-0 shadow-md"
           title="Trang cá nhân của bạn"
         >
-          <div className="w-7 h-7 rounded-full overflow-hidden border-2 border-[#FFC700] bg-zinc-900 flex-shrink-0">
-            <img
-              src={avatarSrc}
-              alt={currentUser.display_name}
-              onError={(e) => {
-                e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
-              }}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <span className="text-xs font-bold text-white max-w-[90px] truncate">
-            {currentUser.display_name}
-          </span>
+          <img
+            src={avatarSrc}
+            alt={currentUser.display_name}
+            onError={(e) => {
+              e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
+            }}
+            className="w-full h-full object-cover"
+          />
         </button>
 
-        {/* Center: Interactive "Tất cả bạn bè" Pill Button (Matching Official Locket) */}
+        {/* Center: "Tất cả bạn bè" Black Pill Button (Exact Official Locket Style) */}
         <button
           onClick={() => setShowFilterModal(true)}
-          className="flex items-center space-x-1.5 bg-[#FFC700] text-black font-extrabold px-3.5 py-1.5 rounded-full shadow-locket-glow active:scale-95 transition-transform cursor-pointer"
+          className="flex items-center space-x-2 bg-[#18181C] hover:bg-[#262626] border border-zinc-800 text-white font-extrabold px-4 py-2 rounded-full shadow-lg active:scale-95 transition-all cursor-pointer"
           title="Bấm để lọc ảnh theo bạn bè"
         >
-          <Users className="w-3.5 h-3.5 stroke-[2.5]" />
-          <span className="text-xs tracking-tight truncate max-w-[120px]">{pillLabel}</span>
-          <ChevronDown className="w-3.5 h-3.5 opacity-80 stroke-[2.5]" />
+          <Users className="w-4 h-4 text-[#FFC700] stroke-[2.2]" />
+          <span className="text-xs font-extrabold text-white tracking-tight truncate max-w-[130px]">{pillLabel}</span>
+          <ChevronDown className="w-3.5 h-3.5 text-zinc-400 stroke-[2.2]" />
         </button>
 
-        {/* Right Spacer for Layout Balance */}
+        {/* Right Spacer for Absolute Dead-Center Alignment */}
         <div className="w-9 h-9 flex-shrink-0" />
       </div>
 
