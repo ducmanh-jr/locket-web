@@ -3,7 +3,10 @@
 @tailwind utilities;
 
 @layer base {
-  body {
+  html, body {
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
+    touch-action: manipulation;
     background-color: #09090b;
     color: #f4f4f5;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;

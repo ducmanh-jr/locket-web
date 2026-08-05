@@ -167,6 +167,17 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     isDraggingRef.current = false;
   };
 
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartY.current !== null) {
+      const touchCurrentY = e.touches[0].clientY;
+      const diffY = touchStartY.current - touchCurrentY;
+      // Prevent browser default pull-to-refresh gesture when swiping down
+      if (Math.abs(diffY) > 5 && e.cancelable) {
+        e.preventDefault();
+      }
+    }
+  };
+
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchStartY.current === null) return;
     const touchEndY = e.changedTouches[0].clientY;
@@ -294,10 +305,12 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     <div
       onWheel={handleWheel}
       onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
+      style={{ touchAction: 'none', overscrollBehavior: 'none' }}
       className={`w-full flex-1 flex flex-col items-center justify-center select-none p-2 my-auto overflow-hidden relative ${
         isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
       }`}
