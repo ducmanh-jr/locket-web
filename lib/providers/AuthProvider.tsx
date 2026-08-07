@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { Profile } from '@/lib/types';
+import { pushProfileToGlobalCloud } from '@/lib/cloudSync';
 
 interface AuthContextValue {
   userProfile: Profile | null;
@@ -104,6 +105,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const profile = buildProfileFromSupabaseUser(user);
           saveCachedProfile(profile);
           setUserProfile(profile);
+          pushProfileToGlobalCloud({
+            id: profile.id,
+            username: profile.username,
+            display_name: profile.display_name,
+            avatar_url: profile.avatar_url || '',
+          }).catch(() => {});
         } else {
           // No active session — check cached profile
           const cached = readCachedProfile();
@@ -136,6 +143,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const profile = buildProfileFromSupabaseUser(session.user);
           saveCachedProfile(profile);
           setUserProfile(profile);
+          pushProfileToGlobalCloud({
+            id: profile.id,
+            username: profile.username,
+            display_name: profile.display_name,
+            avatar_url: profile.avatar_url || '',
+          }).catch(() => {});
         } else if (_event === 'SIGNED_OUT') {
           clearCachedProfile();
           setUserProfile(null);
