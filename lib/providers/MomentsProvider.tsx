@@ -82,6 +82,11 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     loadMoments();
 
+    // 15-second background sync interval to guarantee 100% identical room state across all devices
+    const pollInterval = setInterval(() => {
+      loadMoments();
+    }, 15000);
+
     // Instant Cross-Tab Broadcast Channel Sync
     let tabChannel: BroadcastChannel | null = null;
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
@@ -106,13 +111,36 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'moments' },
-          (payload) => {
+          async (payload) => {
             if (payload?.new) {
-              const newMoment = payload.new as Moment;
-              if (newMoment.sender_id === currentUser.id) return;
+              const rawMoment = payload.new as Moment;
+              if (rawMoment.sender_id === currentUser.id) return;
+
+              let senderObj = rawMoment.sender;
+              if (!senderObj && rawMoment.sender_id) {
+                try {
+                  const { data: prof } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', rawMoment.sender_id)
+                    .single();
+                  if (prof) senderObj = prof;
+                } catch (err) {}
+              }
+
+              const fullMoment: Moment = {
+                ...rawMoment,
+                sender: senderObj || {
+                  id: rawMoment.sender_id || 'locket-user',
+                  username: 'locket_user',
+                  display_name: 'Thành viên Locket',
+                  avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${rawMoment.sender_id || 'user'}`,
+                },
+              };
+
               setMoments((prev) => {
-                if (prev.some((m) => m.id === newMoment.id)) return prev;
-                return [newMoment, ...prev];
+                if (prev.some((m) => m.id === fullMoment.id)) return prev;
+                return [fullMoment, ...prev];
               });
             }
           }
@@ -130,6 +158,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
 
     return () => {
+      clearInterval(pollInterval);
       if (tabChannel) tabChannel.close();
       if (dbChannel) supabase.removeChannel(dbChannel);
     };

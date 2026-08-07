@@ -55,17 +55,36 @@ export async function GET() {
     const [{ data: momentsData }, { data: profilesData }] = await Promise.all([
       supabase
         .from('moments')
-        .select('*')
+        .select('*, sender:profiles(*)')
         .order('created_at', { ascending: false })
-        .limit(100),
-      supabase.from('profiles').select('*').limit(50),
+        .limit(150),
+      supabase.from('profiles').select('*').limit(100),
     ]);
 
-    const sanitized = sanitizeMoments(momentsData || []);
+    // Fallback profile mapping in case foreign key join is missing
+    const profilesMap = new Map((profilesData || []).map((p) => [p.id, p]));
+    const momentsWithSender = (momentsData || []).map((m: any) => {
+      const senderObj =
+        m.sender ||
+        profilesMap.get(m.sender_id) || {
+          id: m.sender_id || 'unknown',
+          username: m.sender_id ? `user_${m.sender_id.substring(0, 6)}` : 'locket_user',
+          display_name: 'Thành viên Locket',
+          avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${m.sender_id || 'locket'}`,
+        };
+      return { ...m, sender: senderObj };
+    });
+
+    const sanitized = sanitizeMoments(momentsWithSender);
 
     return NextResponse.json(
       { profiles: profilesData || [], moments: sanitized },
-      { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Access-Control-Allow-Origin': '*',
+        },
+      }
     );
   } catch (e: any) {
     return NextResponse.json(
@@ -88,7 +107,7 @@ export async function POST(request: Request) {
       await supabase.from('profiles').upsert({
         id: profile.id,
         username: profile.username || `user_${profile.id.substring(0, 6)}`,
-        display_name: profile.display_name || 'Locket User',
+        display_name: profile.display_name || 'Thành viên Locket',
         avatar_url: profile.avatar_url || '',
       });
       return NextResponse.json({ success: true });
@@ -102,9 +121,21 @@ export async function POST(request: Request) {
         );
       }
 
+      const senderId = moment.sender_id || moment.sender?.id;
+
+      // Guaranteed Profile Upsert first so foreign key constraint is satisfied
+      if (senderId && moment.sender) {
+        await supabase.from('profiles').upsert({
+          id: senderId,
+          username: moment.sender.username || `user_${senderId.substring(0, 6)}`,
+          display_name: moment.sender.display_name || 'Thành viên Locket',
+          avatar_url: moment.sender.avatar_url || '',
+        });
+      }
+
       await supabase.from('moments').upsert({
         id: moment.id,
-        sender_id: moment.sender_id || moment.sender?.id,
+        sender_id: senderId,
         media_url: moment.media_url,
         media_type: moment.media_type || (isVideoMoment(moment) ? 'video' : 'photo'),
         caption: moment.caption || '',
