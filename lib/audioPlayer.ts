@@ -23,7 +23,9 @@ export function killGlobalAudio(): void {
     _globalAudio = null;
   }
   if (_globalSynthStop) {
-    try { _globalSynthStop(); } catch (e) {}
+    try {
+      _globalSynthStop();
+    } catch (e) {}
     _globalSynthStop = null;
   }
 }
@@ -44,7 +46,7 @@ export function playGlobalAudio(url: string, onEnd: () => void): void {
   audio.volume = 0.85;
   audio.onended = () => onEnd();
   audio.onerror = () => {
-    // Fallback: Web Audio API synth so user always hears something
+    // Fallback: Web Audio API synth capped at 16 steps (4.1 seconds) to prevent infinite loops
     try {
       const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtxClass) return;
@@ -53,8 +55,18 @@ export function playGlobalAudio(url: string, onEnd: () => void): void {
       const melody = [523.25, 659.25, 783.99, 1046.50, 880.00, 659.25, 698.46, 783.99];
       let stopped = false;
       let step = 0;
+      const MAX_SYNTH_STEPS = 16; // 16 steps * 260ms = ~4.1s max fallback duration
+
       const playStep = () => {
         if (stopped) return;
+        if (step >= MAX_SYNTH_STEPS) {
+          stopped = true;
+          try { ctx.close(); } catch (e) {}
+          _globalSynthStop = null;
+          onEnd();
+          return;
+        }
+
         try {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
@@ -68,11 +80,16 @@ export function playGlobalAudio(url: string, onEnd: () => void): void {
           osc.stop(ctx.currentTime + 0.3);
           step++;
           if (!stopped) setTimeout(playStep, 260);
-        } catch (e) {}
+        } catch (e) {
+          stopped = true;
+        }
       };
       playStep();
-      _globalSynthStop = () => { stopped = true; try { ctx.close(); } catch(e) {} };
-    } catch(e) {}
+      _globalSynthStop = () => {
+        stopped = true;
+        try { ctx.close(); } catch (e) {}
+      };
+    } catch (e) {}
   };
 
   _globalAudio = audio;

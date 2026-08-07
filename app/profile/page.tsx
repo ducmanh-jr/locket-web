@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { CameraView } from '@/components/CameraView';
-import { DEMO_CURRENT_USER, addDemoMoment } from '@/lib/demoStore';
 import { Profile } from '@/lib/types';
 import {
   ArrowLeft,
@@ -16,18 +15,18 @@ import {
   ChevronRight,
   Sparkles,
 } from 'lucide-react';
-import { CapturedImage } from '@/lib/camera';
+import { CapturedMedia } from '@/lib/camera';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
+import { MusicTrack } from '@/lib/types';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { userProfile, loading: authLoading } = useAuth();
-  const [user, setUser] = useState<Profile>(userProfile || DEMO_CURRENT_USER);
+  const { userProfile, loading: authLoading, signOut, updateProfile } = useAuth();
+  const [user, setUser] = useState<Profile | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [displayName, setDisplayName] = useState<string>('');
-  const [showCamera, setShowCamera] = useState<boolean>(false);
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
 
   useEffect(() => {
@@ -37,9 +36,16 @@ export default function ProfilePage() {
     }
   }, [userProfile]);
 
+  // Redirect unauthenticated users
+  useEffect(() => {
+    if (!authLoading && !userProfile) {
+      router.push('/login');
+    }
+  }, [authLoading, userProfile, router]);
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!displayName.trim()) return;
+    if (!displayName.trim() || !user) return;
 
     if (isSupabaseConfigured() && userProfile) {
       try {
@@ -52,40 +58,29 @@ export default function ProfilePage() {
       }
     }
 
-    setUser((prev) => ({ ...prev, display_name: displayName }));
+    const updatedUser = { ...user, display_name: displayName };
+    setUser(updatedUser);
+    // Sync back to AuthProvider and localStorage
+    updateProfile({ display_name: displayName });
     setIsEditing(false);
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2000);
   };
 
   const handleSignOut = async () => {
-    if (isSupabaseConfigured()) {
-      await supabase.auth.signOut();
-    }
-    try {
-      localStorage.removeItem('locket_google_user_v1');
-    } catch (e) {}
+    await signOut();
     router.push('/login');
   };
 
-  const handleSendMoment = async (
-    image: CapturedImage,
-    caption: string,
-    recipientIds: string[]
-  ) => {
-    const newMoment = {
-      id: `moment-${Date.now()}`,
-      sender_id: user.id,
-      sender: user,
-      media_url: image.dataUrl,
-      caption: caption,
-      created_at: new Date().toISOString(),
-      reactions: [],
-    };
-    addDemoMoment(newMoment);
-  };
-
   if (authLoading) {
+    return (
+      <div className="min-h-full flex items-center justify-center bg-black">
+        <div className="w-10 h-10 rounded-full border-4 border-[#FFC700] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
     return (
       <div className="min-h-full flex items-center justify-center bg-black">
         <div className="w-10 h-10 rounded-full border-4 border-[#FFC700] border-t-transparent animate-spin" />
@@ -246,14 +241,6 @@ export default function ProfilePage() {
         <LogOut className="w-4 h-4" />
         <span>Đăng xuất tài khoản</span>
       </button>
-
-      {showCamera && (
-        <CameraView
-          friends={[]}
-          onClose={() => setShowCamera(false)}
-          onSendMoment={handleSendMoment}
-        />
-      )}
     </div>
   );
 }

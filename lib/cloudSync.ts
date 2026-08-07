@@ -1,8 +1,6 @@
 import { Moment } from './types';
 import { hasRenderableMedia, sanitizeMoments } from './media';
 
-const JSONBLOB_STORE_URL = 'https://jsonblob.com/api/jsonBlob/019fcc1e-0de5-7e25-bd85-bd9756144094';
-
 export interface CloudProfile {
   id: string;
   username: string;
@@ -78,10 +76,6 @@ export async function uploadMediaToPublicUrl(mediaUrl: string, fallbackName: str
   }
 }
 
-/**
- * Uploads a raw Blob directly to public URL without base64 conversion.
- * This is critical for video files to avoid huge data URL overhead.
- */
 export async function uploadBlobToPublicUrl(blob: Blob, fallbackName: string): Promise<string | null> {
   if (typeof window === 'undefined' || !blob || blob.size === 0) return null;
 
@@ -108,9 +102,6 @@ export async function uploadBlobToPublicUrl(blob: Blob, fallbackName: string): P
   }
 }
 
-/**
- * Compresses an image DataURL to 1080x1080 JPEG quality 0.90.
- */
 export function compressImageForCloudSync(dataUrl: string): Promise<string> {
   return new Promise((resolve) => {
     if (typeof window === 'undefined' || !dataUrl) return resolve(dataUrl);
@@ -142,16 +133,9 @@ export function compressImageForCloudSync(dataUrl: string): Promise<string> {
   });
 }
 
-/**
- * Registers a user profile to the Global Cloud.
- */
 export async function pushProfileToGlobalCloud(profile: CloudProfile): Promise<boolean> {
   try {
     if (!profile.id || !profile.username) return false;
-    if (profile.id.startsWith('user-') || profile.id.startsWith('user_dev_') || profile.username === 'manh_locket') {
-      return false;
-    }
-
     const res = await fetch('/api/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -163,40 +147,21 @@ export async function pushProfileToGlobalCloud(profile: CloudProfile): Promise<b
   }
 }
 
-/**
- * Fetches all user profiles from Global Cloud (Google Accounts Only).
- */
 export async function fetchGlobalCloudProfiles(): Promise<CloudProfile[]> {
   try {
-    let rawProfiles: CloudProfile[] = [];
     const res = await fetch('/api/sync', { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data.profiles) && data.profiles.length > 0) {
-        rawProfiles = data.profiles;
+      if (Array.isArray(data.profiles)) {
+        return data.profiles;
       }
     }
-
-    if (rawProfiles.length === 0) {
-      const jsonRes = await fetch(JSONBLOB_STORE_URL, { cache: 'no-store' });
-      if (jsonRes.ok) {
-        const data = await jsonRes.json();
-        if (Array.isArray(data.profiles)) rawProfiles = data.profiles;
-      }
-    }
-
-    return rawProfiles.filter(
-      (p) => p && p.id && !p.id.startsWith('user-') && !p.id.startsWith('user_dev_') && p.username !== 'manh_locket'
-    );
+    return [];
   } catch (e) {
     return [];
   }
 }
 
-/**
- * Pushes a newly posted moment to Global Cloud.
- * Reliable public upload fallback ensures photos/videos are converted to lightweight URLs.
- */
 export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> {
   try {
     if (!moment.id || !moment.media_url) return false;
@@ -204,7 +169,6 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
     let finalMediaUrl = moment.media_url;
     let finalThumbnailUrl = moment.thumbnail_url;
 
-    // Convert data: or blob: URLs into short durable HTTP/HTTPS URLs
     if (moment.media_url.startsWith('data:') || moment.media_url.startsWith('blob:')) {
       const uploadedUrl = await uploadMediaToPublicUrl(moment.media_url, `locket_${moment.id}`);
       if (uploadedUrl) {
@@ -238,42 +202,21 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
   }
 }
 
-/**
- * Fetches all moments posted across all accounts from Global Cloud.
- */
 export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
-  const allMoments: Moment[] = [];
-
   try {
-    // 1. Fetch from Serverless API
     const res = await fetch('/api/sync', { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data.moments)) {
-        allMoments.push(...data.moments);
+        return sanitizeMoments(data.moments);
       }
     }
-  } catch (e) {}
-
-  try {
-    // 2. Fetch from JSONBlob Store
-    const jsonRes = await fetch(JSONBLOB_STORE_URL, { cache: 'no-store' });
-    if (jsonRes.ok) {
-      const data = await jsonRes.json();
-      if (Array.isArray(data.moments)) {
-        allMoments.push(...data.moments);
-      }
-    }
-  } catch (e) {}
-
-  return sanitizeMoments(allMoments).filter(
-    (m, i, self) => i === self.findIndex((x) => x && x.id === m.id)
-  );
+    return [];
+  } catch (e) {
+    return [];
+  }
 }
 
-/**
- * Deletes a moment from Global Cloud store.
- */
 export async function deleteMomentFromGlobalCloud(momentId: string): Promise<boolean> {
   try {
     const res = await fetch('/api/sync', {
@@ -287,29 +230,14 @@ export async function deleteMomentFromGlobalCloud(momentId: string): Promise<boo
   }
 }
 
-/**
- * Retries pushing a newly posted moment to Global Cloud within a 60-second stabilization window.
- */
 export async function pushMomentToGlobalCloudWithRetry(
   moment: Moment,
-  maxDurationMs: number = 60000
+  _maxDurationMs: number = 5000
 ): Promise<boolean> {
-  const startTime = Date.now();
-  let attempt = 0;
+  // Simple single-retry with short 1.5s delay
+  let ok = await pushMomentToGlobalCloud(moment);
+  if (ok) return true;
 
-  while (Date.now() - startTime < maxDurationMs) {
-    attempt += 1;
-    try {
-      const ok = await pushMomentToGlobalCloud(moment);
-      if (ok) return true;
-    } catch (e) {}
-
-    // Exponential backoff delay (1.5s, 3s, 6s, max 10s)
-    const delay = Math.min(1500 * Math.pow(2, attempt - 1), 10000);
-    await new Promise((resolve) => setTimeout(resolve, delay));
-  }
-
-  return false;
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+  return await pushMomentToGlobalCloud(moment);
 }
-
-

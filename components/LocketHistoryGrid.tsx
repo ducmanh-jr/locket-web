@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Moment } from '@/lib/types';
 import { Grid, Video } from 'lucide-react';
 
@@ -15,13 +15,6 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
   onSelectMoment,
   onOpenCamera,
 }) => {
-  const [selectedTab, setSelectedTab] = useState<'all' | 'recents'>('all');
-
-  const formatDateHeader = (dateString: string) => {
-    const d = new Date(dateString);
-    return `Ngày ${d.getDate()} tháng ${d.getMonth() + 1}`;
-  };
-
   return (
     <div className="w-full h-full bg-black text-white flex flex-col justify-between p-4 pt-3 pb-24 overflow-y-auto custom-scrollbar select-none">
       {/* Top Header Bar */}
@@ -48,49 +41,58 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-2 transform-gpu">
-            {moments.map((moment) => (
-              <div
-                key={moment.id}
-                onClick={() => onSelectMoment(moment)}
-                className="relative aspect-square rounded-2xl overflow-hidden bg-[#18181C] border border-zinc-800/80 cursor-pointer active:scale-95 transition-transform group transform-gpu"
-              >
-                {moment.media_type === 'video' ||
+            {moments.map((moment) => {
+              const isVideo =
+                moment.media_type === 'video' ||
                 moment.id?.includes('video') ||
-                moment.media_url?.startsWith('data:video/') ? (
-                  <video
-                    src={moment.media_url}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    controls={false}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 pointer-events-none"
-                  />
-                ) : (
-                  <img
-                    src={moment.media_url}
-                    alt={moment.caption || 'Khoảnh khắc Locket'}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
-                )}
+                moment.media_url?.startsWith('data:video/') ||
+                moment.media_url?.endsWith('.mp4') ||
+                moment.media_url?.endsWith('.webm');
 
-                {/* Caption Tag Overlay at bottom */}
-                {moment.caption && (
-                  <div className="absolute bottom-1 left-1 right-1 bg-black/85 text-[9px] text-zinc-200 px-1.5 py-0.5 rounded-lg truncate font-medium text-center border border-white/10">
-                    {moment.caption}
-                  </div>
-                )}
+              const displayUrl = isVideo
+                ? moment.thumbnail_url || moment.media_url
+                : moment.media_url;
 
-                {/* Video Indicator Badge */}
-                {moment.media_type === 'video' && (
-                  <div className="absolute top-1.5 right-1.5 bg-black/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center space-x-0.5 border border-white/10">
-                    <Video className="w-3 h-3" />
-                  </div>
-                )}
-              </div>
-            ))}
+              return (
+                <div
+                  key={moment.id}
+                  onClick={() => onSelectMoment(moment)}
+                  className="relative aspect-square rounded-2xl overflow-hidden bg-[#18181C] border border-zinc-800/80 cursor-pointer active:scale-95 transition-transform group transform-gpu"
+                >
+                  {isVideo && !moment.thumbnail_url ? (
+                    <video
+                      src={moment.media_url}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 pointer-events-none"
+                    />
+                  ) : (
+                    <img
+                      src={displayUrl}
+                      alt={moment.caption || 'Khoảnh khắc Locket'}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    />
+                  )}
+
+                  {/* Caption Tag Overlay at bottom */}
+                  {moment.caption && (
+                    <div className="absolute bottom-1 left-1 right-1 bg-black/85 text-[9px] text-zinc-200 px-1.5 py-0.5 rounded-lg truncate font-medium text-center border border-white/10">
+                      {moment.caption}
+                    </div>
+                  )}
+
+                  {/* Video Indicator Badge */}
+                  {isVideo && (
+                    <div className="absolute top-1.5 right-1.5 bg-black/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center space-x-0.5 border border-white/10">
+                      <Video className="w-3 h-3" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

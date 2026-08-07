@@ -167,9 +167,7 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
       setLoading(true);
       try {
         const res = await fetch(
-          `https://itunes.apple.com/search?term=${encodeURIComponent(
-            searchQuery
-          )}&media=music&entity=song&limit=50`
+          `/api/music?term=${encodeURIComponent(searchQuery)}`
         );
         const data = await res.json();
 

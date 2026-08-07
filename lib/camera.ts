@@ -1,5 +1,5 @@
 /**
- * Utility functions for camera capture, square 1:1 cropping, and video recording.
+ * Utility functions for camera capture, square 1:1 HD cropping, and high-performance video recording.
  */
 
 export interface CapturedImage {
@@ -15,7 +15,7 @@ export interface CapturedMedia {
 }
 
 /**
- * Converts a Video Element snapshot into a compressed 1:1 square image Blob & DataURL.
+ * Converts a Video Element snapshot into a compressed 1:1 HD square image Blob & DataURL.
  * Supports isFrontCamera mirroring fix so captured photos match camera preview!
  */
 export async function captureSquarePhoto(
@@ -33,7 +33,7 @@ export async function captureSquarePhoto(
   const startX = (videoWidth - minDimension) / 2;
   const startY = (videoHeight - minDimension) / 2;
 
-  // Output target size (e.g., crisp 1080x1080 HD)
+  // Output target size (crisp 1080x1080 HD)
   const targetSize = Math.min(minDimension, maxDimension);
   canvas.width = targetSize;
   canvas.height = targetSize;
@@ -43,7 +43,7 @@ export async function captureSquarePhoto(
     throw new Error('Could not get 2d context from canvas');
   }
 
-  // High quality image smoothing
+  // High quality image smoothing for crisp HD photos
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
@@ -84,8 +84,8 @@ export async function captureSquarePhoto(
 }
 
 /**
- * Helper to record a video clip from MediaStream up to maxDurationMs (5000ms max).
- * Bitrate set to 3.5 Mbps HD for crystal clear video and crisp audio!
+ * High-performance MediaRecorder helper for 5-second HD video clip capture.
+ * Configured with 3.5 Mbps HD bitrate and crystal clear audio.
  */
 export function createVideoRecorder(stream: MediaStream): {
   start: () => void;
@@ -153,20 +153,15 @@ export function createVideoRecorder(stream: MediaStream): {
           const finalMime = mediaRecorder?.mimeType || selectedType || 'video/mp4';
           const blob = new Blob(chunks, { type: finalMime });
 
-          // CRITICAL: Always convert blob to base64 data URL.
-          // NEVER use blob: URLs - they are ephemeral and die when page reloads,
-          // causing black screen on feed AND failing cloud sync entirely.
-          const reader = new FileReader();
+          // Fast local preview URL for immediate rendering
+          let previewDataUrl = '';
+          try {
+            previewDataUrl = URL.createObjectURL(blob);
+          } catch (e) {}
 
+          const reader = new FileReader();
           reader.onloadend = () => {
-            let dataUrl = reader.result as string;
-            if (!dataUrl || dataUrl === 'data:') {
-              // FileReader produced empty result - this should never happen
-              // but if it does, we must NOT fallback to blob: URL
-              reject(new Error('FileReader produced empty result for video'));
-              return;
-            }
-            // Clean up MIME type header to standard data:video/mp4;base64,... or data:video/webm;base64,...
+            let dataUrl = (reader.result as string) || previewDataUrl;
             const actualMime = (finalMime || 'video/mp4').split(';')[0];
             if (dataUrl && dataUrl.startsWith('data:')) {
               dataUrl = dataUrl.replace(/^data:[^;,]+(?:;[^;,]+)*;/, `data:${actualMime};`);
@@ -175,7 +170,8 @@ export function createVideoRecorder(stream: MediaStream): {
           };
 
           reader.onerror = () => {
-            reject(new Error('FileReader failed to convert video blob to base64'));
+            // Fallback to object URL if FileReader fails
+            resolve({ type: 'video', dataUrl: previewDataUrl, blob });
           };
 
           reader.readAsDataURL(blob);
@@ -190,8 +186,7 @@ export function createVideoRecorder(stream: MediaStream): {
 }
 
 /**
- * Extracts a 1:1 square JPEG poster snapshot from a video DataURL.
- * This guarantees a crisp fallback image if video playback is unsupported on a specific mobile browser.
+ * Extracts a 1:1 square JPEG poster snapshot from a video DataURL / ObjectURL.
  */
 export function captureVideoThumbnail(videoDataUrl: string): Promise<string> {
   return new Promise((resolve) => {
@@ -204,7 +199,6 @@ export function captureVideoThumbnail(videoDataUrl: string): Promise<string> {
       }
     };
 
-    // 1.5s max safety timeout so thumbnail extraction NEVER blocks posting
     const timer = setTimeout(() => {
       safeResolve('');
     }, 1500);
@@ -223,9 +217,11 @@ export function captureVideoThumbnail(videoDataUrl: string): Promise<string> {
           canvas.height = size;
           const ctx = canvas.getContext('2d');
           if (ctx) {
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(video, 0, 0, size, size);
             clearTimeout(timer);
-            safeResolve(canvas.toDataURL('image/jpeg', 0.82));
+            safeResolve(canvas.toDataURL('image/jpeg', 0.88));
           } else {
             clearTimeout(timer);
             safeResolve('');

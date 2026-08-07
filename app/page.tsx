@@ -1,47 +1,49 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { LocketHeader, MemberFilterOption } from '@/components/LocketHeader';
+import React, { useState, useEffect } from 'react';
+import { LocketHeader } from '@/components/LocketHeader';
 import { LocketDock } from '@/components/LocketDock';
 import { LocketFeedCard } from '@/components/LocketFeedCard';
 import { LocketHistoryGrid } from '@/components/LocketHistoryGrid';
 import { CameraView } from '@/components/CameraView';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 import { SupabaseConfigNotice } from '@/components/SupabaseConfigNotice';
-import {
-  DEMO_CURRENT_USER,
-  DEMO_50_MOMENTS,
-  getStoredDemoMoments,
-  saveStoredDemoMoments,
-  addDemoMoment,
-  addDemoReaction,
-} from '@/lib/demoStore';
-import { Moment, Profile, MusicTrack } from '@/lib/types';
-import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/providers/AuthProvider';
+import { useMoments } from '@/lib/providers/MomentsProvider';
 import { Camera, X, User, LogOut } from 'lucide-react';
-import { CapturedMedia, captureVideoThumbnail } from '@/lib/camera';
+import { CapturedMedia } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { pushMomentToGlobalCloud, pushMomentToGlobalCloudWithRetry, fetchGlobalCloudMoments, pushProfileToGlobalCloud, deleteMomentFromGlobalCloud, compressImageForCloudSync, uploadMediaToPublicUrl, uploadBlobToPublicUrl } from '@/lib/cloudSync';
-import { sanitizeMoments } from '@/lib/media';
+import { MusicTrack } from '@/lib/types';
 
 export default function HomePage() {
   const router = useRouter();
-  const { userProfile, loading: authLoading } = useAuth();
-  const [moments, setMoments] = useState<Moment[]>([]);
+  const { userProfile, loading: authLoading, signOut } = useAuth();
+  const {
+    filteredMoments,
+    loading: momentsLoading,
+    selectedFriendFilter,
+    setSelectedFriendFilter,
+    membersFilterOptions,
+    addMoment,
+    deleteMoment,
+    addReaction,
+  } = useMoments();
+
   const [selectedMomentId, setSelectedMomentId] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<'feed' | 'grid'>('feed');
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [showMenuModal, setShowMenuModal] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
   const [lastReaction, setLastReaction] = useState<{ emoji: string; timestamp: number } | null>(null);
-  const [selectedFriendFilter, setSelectedFriendFilter] = useState<string>('all');
-  const broadcastChannelRef = useRef<any>(null);
 
-  const currentUser = userProfile || DEMO_CURRENT_USER;
+  const currentUser = userProfile || {
+    id: 'user-me',
+    username: 'manh_locket',
+    display_name: 'Đức Mạnh',
+    avatar_url: '/user-photos/1785829393992_567716528849713056_g276929852367586455_e887fb48d4d113fc528e29488435b6f7.jpg',
+  };
 
-  // Enforce Google Login: Redirect unauthenticated sessions immediately to /login
+  // Redirect unauthenticated sessions to /login
   useEffect(() => {
     if (!authLoading && !userProfile) {
       router.push('/login');
@@ -50,174 +52,10 @@ export default function HomePage() {
 
   // Register PWA Service Worker
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
   }, []);
-
-  const areMomentsEqual = (a: Moment[], b: Moment[]): boolean => {
-    if (a.length !== b.length) return false;
-    for (let i = 0; i < a.length; i++) {
-      if (
-        a[i].id !== b[i].id ||
-        a[i].media_url !== b[i].media_url ||
-        (a[i].reactions?.length || 0) !== (b[i].reactions?.length || 0)
-      ) {
-        return false;
-      }
-    }
-    return true;
-  };
-
-  // Delete moment handler
-  const handleDeleteMoment = (momentId: string) => {
-    deleteMomentFromGlobalCloud(momentId).catch(() => {});
-    setMoments((prev) => {
-      const updated = prev.filter((m) => m.id !== momentId);
-      saveStoredDemoMoments(updated, currentUser.id);
-      return updated;
-    });
-  };
-
-  // Sync profile to Global Cloud
-  useEffect(() => {
-    if (userProfile) {
-      pushProfileToGlobalCloud({
-        id: userProfile.id,
-        username: userProfile.username,
-        display_name: userProfile.display_name,
-        avatar_url: userProfile.avatar_url || '',
-      }).catch(() => {});
-    }
-  }, [userProfile]);
-
-  // Fetch moments with full bidirectional cloud sync so ALL accounts see the SAME feed
-  const loadMoments = async () => {
-    let cloudMoments: Moment[] = [];
-    try {
-      cloudMoments = await fetchGlobalCloudMoments();
-    } catch (e) {}
-
-    const cachedMoments = getStoredDemoMoments(currentUser.id);
-    const combined = sanitizeMoments([...cloudMoments, ...cachedMoments, ...DEMO_50_MOMENTS]);
-
-    const sanitized = combined.map((m) => {
-      let item = m;
-      if (item.id.startsWith('m-photo-v5-') || item.caption?.includes('mèo cưng')) {
-        item = { ...item, music: undefined };
-      }
-      if (!item.sender) {
-        if (item.sender_id === currentUser.id || item.sender_id === 'user-me') {
-          return { ...item, sender: currentUser };
-        }
-        return {
-          ...item,
-          sender: {
-            id: item.sender_id || 'user-locket',
-            username: item.sender_id || 'locket_user',
-            display_name: 'Thành viên Locket',
-            avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${item.sender_id || 'locket'}`,
-          },
-        };
-      }
-      return item;
-    });
-
-    const unique = sanitized.filter(
-      (m, i, self) => i === self.findIndex((x) => x.id === m.id)
-    );
-
-    // Newest moments at the top of the stack (seq_id descending, then created_at)
-    unique.sort((a: any, b: any) => {
-      const seqA = Number(a.seq_id || 0);
-      const seqB = Number(b.seq_id || 0);
-      if (seqA && seqB && seqA !== seqB) return seqB - seqA;
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
-
-    saveStoredDemoMoments(unique, currentUser.id);
-
-    const targetMoments = unique.length > 0 ? unique : DEMO_50_MOMENTS;
-    setMoments((prev) => (areMomentsEqual(prev, targetMoments) ? prev : targetMoments));
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    loadMoments();
-
-    // 60-second background stabilization sync interval for maximum server stability
-    const pollInterval = setInterval(() => {
-      loadMoments();
-    }, 60000);
-
-    // Native BroadcastChannel for instant cross-tab real-time sync
-    let tabChannel: BroadcastChannel | null = null;
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      tabChannel = new BroadcastChannel('locket_tab_sync');
-      tabChannel.onmessage = (event) => {
-        if (event.data?.type === 'NEW_MOMENT' && event.data?.moment) {
-          setMoments((prev) => {
-            const exists = prev.some((m) => m.id === event.data.moment.id);
-            if (exists) return prev;
-            return [event.data.moment, ...prev];
-          });
-        }
-      };
-    }
-
-    if (isSupabaseConfigured()) {
-      const dbChannel = supabase
-        .channel('public:moments-feed')
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'moments' },
-          (payload) => {
-            if (payload?.new) {
-              const newMoment = payload.new as Moment;
-              // Skip moments sent by self to prevent duplicates
-              if (newMoment.sender_id === currentUser.id) return;
-              setMoments((prev) => {
-                const exists = prev.some((m) => m.id === newMoment.id);
-                if (exists) return prev;
-                return [newMoment, ...prev];
-              });
-            }
-          }
-        )
-        .subscribe();
-
-      const broadcastChannel = supabase.channel('locket-live-broadcast');
-      broadcastChannel
-        .on('broadcast', { event: 'new_moment' }, ({ payload }) => {
-          if (payload && payload.id) {
-            setMoments((prev) => {
-              const exists = prev.some((m) => m.id === payload.id);
-              if (exists) return prev;
-              const updated = [payload, ...prev];
-              addDemoMoment(payload, currentUser.id);
-              return updated;
-            });
-          }
-        })
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            broadcastChannelRef.current = broadcastChannel;
-          }
-        });
-
-      return () => {
-        clearInterval(pollInterval);
-        if (tabChannel) tabChannel.close();
-        supabase.removeChannel(dbChannel);
-        supabase.removeChannel(broadcastChannel);
-      };
-    }
-
-    return () => {
-      clearInterval(pollInterval);
-      if (tabChannel) tabChannel.close();
-    };
-  }, [currentUser.id]);
 
   if (authLoading) {
     return (
@@ -246,51 +84,7 @@ export default function HomePage() {
     );
   }
 
-  // Members Filter Options for "Tất cả bạn bè" Selector Modal Sheet
-  const membersFilterOptions: MemberFilterOption[] = React.useMemo(() => {
-    const list: MemberFilterOption[] = [
-      { id: 'all', name: 'Tất cả bạn bè', count: moments.length },
-    ];
-    const sendersMap = new Map<string, { name: string; avatar_url?: string; count: number }>();
-    moments.forEach((m) => {
-      const sid = m.sender?.id || m.sender_id || 'unknown';
-      const sname =
-        m.sender?.display_name ||
-        (sid === currentUser.id ? currentUser.display_name : 'Thành viên Locket');
-      const savatar =
-        m.sender?.avatar_url ||
-        (sid === currentUser.id ? currentUser.avatar_url : undefined);
-      if (!sendersMap.has(sid)) {
-        sendersMap.set(sid, { name: sname, avatar_url: savatar, count: 1 });
-      } else {
-        const existing = sendersMap.get(sid)!;
-        existing.count += 1;
-      }
-    });
-    sendersMap.forEach((val, key) => {
-      list.push({
-        id: key,
-        name: val.name,
-        avatar_url: val.avatar_url,
-        count: val.count,
-      });
-    });
-    return list;
-  }, [moments, currentUser]);
-
-  // Filter moments according to selected friend option
-  const filteredMoments = React.useMemo(() => {
-    if (selectedFriendFilter === 'all') return moments;
-    return moments.filter(
-      (m) =>
-        m.sender_id === selectedFriendFilter ||
-        m.sender?.id === selectedFriendFilter ||
-        m.sender?.username === selectedFriendFilter
-    );
-  }, [moments, selectedFriendFilter]);
-
-  // Pure Shared Room Stack filtered by selection
-  const roomMoments = filteredMoments.length > 0 ? filteredMoments : moments;
+  const roomMoments = filteredMoments;
 
   const currentMoment = selectedMomentId
     ? roomMoments.find((m) => m.id === selectedMomentId) || roomMoments[0]
@@ -318,25 +112,15 @@ export default function HomePage() {
     }
   };
 
-  const handleSendDirectMessage = (text: string) => {
+  const handleReact = (momentId: string, emoji: string) => {
+    setLastReaction({ emoji, timestamp: Date.now() });
+    addReaction(momentId, emoji);
+  };
+
+  const handleSendDirectMessage = (_text: string) => {
     if (currentMoment) {
       handleReact(currentMoment.id, '💬');
     }
-  };
-
-  const handleReact = async (momentId: string, emoji: string) => {
-    setLastReaction({ emoji, timestamp: Date.now() });
-    if (isSupabaseConfigured() && userProfile) {
-      try {
-        await supabase.from('reactions').insert({
-          moment_id: momentId,
-          user_id: userProfile.id,
-          emoji: emoji,
-        });
-      } catch (e) {}
-    }
-    const updated = addDemoReaction(momentId, emoji, currentUser, currentUser.id);
-    setMoments(updated);
   };
 
   const handleSendMoment = async (
@@ -346,108 +130,13 @@ export default function HomePage() {
     music?: MusicTrack,
     audioOption?: 'mute' | 'original' | 'music'
   ) => {
-    const newMomentId = `m-${media.type}-v9-${Date.now()}`;
-    const activeSender = userProfile || currentUser;
-
-    let mediaUrl = media.dataUrl;
-    let thumbnailUrl: string | undefined = undefined;
-
-    if (media.type === 'photo' && media.dataUrl.startsWith('data:image/')) {
-      try {
-        mediaUrl = await compressImageForCloudSync(media.dataUrl);
-        if (mediaUrl.length > 450000) {
-          const uploadedPhotoUrl = await uploadMediaToPublicUrl(mediaUrl, `locket_${newMomentId}`);
-          if (uploadedPhotoUrl) mediaUrl = uploadedPhotoUrl;
-        }
-      } catch (e) {}
-    } else if (media.type === 'video') {
-      try {
-        // Upload video blob directly (not base64) for reliability
-        const [uploadedVideoUrl, thumb] = await Promise.all([
-          uploadBlobToPublicUrl(media.blob, `locket_${newMomentId}`),
-          captureVideoThumbnail(media.dataUrl),
-        ]);
-        if (uploadedVideoUrl) mediaUrl = uploadedVideoUrl;
-        if (thumb) thumbnailUrl = thumb;
-      } catch (e) {}
-    }
-
-    const newMoment: Moment = {
-      id: newMomentId,
-      sender_id: activeSender.id,
-      sender: activeSender,
-      media_url: mediaUrl,
-      media_type: media.type,
-      audio_option: audioOption || (media.type === 'video' ? 'original' : undefined),
-      caption: caption,
-      created_at: new Date().toISOString(),
-      reactions: [],
-      music: music,
-      thumbnail_url: thumbnailUrl,
-    };
-
-    // 1. Optimistic Local Save - Put new photo on TOP of the room stack
-    const updatedMoments = addDemoMoment(newMoment, currentUser.id);
-    setMoments(updatedMoments);
-    setSelectedMomentId(newMomentId);
+    await addMoment(media, caption, recipientIds, music, audioOption);
     setShowCamera(false);
     setCurrentView('feed');
-
-    // 2. Broadcast to all open tabs
-    try {
-      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-        const tabChannel = new BroadcastChannel('locket_tab_sync');
-        tabChannel.postMessage({ type: 'NEW_MOMENT', moment: newMoment });
-        tabChannel.close();
-      }
-    } catch (e) {}
-
-    // 3. Background Cloud / DB Sync
-    (async () => {
-      if (isSupabaseConfigured()) {
-        try {
-          await supabase.from('profiles').upsert({
-            id: activeSender.id,
-            username: activeSender.username,
-            display_name: activeSender.display_name,
-            avatar_url: activeSender.avatar_url,
-          });
-
-          await supabase.from('moments').insert({
-            id: newMomentId,
-            sender_id: activeSender.id,
-            media_url: mediaUrl,
-            media_type: media.type,
-            caption: caption,
-          });
-        } catch (e) {}
-      }
-
-      try {
-        // 60-Second Stabilization Sync Worker with Retries & Exponential Backoff
-        await pushMomentToGlobalCloudWithRetry(newMoment, 60000);
-      } catch (e) {}
-
-      if (broadcastChannelRef.current) {
-        try {
-          broadcastChannelRef.current.send({
-            type: 'broadcast',
-            event: 'new_moment',
-            payload: newMoment,
-          });
-        } catch (e) {}
-      }
-    })();
   };
 
   const handleLogout = async () => {
-    try {
-      localStorage.removeItem('locket_google_user_v1');
-      localStorage.removeItem('locket_device_profile');
-      if (isSupabaseConfigured()) {
-        await supabase.auth.signOut();
-      }
-    } catch (e) {}
+    await signOut();
     router.push('/login');
   };
 
@@ -497,7 +186,7 @@ export default function HomePage() {
                 <PWAInstallBanner />
               </div>
 
-              {loading ? (
+              {momentsLoading ? (
                 <div className="w-[310px] h-[310px] my-auto rounded-[2.5rem] bg-[#18181C] border border-zinc-800 flex items-center justify-center animate-pulse">
                   <div className="w-10 h-10 rounded-full border-4 border-[#FFC700] border-t-transparent animate-spin" />
                 </div>
@@ -509,7 +198,7 @@ export default function HomePage() {
                   onPrev={handlePrev}
                   hasPrev={safeIndex > 0}
                   hasNext={safeIndex < roomMoments.length - 1}
-                  onDeleteMoment={handleDeleteMoment}
+                  onDeleteMoment={deleteMoment}
                   nextMomentUrl={nextMoment?.media_url}
                   prevMomentUrl={prevMoment?.media_url}
                   activeReaction={lastReaction}
@@ -627,4 +316,3 @@ export default function HomePage() {
     </div>
   );
 }
-

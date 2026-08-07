@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import { DesktopPhoneFrame } from '@/components/DesktopPhoneFrame';
+import { ClientLayout } from '@/components/ClientLayout';
 
 export const metadata: Metadata = {
   title: 'LocketWeb — Chia sẻ khoảnh khắc tức thời với Bạn bè',
@@ -33,10 +33,10 @@ export default function RootLayout({
   return (
     <html lang="vi" className="dark">
       <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <link rel="apple-touch-icon" href="/icon.svg" />
       </head>
       <body>
-        <DesktopPhoneFrame>{children}</DesktopPhoneFrame>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );
