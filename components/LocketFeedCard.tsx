@@ -165,7 +165,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     avatar_url: '',
   };
 
+  const ADMIN_EMAIL = 'nguyenducmanh.ovaltine@gmail.com';
+  const isAdmin = currentUser.isAdmin || currentUser.email?.toLowerCase().trim() === ADMIN_EMAIL;
   const isMyMoment = sender.id === currentUser.id;
+  const canDeleteMoment = isMyMoment || isAdmin;
 
   const formatLocketTime = (dateString: string) => {
     const diff = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000);
@@ -529,7 +532,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                 <span>Tải ảnh về máy</span>
               </button>
 
-              {isMyMoment && onDeleteMoment && (
+              {canDeleteMoment && onDeleteMoment && (
                 <button
                   onClick={() => {
                     onDeleteMoment(moment.id);
@@ -538,7 +541,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                   className="w-full p-3 bg-red-500/10 hover:bg-red-500/20 rounded-2xl text-red-400 text-xs font-semibold flex items-center space-x-3 transition-all active:scale-98"
                 >
                   <Trash2 className="w-4 h-4 text-red-400" />
-                  <span>Xóa khoảnh khắc này</span>
+                  <span>{isAdmin && !isMyMoment ? 'Xóa khoảnh khắc này (Quyền Admin 👑)' : 'Xóa khoảnh khắc này'}</span>
                 </button>
               )}
 

@@ -4,6 +4,8 @@ export interface Profile {
   display_name: string;
   avatar_url?: string;
   created_at?: string;
+  email?: string;
+  isAdmin?: boolean;
 }
 
 export interface Friendship {

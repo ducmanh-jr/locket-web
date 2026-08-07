@@ -48,25 +48,31 @@ function clearCachedProfile(): void {
 }
 
 function buildProfileFromSupabaseUser(user: any): Profile {
+  const email = user.email || user.user_metadata?.email || '';
   const name =
     user.user_metadata?.full_name ||
     user.user_metadata?.name ||
-    user.email?.split('@')[0] ||
+    email.split('@')[0] ||
     'Locket User';
   const username =
     user.user_metadata?.username ||
-    user.email?.split('@')[0]?.toLowerCase().replace(/[^a-z0-9_]/g, '') ||
+    email.split('@')[0]?.toLowerCase().replace(/[^a-z0-9_]/g, '') ||
     `user_${user.id.substring(0, 6)}`;
   const avatarUrl =
     user.user_metadata?.avatar_url ||
     user.user_metadata?.picture ||
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
 
+  const ADMIN_EMAIL = 'nguyenducmanh.ovaltine@gmail.com';
+  const isAdmin = email.toLowerCase().trim() === ADMIN_EMAIL;
+
   return {
     id: user.id,
     username,
     display_name: name,
     avatar_url: avatarUrl,
+    email,
+    isAdmin,
   };
 }
 
