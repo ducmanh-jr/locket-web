@@ -1,5 +1,6 @@
 import { Moment } from './types';
 import { hasRenderableMedia, sanitizeMoments } from './media';
+import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 export interface CloudProfile {
   id: string;
@@ -215,12 +216,42 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
 
     if (!hasRenderableMedia(compressedMoment)) return false;
 
-    const res = await fetch('/api/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'push_moment', moment: compressedMoment }),
-    });
-    return res.ok;
+    // 1. Primary: Try API Sync Endpoint
+    try {
+      const res = await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'push_moment', moment: compressedMoment }),
+      });
+      if (res.ok) return true;
+    } catch (apiErr) {}
+
+    // 2. Direct Supabase JS Client Fallback (Guarantees DB insert directly from browser)
+    if (isSupabaseConfigured()) {
+      const senderId = compressedMoment.sender_id || compressedMoment.sender?.id;
+      if (senderId) {
+        const senderObj: any = compressedMoment.sender || {};
+        await supabase.from('profiles').upsert({
+          id: senderId,
+          username: senderObj.username || `user_${senderId.substring(0, 6)}`,
+          display_name: senderObj.display_name || 'Thành viên Locket',
+          avatar_url: senderObj.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${senderId}`,
+        });
+      }
+
+      const { error: dbErr } = await supabase.from('moments').upsert({
+        id: compressedMoment.id,
+        sender_id: senderId,
+        media_url: compressedMoment.media_url,
+        thumbnail_url: compressedMoment.thumbnail_url || null,
+        media_type: compressedMoment.media_type || 'photo',
+        caption: compressedMoment.caption || '',
+        created_at: compressedMoment.created_at || new Date().toISOString(),
+      });
+      return !dbErr;
+    }
+
+    return false;
   } catch (e) {
     return false;
   }
