@@ -70,14 +70,14 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
 
   // Auto-play music when moment changes, auto-stop when switching away
   useEffect(() => {
-    // Kill any previous audio immediately
+    // ALWAYS kill previous audio immediately when moment changes
     killGlobalAudio();
     setIsPlayingAudio(false);
 
+    // Only play if this moment has music
     if (moment.music?.preview_url) {
       setIsPlayingAudio(true);
       playGlobalAudio(moment.music.preview_url, () => {
-        // Only update state if this moment is still the active one
         if (currentMomentIdRef.current === moment.id) {
           setIsPlayingAudio(false);
         }
@@ -88,7 +88,22 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       killGlobalAudio();
       setIsPlayingAudio(false);
     };
-  }, [moment.id, moment.music?.preview_url]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [moment.id]);
+
+  // Pause music when user switches to another browser tab
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        killGlobalAudio();
+        setIsPlayingAudio(false);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   const toggleAudio = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
