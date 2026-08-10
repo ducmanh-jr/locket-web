@@ -469,7 +469,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                 title="Bật/Tắt nhạc"
               >
                 <div
-                  className={`w-4.5 h-4.5 rounded-full overflow-hidden flex-shrink-0 border border-[#FFC700] ${
+                  className={`w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-[#FFC700] ${
                     isPlayingAudio ? 'animate-spin' : ''
                   }`}
                 >

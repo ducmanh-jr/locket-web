@@ -489,7 +489,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
             <div className="absolute top-4 left-4 right-4 flex items-center justify-center">
               {selectedMusic ? (
                 <div className="flex items-center space-x-2 bg-black/75 backdrop-blur-md border border-[#FFC700]/50 text-white text-xs px-3.5 py-1.5 rounded-full shadow-lg max-w-[90%]">
-                  <div className="w-4.5 h-4.5 rounded-full overflow-hidden flex-shrink-0 border border-[#FFC700]/70 animate-spin">
+                  <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-[#FFC700]/70 animate-spin">
                     <img src={selectedMusic.cover_url} alt="" className="w-full h-full object-cover" />
                   </div>
                   <span className="font-semibold text-xs truncate max-w-[130px]">
