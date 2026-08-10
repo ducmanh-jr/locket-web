@@ -6,7 +6,6 @@ import { LocketDock } from '@/components/LocketDock';
 import { LocketFeedCard } from '@/components/LocketFeedCard';
 import { LocketHistoryGrid } from '@/components/LocketHistoryGrid';
 import { CameraView } from '@/components/CameraView';
-import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 import { SupabaseConfigNotice } from '@/components/SupabaseConfigNotice';
 import { useAuth } from '@/lib/providers/AuthProvider';
 import { useMoments } from '@/lib/providers/MomentsProvider';
@@ -177,7 +176,6 @@ export default function HomePage() {
             >
               <div className="w-full px-2 pt-1">
                 <SupabaseConfigNotice />
-                <PWAInstallBanner />
               </div>
 
               {momentsLoading ? (

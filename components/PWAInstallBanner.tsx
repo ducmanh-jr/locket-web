@@ -3,24 +3,31 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Share, PlusSquare, X, Smartphone } from 'lucide-react';
 
-export const PWAInstallBanner: React.FC = () => {
+interface PWAInstallBannerProps {
+  forceDisplay?: boolean;
+}
+
+export const PWAInstallBanner: React.FC<PWAInstallBannerProps> = ({ forceDisplay = false }) => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState<boolean>(false);
-  const [isStandalone, setIsStandalone] = useState<boolean>(true);
+  const [isStandalone, setIsStandalone] = useState<boolean>(false);
   const [showIOSModal, setShowIOSModal] = useState<boolean>(false);
   const [dismissed, setDismissed] = useState<boolean>(false);
 
   useEffect(() => {
     // Check if running in PWA standalone mode
     const isStandaloneMode =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true;
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as any).standalone === true);
     setIsStandalone(isStandaloneMode);
 
     // Detect iOS
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    const iosDevice = /iphone|ipad|ipod/.test(userAgent);
-    setIsIOS(iosDevice);
+    if (typeof window !== 'undefined') {
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      const iosDevice = /iphone|ipad|ipod/.test(userAgent);
+      setIsIOS(iosDevice);
+    }
 
     // Listen for Android/Desktop PWA prompt
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -42,13 +49,15 @@ export const PWAInstallBanner: React.FC = () => {
       if (outcome === 'accepted') {
         setDeferredPrompt(null);
       }
-    } else if (isIOS) {
+    } else {
       setShowIOSModal(true);
     }
   };
 
-  if (isStandalone || dismissed) return null;
-  if (!deferredPrompt && !isIOS) return null;
+  if (!forceDisplay) {
+    if (isStandalone || dismissed) return null;
+    if (!deferredPrompt && !isIOS) return null;
+  }
 
   return (
     <>

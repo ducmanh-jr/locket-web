@@ -19,7 +19,7 @@ import { CapturedMedia } from '@/lib/camera';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/lib/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
-import { MusicTrack } from '@/lib/types';
+import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -199,23 +199,7 @@ export default function ProfilePage() {
             <ChevronRight className="w-4 h-4 text-zinc-500" />
           </button>
 
-          {/* Menu Item 3: PWA Widget */}
-          <div className="w-full bg-[#18181C] border border-zinc-800/80 rounded-2xl p-3.5 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-9 h-9 rounded-full bg-zinc-800 text-green-400 flex items-center justify-center">
-                <Smartphone className="w-5 h-5 stroke-[2.2]" />
-              </div>
-              <div className="text-left">
-                <h4 className="text-white text-xs font-bold">Ứng dụng PWA Widget</h4>
-                <p className="text-zinc-500 text-[11px]">Đã bật Thêm vào Màn hình chính</p>
-              </div>
-            </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-500/20 text-green-400">
-              Sẵn sàng
-            </span>
-          </div>
-
-          {/* Menu Item 4: Cloud Protection */}
+          {/* Menu Item 3: Cloud Protection */}
           <div className="w-full bg-[#18181C] border border-zinc-800/80 rounded-2xl p-3.5 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-9 h-9 rounded-full bg-zinc-800 text-blue-400 flex items-center justify-center">
@@ -229,6 +213,11 @@ export default function ProfilePage() {
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400">
               An toàn
             </span>
+          </div>
+
+          {/* Menu Item 4: Cài đặt LocketWeb (PWA Install Card placed DIRECTLY below Bảo mật & Quyền riêng tư) */}
+          <div className="pt-2">
+            <PWAInstallBanner forceDisplay={true} />
           </div>
         </div>
       </div>
