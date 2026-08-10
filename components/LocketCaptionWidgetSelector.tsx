@@ -98,7 +98,7 @@ export const LocketCaptionWidgetSelector: React.FC<LocketCaptionWidgetSelectorPr
     onChange(filteredItems[newIdx].text);
   };
 
-  // Touch Swipe Gesture Handlers
+  // Touch & Click Swipe Handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartXRef.current = e.touches[0].clientX;
   };
@@ -116,74 +116,22 @@ export const LocketCaptionWidgetSelector: React.FC<LocketCaptionWidgetSelectorPr
     touchStartXRef.current = null;
   };
 
-  const selectSuggestion = (text: string, index: number) => {
-    setCurrentIndex(index);
-    onChange(text);
-  };
-
   return (
-    <div className="w-full flex flex-col items-center select-none">
-      {/* Main Interactive Caption Pill with Left / Right Swipe Controls */}
-      <div className="relative w-[92%] max-w-xs flex items-center justify-between">
-        <button
-          type="button"
-          onClick={handlePrev}
-          className="p-1.5 rounded-full bg-black/60 backdrop-blur-md text-white/80 hover:text-white border border-white/20 active:scale-95 transition-all shadow-md z-10"
-          title="Gợi ý trước"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-
-        {/* Caption Input / Animated Suggestion Display */}
-        <div
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          className="flex-1 mx-1.5 relative flex items-center justify-center bg-black/80 backdrop-blur-md rounded-2xl border border-white/20 px-3 py-2 text-center shadow-2xl transition-all focus-within:border-[#FFC700]"
-        >
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder="Vuốt chọn hoặc nhập chú thích... ✏️"
-            maxLength={60}
-            className="w-full bg-transparent text-white text-xs font-bold text-center placeholder-zinc-400 focus:outline-none"
-          />
-        </div>
-
-        <button
-          type="button"
-          onClick={handleNext}
-          className="p-1.5 rounded-full bg-black/60 backdrop-blur-md text-white/80 hover:text-white border border-white/20 active:scale-95 transition-all shadow-md z-10"
-          title="Gợi ý kế tiếp"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Swipe Hint Indicator */}
-      <div className="flex items-center space-x-1 mt-1 text-[10px] text-zinc-400 font-medium">
-        <span>👈 Vuốt để đổi tiện ích Locket 👉</span>
-      </div>
-
-      {/* Quick Suggestion Chips Bar */}
-      <div className="w-full overflow-x-auto no-scrollbar flex items-center space-x-1.5 px-3 py-1.5 mt-1">
-        {filteredItems.map((item, idx) => {
-          const isSelected = value === item.text;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => selectSuggestion(item.text, idx)}
-              className={`flex-shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all active:scale-95 border ${
-                isSelected
-                  ? 'bg-[#FFC700] text-black border-[#FFC700] font-bold shadow-md scale-105'
-                  : 'bg-black/60 text-zinc-300 border-white/10 hover:border-white/30 hover:text-white'
-              }`}
-            >
-              {item.text}
-            </button>
-          );
-        })}
+    <div className="w-full flex items-center justify-center select-none">
+      {/* Clean Glassmorphic Caption Pill Container */}
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        className="w-[85%] max-w-[280px] relative flex items-center justify-center bg-black/60 backdrop-blur-xl rounded-full border border-white/20 px-4 py-2.5 text-center shadow-2xl transition-all focus-within:border-[#FFC700] focus-within:bg-black/80"
+      >
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Viết chú thích..."
+          maxLength={60}
+          className="w-full bg-transparent text-white text-xs font-semibold text-center placeholder-zinc-400 focus:outline-none tracking-tight"
+        />
       </div>
     </div>
   );

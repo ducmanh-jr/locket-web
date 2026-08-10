@@ -488,11 +488,11 @@ export const CameraView: React.FC<CameraViewProps> = ({
             {/* Music Badge Sticker at Top Center of Photo */}
             <div className="absolute top-4 left-4 right-4 flex items-center justify-center">
               {selectedMusic ? (
-                <div className="flex items-center space-x-2 bg-black/80 backdrop-blur-md border border-[#FFC700]/50 text-white text-xs px-3.5 py-1.5 rounded-full shadow-lg max-w-[90%]">
-                  <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-[#FFC700]/60 animate-spin">
+                <div className="flex items-center space-x-2 bg-black/75 backdrop-blur-md border border-[#FFC700]/50 text-white text-xs px-3.5 py-1.5 rounded-full shadow-lg max-w-[90%]">
+                  <div className="w-4.5 h-4.5 rounded-full overflow-hidden flex-shrink-0 border border-[#FFC700]/70 animate-spin">
                     <img src={selectedMusic.cover_url} alt="" className="w-full h-full object-cover" />
                   </div>
-                  <span className="font-semibold text-xs truncate">
+                  <span className="font-semibold text-xs truncate max-w-[130px]">
                     {selectedMusic.title} • {selectedMusic.artist}
                   </span>
                   <button
@@ -506,23 +506,23 @@ export const CameraView: React.FC<CameraViewProps> = ({
               ) : (
                 <button
                   onClick={() => setShowMusicPicker(true)}
-                  className="bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/20 text-[#FFC700] text-xs font-bold px-3.5 py-1.5 rounded-full flex items-center space-x-1.5 transition-all active:scale-95 shadow-md"
+                  className="bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-[#FFC700] text-xs font-bold px-3.5 py-1.5 rounded-full flex items-center space-x-1.5 transition-all active:scale-95 shadow-md"
                 >
                   <Music className="w-3.5 h-3.5 text-[#FFC700]" />
-                  <span>Thêm nhạc 🎵</span>
+                  <span>Thêm nhạc</span>
                 </button>
               )}
             </div>
 
             {/* Caption Input & Swipe Widgets Pill inside Photo */}
-            <div className="absolute bottom-2 left-2 right-2 flex justify-center z-20">
+            <div className="absolute bottom-4 left-4 right-4 flex justify-center z-20">
               <LocketCaptionWidgetSelector value={caption} onChange={setCaption} />
             </div>
           </div>
         )}
       </div>
 
-      {/* Bottom Controls / Recipients Selector */}
+      {/* Bottom Controls / Action Buttons */}
       <div className="w-full max-w-sm pb-6 z-10">
         {!capturedMedia ? (
           /* Live Shutter Button (Tap = Photo, Hold >= 400ms = Record Video max 5s) */
@@ -568,12 +568,12 @@ export const CameraView: React.FC<CameraViewProps> = ({
           </div>
         ) : (
           /* Post Capture: Action Buttons (Retake & Send directly to Shared Room) */
-          <div className="space-y-3">
+          <div className="space-y-3 px-2">
             <div className="flex items-center space-x-3">
               <button
                 onClick={handleRetake}
                 disabled={isSending}
-                className="flex-1 py-3.5 bg-[#18181C] hover:bg-[#262626] border border-zinc-800 text-zinc-300 font-bold text-xs rounded-2xl flex items-center justify-center space-x-1.5 transition-all active:scale-95"
+                className="flex-1 py-3.5 bg-[#18181C] hover:bg-[#262626] border border-zinc-800 text-white font-bold text-xs rounded-full flex items-center justify-center space-x-2 shadow-md transition-all active:scale-95"
               >
                 <RotateCcw className="w-4 h-4 text-zinc-400" />
                 <span>Quay/Chụp lại</span>
@@ -582,7 +582,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
               <button
                 onClick={handleSend}
                 disabled={isSending}
-                className="flex-1 py-3.5 bg-[#FFC700] hover:bg-[#FFD633] text-black font-extrabold text-xs rounded-2xl flex items-center justify-center space-x-1.5 shadow-locket-glow transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-3.5 bg-[#FFC700] hover:bg-[#FFE066] text-black font-extrabold text-xs rounded-full flex items-center justify-center space-x-2 shadow-[0_0_20px_rgba(255,199,0,0.35)] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSending ? (
                   <div className="w-4 h-4 rounded-full border-2 border-black border-t-transparent animate-spin" />
