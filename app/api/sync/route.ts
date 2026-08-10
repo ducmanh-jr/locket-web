@@ -31,13 +31,36 @@ function hasRenderableMedia(moment: any): boolean {
   );
 }
 
+function isSystemMoment(moment: any): boolean {
+  if (!moment) return false;
+  const senderId = String(moment.sender_id || moment.sender?.id || '');
+  const id = String(moment.id || '');
+  return (
+    senderId === 'user-dm' ||
+    senderId === 'user-system32' ||
+    senderId === 'user-admin' ||
+    senderId.startsWith('user-') ||
+    id.startsWith('m-photo-v5-')
+  );
+}
+
 function sanitizeMoments(moments: any[]): any[] {
   const unique = moments
     .filter(hasRenderableMedia)
     .filter((m, i, self) => i === self.findIndex((x) => x?.id === m?.id));
 
   unique.sort((a, b) => {
-    return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    const isSysA = isSystemMoment(a);
+    const isSysB = isSystemMoment(b);
+
+    // 1. Primary rule: Real users first, System demo users at bottom
+    if (isSysA && !isSysB) return 1;
+    if (!isSysA && isSysB) return -1;
+
+    // 2. Secondary rule: Within same category, newest timestamp FIRST (descending)
+    const timeA = new Date(a.created_at || 0).getTime();
+    const timeB = new Date(b.created_at || 0).getTime();
+    return timeB - timeA;
   });
 
   return unique.slice(0, 250);

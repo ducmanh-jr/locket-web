@@ -12,7 +12,7 @@ import {
   uploadBlobToPublicUrl,
 } from '@/lib/cloudSync';
 import { CapturedMedia, captureVideoThumbnail } from '@/lib/camera';
-import { sanitizeMoments } from '@/lib/media';
+import { sanitizeMoments, sortMoments } from '@/lib/media';
 import { MemberFilterOption } from '@/components/LocketHeader';
 
 interface MomentsContextValue {
@@ -110,8 +110,8 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
         });
 
         const merged = [...pendingOptimistic, ...localMoments, ...sanitized];
-        merged.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
-        return merged.filter((m, i, self) => i === self.findIndex((x) => x.id === m.id));
+        const sorted = sortMoments(merged) as Moment[];
+        return sorted.filter((m, i, self) => i === self.findIndex((x) => x.id === m.id));
       });
     } catch (e) {
       console.error('Error fetching room moments:', e);
