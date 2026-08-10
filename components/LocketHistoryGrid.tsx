@@ -96,17 +96,6 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
           </div>
         )}
       </div>
-
-      {/* Floating Yellow Camera Shutter Button Fixed at Bottom Center */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
-        <button
-          onClick={onOpenCamera}
-          className="w-16 h-16 rounded-full border-4 border-[#FFC700] p-1 bg-black flex items-center justify-center shadow-locket-glow active:scale-90 transition-transform"
-          title="Chụp khoảnh khắc mới"
-        >
-          <div className="w-full h-full bg-white rounded-full shadow-inner" />
-        </button>
-      </div>
     </div>
   );
 };
