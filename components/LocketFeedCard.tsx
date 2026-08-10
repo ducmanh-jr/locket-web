@@ -299,7 +299,13 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isDraggingRef.current) return;
     const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('form') || target.closest('input')) {
+    if (
+      target.closest('button') ||
+      target.closest('form') ||
+      target.closest('input') ||
+      target.closest('[role="button"]') ||
+      target.closest('.no-card-click')
+    ) {
       return;
     }
 

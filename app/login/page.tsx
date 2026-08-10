@@ -9,20 +9,32 @@ import { motion } from 'framer-motion';
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
+    setErrorMessage(null);
     if (isSupabaseConfigured()) {
       try {
-        await supabase.auth.signInWithOAuth({
+        const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
             redirectTo: `${window.location.origin}/`,
           },
         });
-      } catch (e) {
+        if (error) {
+          console.error('Google OAuth error:', error);
+          setErrorMessage(error.message || 'Đăng nhập bằng Google không thành công');
+          setLoading(false);
+        }
+      } catch (e: any) {
+        console.error('Exception during Google OAuth:', e);
+        setErrorMessage(e?.message || 'Không thể kết nối đến máy chủ đăng nhập');
         setLoading(false);
       }
+    } else {
+      setErrorMessage('Dịch vụ đăng nhập chưa sẵn sàng (Chưa cấu hình Supabase)');
+      setLoading(false);
     }
   };
 
@@ -113,6 +125,12 @@ export default function LoginPage() {
               1-Click
             </span>
           </button>
+
+          {errorMessage && (
+            <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs font-semibold text-center animate-in fade-in">
+              {errorMessage}
+            </div>
+          )}
         </div>
       </div>
 

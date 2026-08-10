@@ -162,6 +162,24 @@ export async function fetchGlobalCloudProfiles(): Promise<CloudProfile[]> {
   }
 }
 
+export async function blobToDataUrl(url: string): Promise<string> {
+  if (typeof window === 'undefined' || !url || !url.startsWith('blob:')) return url;
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve((reader.result as string) || url);
+      };
+      reader.onerror = () => resolve(url);
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    return url;
+  }
+}
+
 export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> {
   try {
     if (!moment.id || !moment.media_url) return false;
@@ -173,14 +191,20 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
       const uploadedUrl = await uploadMediaToPublicUrl(moment.media_url, `locket_${moment.id}`);
       if (uploadedUrl) {
         finalMediaUrl = uploadedUrl;
-      } else if (moment.media_type !== 'video' && moment.media_url.startsWith('data:')) {
+      } else if (moment.media_url.startsWith('blob:')) {
+        finalMediaUrl = await blobToDataUrl(moment.media_url);
+      } else if (moment.media_type !== 'video') {
         finalMediaUrl = await compressImageForCloudSync(moment.media_url);
       }
     }
 
     if (moment.thumbnail_url?.startsWith('data:') || moment.thumbnail_url?.startsWith('blob:')) {
       const uploadedThumb = await uploadMediaToPublicUrl(moment.thumbnail_url, `locket_${moment.id}_thumb`);
-      if (uploadedThumb) finalThumbnailUrl = uploadedThumb;
+      if (uploadedThumb) {
+        finalThumbnailUrl = uploadedThumb;
+      } else if (moment.thumbnail_url.startsWith('blob:')) {
+        finalThumbnailUrl = await blobToDataUrl(moment.thumbnail_url);
+      }
     }
 
     const compressedMoment: Moment = {

@@ -47,9 +47,41 @@ const MomentsContext = createContext<MomentsContextValue>({
   refreshMoments: async () => {},
 });
 
+const LOCAL_MOMENTS_KEY = 'locket_local_moments_v1';
+
+function readLocalMoments(): Moment[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(LOCAL_MOMENTS_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) return sanitizeMoments(parsed);
+    }
+  } catch (e) {}
+  return [];
+}
+
+function saveLocalMoment(moment: Moment): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const existing = readLocalMoments();
+    const updated = [moment, ...existing.filter((m) => m.id !== moment.id)].slice(0, 50);
+    localStorage.setItem(LOCAL_MOMENTS_KEY, JSON.stringify(updated));
+  } catch (e) {}
+}
+
+function removeLocalMoment(momentId: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const existing = readLocalMoments();
+    const updated = existing.filter((m) => m.id !== momentId);
+    localStorage.setItem(LOCAL_MOMENTS_KEY, JSON.stringify(updated));
+  } catch (e) {}
+}
+
 export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { userProfile } = useAuth();
-  const [moments, setMoments] = useState<Moment[]>([]);
+  const [moments, setMoments] = useState<Moment[]>(() => readLocalMoments());
   const [loading, setLoading] = useState(true);
   const [selectedFriendFilter, setSelectedFriendFilter] = useState<string>('all');
 
@@ -65,13 +97,22 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       const cloudMoments = await fetchGlobalCloudMoments();
       const sanitized = sanitizeMoments(cloudMoments);
+      const localMoments = readLocalMoments();
 
-      // Sort strictly by server creation date descending (newest on top)
-      sanitized.sort((a, b) => {
-        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      setMoments((prevMoments) => {
+        // Merge cloud moments with local persistent moments & recent optimistic moments
+        const now = Date.now();
+        const pendingOptimistic = prevMoments.filter((m) => {
+          const createdAtTime = new Date(m.created_at || 0).getTime();
+          const isRecent = now - createdAtTime < 300000; // 5-minute optimistic grace period
+          const existsInCloud = sanitized.some((c) => c.id === m.id);
+          return isRecent && !existsInCloud;
+        });
+
+        const merged = [...pendingOptimistic, ...localMoments, ...sanitized];
+        merged.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+        return merged.filter((m, i, self) => i === self.findIndex((x) => x.id === m.id));
       });
-
-      setMoments(sanitized);
     } catch (e) {
       console.error('Error fetching room moments:', e);
     } finally {
@@ -189,7 +230,9 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
         music: music,
       };
 
-      // 2. Immediate Local State Update (Instant Feedback)
+      // 2. Immediate Local State Update & Local Persistence (Instant Feedback & Offline Protection)
+      saveLocalMoment(optimisticMoment);
+      setSelectedFriendFilter('all');
       setMoments((prev) => [optimisticMoment, ...prev]);
 
       // 3. Broadcast instantly to open tabs
@@ -232,7 +275,8 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
           thumbnail_url: thumbnailUrl,
         };
 
-        // Update local state with durable CDN URL
+        // Save durable moment to localStorage & local state
+        saveLocalMoment(finalMoment);
         setMoments((prev) =>
           prev.map((m) => (m.id === newMomentId ? finalMoment : m))
         );
@@ -245,6 +289,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
   );
 
   const deleteMoment = useCallback(async (momentId: string) => {
+    removeLocalMoment(momentId);
     setMoments((prev) => prev.filter((m) => m.id !== momentId));
     deleteMomentFromGlobalCloud(momentId).catch(() => {});
 

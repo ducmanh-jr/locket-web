@@ -25,7 +25,7 @@ Tài liệu này hướng dẫn chi tiết từng bước để bạn đưa ứn
    - **Pricing Plan**: Chọn **Free Tier ($0/month)**.
 3. Sau khi dự án khởi tạo xong (~1 phút):
    - Vào tab **SQL Editor** ở menu bên trái.
-   - Mở file [`supabase/schema.sql`](file:///c:/Users/Admin/ducmanh/Locket/supabase/schema.sql) trong thư mục dự án này, copy toàn bộ nội dung SQL.
+   - Mở file [`supabase/migration_shared_room.sql`](file:///c:/Users/Admin/ducmanh/DM_locket/supabase/migration_shared_room.sql) trong thư mục dự án này, copy toàn bộ nội dung SQL.
    - Dán vào SQL Editor trên Supabase và bấm nút **RUN**.
    - *(Lệnh này sẽ tự động tạo toàn bộ các bảng `profiles`, `friendships`, `moments`, `moment_recipients`, `reactions`, phân quyền RLS bảo mật và bật tính năng Realtime WebSocket)*.
 4. Lấy API Keys:

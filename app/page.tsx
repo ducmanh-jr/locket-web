@@ -33,7 +33,6 @@ export default function HomePage() {
   const [selectedMomentId, setSelectedMomentId] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<'feed' | 'grid'>('feed');
   const [showCamera, setShowCamera] = useState<boolean>(false);
-  const [showMenuModal, setShowMenuModal] = useState<boolean>(false);
   const [lastReaction, setLastReaction] = useState<{ emoji: string; timestamp: number } | null>(null);
 
   const currentUser = userProfile || {
@@ -135,11 +134,6 @@ export default function HomePage() {
     setCurrentView('feed');
   };
 
-  const handleLogout = async () => {
-    await signOut();
-    router.push('/login');
-  };
-
   return (
     <div className="h-full flex flex-col justify-between bg-black selection:bg-[#FFC700] selection:text-black overflow-hidden relative">
       {/* Shared Room Header */}
@@ -225,12 +219,12 @@ export default function HomePage() {
         </AnimatePresence>
       </div>
 
-      {/* Bottom Dock */}
+      {/* Bottom Dock — "..." button now goes directly to /profile settings */}
       <LocketDock
         currentView={currentView}
         onToggleView={(view) => setCurrentView(view)}
         onOpenCamera={() => setShowCamera(true)}
-        onOpenMenu={() => setShowMenuModal(true)}
+        onOpenMenu={() => router.push('/profile')}
         onSendDirectMessage={handleSendDirectMessage}
         onReactEmoji={(emoji) => {
           if (currentMoment) handleReact(currentMoment.id, emoji);
@@ -243,67 +237,6 @@ export default function HomePage() {
             : false
         }
       />
-
-      {/* Options Menu Modal */}
-      <AnimatePresence>
-        {showMenuModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4"
-            onClick={() => setShowMenuModal(false)}
-          >
-            <motion.div
-              initial={{ y: 100, scale: 0.95 }}
-              animate={{ y: 0, scale: 1 }}
-              exit={{ y: 100, scale: 0.95 }}
-              transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
-              className="w-full max-w-sm bg-[#18181C] border border-zinc-800 rounded-t-3xl sm:rounded-3xl p-5 text-left relative"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => setShowMenuModal(false)}
-                className="absolute top-4 right-4 w-7 h-7 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
-
-              <h3 className="text-white text-base font-bold mb-4">Tùy chọn Căn phòng</h3>
-
-              <div className="space-y-2">
-                <button
-                  onClick={() => {
-                    setShowMenuModal(false);
-                    router.push('/profile');
-                  }}
-                  className="w-full p-3 bg-[#262626] hover:bg-[#333333] rounded-2xl text-white text-xs font-semibold flex items-center justify-between"
-                >
-                  <div className="flex items-center space-x-2.5">
-                    <User className="w-4 h-4 text-[#FFC700]" />
-                    <span>Trang cá nhân của bạn</span>
-                  </div>
-                  <span className="text-zinc-500">&gt;</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setShowMenuModal(false);
-                    handleLogout();
-                  }}
-                  className="w-full p-3 bg-[#262626] hover:bg-red-950/40 rounded-2xl text-red-400 text-xs font-semibold flex items-center justify-between"
-                >
-                  <div className="flex items-center space-x-2.5">
-                    <LogOut className="w-4 h-4 text-red-400" />
-                    <span>Đăng xuất Google</span>
-                  </div>
-                  <span className="text-zinc-500">&gt;</span>
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Camera View Modal */}
       {showCamera && (
