@@ -253,20 +253,32 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
           try {
             if (media.blob && media.blob.size > 0) {
               const uploadedPhotoUrl = await uploadBlobToPublicUrl(media.blob, `photo_${newMomentId}`);
-              if (uploadedPhotoUrl) finalMediaUrl = uploadedPhotoUrl;
+              if (uploadedPhotoUrl) {
+                finalMediaUrl = uploadedPhotoUrl;
+              } else {
+                console.error('[MomentsProvider] Photo blob upload returned null for', newMomentId);
+              }
             } else if (media.dataUrl.startsWith('data:image/')) {
               finalMediaUrl = await compressImageForCloudSync(media.dataUrl);
             }
-          } catch (e) {}
+          } catch (e) {
+            console.error('[MomentsProvider] Photo upload error:', e);
+          }
         } else if (media.type === 'video') {
           try {
             const [uploadedVideoUrl, thumb] = await Promise.all([
               uploadBlobToPublicUrl(media.blob, `video_${newMomentId}`),
               captureVideoThumbnail(media.dataUrl || ''),
             ]);
-            if (uploadedVideoUrl) finalMediaUrl = uploadedVideoUrl;
+            if (uploadedVideoUrl) {
+              finalMediaUrl = uploadedVideoUrl;
+            } else {
+              console.error('[MomentsProvider] Video blob upload returned null for', newMomentId);
+            }
             if (thumb) thumbnailUrl = thumb;
-          } catch (e) {}
+          } catch (e) {
+            console.error('[MomentsProvider] Video upload error:', e);
+          }
         }
 
         const finalMoment: Moment = {
@@ -281,8 +293,16 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
           prev.map((m) => (m.id === newMomentId ? finalMoment : m))
         );
 
-        // Save to Supabase Cloud DB
-        await pushMomentToGlobalCloud(finalMoment);
+        // Save to Supabase Cloud DB (with retry)
+        let pushOk = await pushMomentToGlobalCloud(finalMoment);
+        if (!pushOk) {
+          console.warn('[MomentsProvider] First push failed for', newMomentId, '- retrying in 3s...');
+          await new Promise(r => setTimeout(r, 3000));
+          pushOk = await pushMomentToGlobalCloud(finalMoment);
+          if (!pushOk) {
+            console.error('[MomentsProvider] CRITICAL: Moment', newMomentId, 'could NOT be saved to cloud DB after retry!');
+          }
+        }
       })();
     },
     [currentUser]
