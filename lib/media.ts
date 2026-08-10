@@ -6,15 +6,8 @@ export function isSampleMoment(moment: Moment): boolean {
 
 export function isSystemMoment(moment: Moment | any): boolean {
   if (!moment) return false;
-  const senderId = String(moment.sender_id || moment.sender?.id || '');
   const id = String(moment.id || '');
-  return (
-    senderId === 'user-dm' ||
-    senderId === 'user-system32' ||
-    senderId === 'user-admin' ||
-    senderId.startsWith('user-') ||
-    id.startsWith('m-photo-v5-')
-  );
+  return id.startsWith('m-photo-v5-');
 }
 
 export function sortMoments(moments: Moment[] | any[]): Moment[] | any[] {

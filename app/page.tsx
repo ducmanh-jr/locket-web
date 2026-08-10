@@ -130,7 +130,12 @@ export default function HomePage() {
     music?: MusicTrack,
     audioOption?: 'mute' | 'original' | 'music'
   ) => {
-    await addMoment(media, caption, recipientIds, music, audioOption);
+    const newMoment = await addMoment(media, caption, recipientIds, music, audioOption);
+    if (newMoment?.id) {
+      setSelectedMomentId(newMoment.id);
+    } else {
+      setSelectedMomentId(null);
+    }
     setShowCamera(false);
     setCurrentView('feed');
   };

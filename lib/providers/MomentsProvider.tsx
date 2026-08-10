@@ -28,7 +28,7 @@ interface MomentsContextValue {
     recipientIds: string[],
     music?: MusicTrack,
     audioOption?: 'mute' | 'original' | 'music'
-  ) => Promise<void>;
+  ) => Promise<Moment>;
   deleteMoment: (momentId: string) => Promise<void>;
   addReaction: (momentId: string, emoji: string) => Promise<void>;
   refreshMoments: () => Promise<void>;
@@ -41,7 +41,7 @@ const MomentsContext = createContext<MomentsContextValue>({
   selectedFriendFilter: 'all',
   setSelectedFriendFilter: () => {},
   membersFilterOptions: [],
-  addMoment: async () => {},
+  addMoment: async () => ({} as Moment),
   deleteMoment: async () => {},
   addReaction: async () => {},
   refreshMoments: async () => {},
@@ -304,6 +304,8 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
           }
         }
       })();
+
+      return optimisticMoment;
     },
     [currentUser]
   );
