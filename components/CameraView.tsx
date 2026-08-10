@@ -57,6 +57,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
   // Video Recording States
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [recordingProgress, setRecordingProgress] = useState<number>(0);
+  const [videoPlaying, setVideoPlaying] = useState<boolean>(false);
   const pressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const recorderRef = useRef<{ start: () => void; stop: () => Promise<CapturedMedia> } | null>(null);
@@ -206,8 +207,9 @@ export const CameraView: React.FC<CameraViewProps> = ({
       try {
         const media = await recorderRef.current.stop();
         recorderRef.current = null;
+        setVideoPlaying(false);
         setCapturedMedia(media);
-        setAudioOption('original');
+        setAudioOption('mute');
       } catch (e) {
         console.error('Failed to stop video recorder:', e);
       }
@@ -279,6 +281,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
     setCaption('');
     setSelectedMusic(null);
     setAudioOption('original');
+    setVideoPlaying(false);
     setIsRecording(false);
     setRecordingProgress(0);
   };
@@ -394,28 +397,18 @@ export const CameraView: React.FC<CameraViewProps> = ({
               autoPlay
               loop
               playsInline
-              muted={audioOption === 'mute'}
+              muted={audioOption !== 'original' || !videoPlaying}
               controls={false}
               onLoadedMetadata={(e) => {
                 const v = e.currentTarget;
                 v.currentTime = 0;
-                const p = v.play();
-                if (p !== undefined) {
-                  p.catch(() => {
-                    v.muted = true;
-                    v.play().catch(() => {});
-                  });
-                }
+                v.muted = true;
+                v.play().then(() => {
+                  setVideoPlaying(true);
+                }).catch(() => {});
               }}
-              onCanPlay={(e) => {
-                const v = e.currentTarget;
-                const p = v.play();
-                if (p !== undefined) {
-                  p.catch(() => {
-                    v.muted = true;
-                    v.play().catch(() => {});
-                  });
-                }
+              onPlaying={() => {
+                setVideoPlaying(true);
               }}
               className="w-full h-full object-cover"
             />

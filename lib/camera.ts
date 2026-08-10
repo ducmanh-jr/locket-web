@@ -95,11 +95,11 @@ export function createVideoRecorder(stream: MediaStream): {
   const chunks: Blob[] = [];
 
   const candidateTypes = [
-    'video/mp4;codecs=avc1,mp4a.40.2',
     'video/mp4',
-    'video/webm;codecs=vp9,opus',
+    'video/mp4;codecs=avc1,mp4a.40.2',
     'video/webm;codecs=vp8,opus',
     'video/webm',
+    'video/webm;codecs=vp9,opus',
   ];
 
   let selectedType = '';
