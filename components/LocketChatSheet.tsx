@@ -148,32 +148,34 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: '100%' }}
       transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
-      className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col justify-between max-w-md mx-auto"
+      className="absolute inset-0 z-50 bg-[#09090B] flex flex-col justify-between overflow-hidden rounded-[2.5rem] select-none"
     >
       {/* Top Header */}
-      <div className="px-4 py-3.5 border-b border-zinc-800 flex items-center justify-between bg-[#121215]/90 backdrop-blur-md">
+      <div className="px-4 py-3.5 border-b border-zinc-800/80 flex items-center justify-between bg-[#121215]/90 backdrop-blur-md flex-shrink-0">
         <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-full bg-[#FFC700]/20 border border-[#FFC700]/50 flex items-center justify-center text-[#FFC700]">
-            <MessageSquare className="w-4 h-4" />
+          <div className="w-8.5 h-8.5 rounded-full bg-[#FFC700]/20 border border-[#FFC700]/50 flex items-center justify-center text-[#FFC700] shadow-[0_0_10px_rgba(255,199,0,0.2)]">
+            <svg className="w-4.5 h-4.5 text-[#FFC700]" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.477 2 2 6.03 2 11c0 2.29.94 4.38 2.5 5.96-.33 1.5-.96 2.89-1.87 4.04 2.1-.2 4.1-.9 5.8-2 .01 0 .01 0 .02 0 .5.07 1.02.1 1.55.1 5.523 0 10-4.03 10-9s-4.477-9-10-9z"/>
+            </svg>
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white flex items-center space-x-1">
+            <h3 className="text-sm font-bold text-white flex items-center space-x-1.5">
               <span>Trò chuyện Locket</span>
-              <span className="text-[10px] bg-[#FFC700] text-black px-1.5 py-0.2 rounded-full font-extrabold">LIVE</span>
+              <span className="text-[9px] bg-[#FFC700] text-black px-1.5 py-0.5 rounded-full font-extrabold shadow-sm">GOLD</span>
             </h3>
             <p className="text-[10px] text-zinc-400">Tương tác trực tiếp với phòng bạn bè</p>
           </div>
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 rounded-full bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-all active:scale-95"
+          className="p-1.5 rounded-full bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-all active:scale-95 border border-zinc-700/50"
         >
           <X className="w-4 h-4" />
         </button>
       </div>
 
       {/* Friends Selector Pills Bar */}
-      <div className="px-3 py-2 border-b border-zinc-900 bg-black flex items-center space-x-2 overflow-x-auto no-scrollbar">
+      <div className="px-3 py-2 border-b border-zinc-900 bg-black flex items-center space-x-2 overflow-x-auto flex-shrink-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <button
           onClick={() => setSelectedFriendId('all')}
           className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold flex items-center space-x-1.5 transition-all ${
@@ -212,7 +214,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
       </div>
 
       {/* Chat Messages Stream Container */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {activeConversationMessages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-500">
             <MessageSquare className="w-10 h-10 text-zinc-700 mb-2 animate-bounce" />

@@ -73,14 +73,16 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
           <ChevronDown className="w-3.5 h-3.5 text-zinc-400 stroke-[2.2]" />
         </button>
 
-        {/* Right: Message / Chat Icon Button (Exact Official Locket Gold Style) */}
+        {/* Right: Official Locket Gold Chat Icon Button */}
         <button
           onClick={onOpenChat}
-          className="w-9 h-9 rounded-full bg-[#18181C] hover:bg-[#262626] border border-zinc-800 text-white flex items-center justify-center flex-shrink-0 active:scale-95 transition-all shadow-md relative group"
+          className="w-9 h-9 rounded-full bg-[#18181C] hover:bg-[#262626] border border-[#FFC700]/40 text-[#FFC700] flex items-center justify-center flex-shrink-0 active:scale-95 transition-all shadow-[0_0_12px_rgba(255,199,0,0.25)] relative group"
           title="Mở Trò chuyện Locket 💬"
         >
-          <MessageSquare className="w-4.5 h-4.5 text-[#FFC700]" />
-          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#FFC700] border-2 border-black animate-pulse" />
+          <svg className="w-5 h-5 text-[#FFC700] drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.477 2 2 6.03 2 11c0 2.29.94 4.38 2.5 5.96-.33 1.5-.96 2.89-1.87 4.04 2.1-.2 4.1-.9 5.8-2 .01 0 .01 0 .02 0 .5.07 1.02.1 1.55.1 5.523 0 10-4.03 10-9s-4.477-9-10-9z"/>
+          </svg>
+          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#FFC700] border-2 border-black animate-pulse shadow-md" />
         </button>
       </div>
 
