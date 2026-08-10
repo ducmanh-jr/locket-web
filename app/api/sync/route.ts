@@ -52,14 +52,26 @@ export async function GET() {
   }
 
   try {
-    const [{ data: momentsData }, { data: profilesData }] = await Promise.all([
-      supabase
+    const { data: profilesData } = await supabase.from('profiles').select('*').limit(100);
+
+    let momentsData: any[] | null = null;
+    const { data: joinMoments, error: joinErr } = await supabase
+      .from('moments')
+      .select('*, sender:profiles(*)')
+      .order('created_at', { ascending: false })
+      .limit(150);
+
+    if (!joinErr && joinMoments && joinMoments.length > 0) {
+      momentsData = joinMoments;
+    } else {
+      // Fallback: Direct select without implicit FK join
+      const { data: rawMoments } = await supabase
         .from('moments')
-        .select('*, sender:profiles(*)')
+        .select('*')
         .order('created_at', { ascending: false })
-        .limit(150),
-      supabase.from('profiles').select('*').limit(100),
-    ]);
+        .limit(150);
+      momentsData = rawMoments;
+    }
 
     // Fallback profile mapping in case foreign key join is missing
     const profilesMap = new Map((profilesData || []).map((p) => [p.id, p]));
