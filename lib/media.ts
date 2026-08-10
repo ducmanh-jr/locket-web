@@ -47,22 +47,14 @@ export function hasLocalOnlyMediaUrl(url?: string): boolean {
 
 export function hasRenderableMedia(moment: Moment): boolean {
   if (!moment?.id || !moment.media_url) return false;
-  if (hasLocalOnlyMediaUrl(moment.media_url)) return false;
-
-  if (isVideoMoment(moment)) {
-    return (
-      moment.media_url.startsWith('https://') ||
-      moment.media_url.startsWith('http://') ||
-      moment.media_url.startsWith('/') ||
-      moment.media_url.startsWith('data:video/')
-    );
-  }
+  const url = moment.media_url;
 
   return (
-    moment.media_url.startsWith('https://') ||
-    moment.media_url.startsWith('http://') ||
-    moment.media_url.startsWith('/') ||
-    moment.media_url.startsWith('data:image/')
+    url.startsWith('https://') ||
+    url.startsWith('http://') ||
+    url.startsWith('/') ||
+    url.startsWith('blob:') ||
+    url.startsWith('data:')
   );
 }
 

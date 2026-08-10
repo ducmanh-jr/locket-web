@@ -216,20 +216,12 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const newMomentId = `m-${media.type}-v10-${Date.now()}`;
       const localMediaUrl = media.dataUrl;
 
-      let initialThumb: string | undefined = undefined;
-      if (media.type === 'video' && media.dataUrl) {
-        try {
-          initialThumb = await captureVideoThumbnail(media.dataUrl);
-        } catch (e) {}
-      }
-
       // 1. Construct Optimistic Local Moment (Instant 0ms UI response)
       const optimisticMoment: Moment = {
         id: newMomentId,
         sender_id: currentUser.id,
         sender: currentUser,
         media_url: localMediaUrl,
-        thumbnail_url: initialThumb,
         media_type: media.type,
         audio_option: audioOption || (media.type === 'video' ? 'original' : undefined),
         caption: caption,
@@ -238,10 +230,10 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
         music: music,
       };
 
-      // 2. Immediate Local State Update & Local Persistence (Instant Feedback & Offline Protection)
+      // 2. Immediate Local State Update & Local Persistence (Instant 0ms Feedback)
       saveLocalMoment(optimisticMoment);
       setSelectedFriendFilter('all');
-      setMoments((prev) => [optimisticMoment, ...prev]);
+      setMoments((prev) => sortMoments([optimisticMoment, ...prev]) as Moment[]);
 
       // 3. Broadcast instantly to open tabs
       try {
