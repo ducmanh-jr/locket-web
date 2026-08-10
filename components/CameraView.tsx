@@ -393,10 +393,15 @@ export const CameraView: React.FC<CameraViewProps> = ({
               loop
               playsInline
               muted={audioOption !== 'original'}
+              controls={false}
+              onLoadedData={(e) => {
+                const v = e.target as HTMLVideoElement;
+                v.play().catch(() => {});
+              }}
               className="w-full h-full object-cover"
             />
             {/* 3 Audio Mode Selector Pill Top Bar */}
-            <div className="absolute top-4 left-3 right-3 flex items-center justify-center space-x-1.5 bg-black/75 backdrop-blur-md p-1.5 rounded-full border border-white/15 shadow-xl">
+            <div className="absolute top-4 left-3 right-3 flex items-center justify-center space-x-1.5 bg-black/80 backdrop-blur-md p-1.5 rounded-full border border-white/20 shadow-xl z-20">
               <button
                 onClick={() => { killGlobalAudio(); setAudioOption('mute'); }}
                 className={`flex-1 py-1 px-2.5 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${

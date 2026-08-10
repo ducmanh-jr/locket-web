@@ -385,26 +385,30 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                   muted={isMuted}
                   controls={false}
                   preload="auto"
+                  onLoadedData={() => {
+                    if (videoRef.current) {
+                      videoRef.current.play().catch(() => {});
+                    }
+                  }}
                   className="w-full h-full object-cover rounded-[2.5rem] select-none pointer-events-none"
                 />
-                {moment.audio_option === 'original' && (
-                  <button
-                    onClick={toggleVideoMute}
-                    className="absolute top-3.5 left-3.5 bg-black/75 backdrop-blur-md border border-[#FFC700]/50 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-1.5 z-20 shadow-lg active:scale-95 transition-all"
-                  >
-                    {!isMuted ? (
-                      <>
-                        <Volume2 className="w-3.5 h-3.5 text-[#FFC700] animate-pulse" />
-                        <span className="font-semibold text-xs text-[#FFC700]">Âm gốc 🎙️</span>
-                      </>
-                    ) : (
-                      <>
-                        <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
-                        <span className="font-semibold text-xs text-zinc-300">Bật âm thanh 🔊</span>
-                      </>
-                    )}
-                  </button>
-                )}
+                <button
+                  onClick={toggleVideoMute}
+                  className="absolute top-3.5 left-3.5 bg-black/80 backdrop-blur-md border border-[#FFC700]/60 text-white text-xs px-3.5 py-1.5 rounded-full flex items-center space-x-1.5 z-20 shadow-xl active:scale-95 transition-all no-card-click"
+                  title="Bật/Tắt âm thanh video"
+                >
+                  {!isMuted ? (
+                    <>
+                      <Volume2 className="w-3.5 h-3.5 text-[#FFC700] animate-pulse" />
+                      <span className="font-bold text-xs text-[#FFC700]">Âm thanh: Bật 🎙️</span>
+                    </>
+                  ) : (
+                    <>
+                      <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
+                      <span className="font-semibold text-xs text-zinc-300">Âm thanh: Tắt 🔇 (Bấm để bật)</span>
+                    </>
+                  )}
+                </button>
               </div>
             ) : (
               <img

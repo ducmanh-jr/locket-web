@@ -65,6 +65,11 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
                       muted
                       playsInline
                       preload="metadata"
+                      onLoadedMetadata={(e) => {
+                        try {
+                          (e.target as HTMLVideoElement).currentTime = 0.05;
+                        } catch (err) {}
+                      }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 pointer-events-none"
                     />
                   ) : (
