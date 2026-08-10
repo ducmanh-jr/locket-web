@@ -3,6 +3,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Profile } from '@/lib/types';
 import { captureSquarePhoto, createVideoRecorder, CapturedMedia } from '@/lib/camera';
+import { LocketCaptionWidgetSelector } from '@/components/LocketCaptionWidgetSelector';
 import {
   Camera,
   RotateCcw,
@@ -471,16 +472,9 @@ export const CameraView: React.FC<CameraViewProps> = ({
               </div>
             )}
 
-            {/* Caption Input Pill inside Video at Bottom Center */}
-            <div className="absolute bottom-4 left-4 right-4 text-center">
-              <input
-                type="text"
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                placeholder="Viết chú thích..."
-                maxLength={60}
-                className="w-[85%] bg-black/75 backdrop-blur-md text-white text-xs font-semibold px-4 py-2.5 rounded-2xl border border-white/15 text-center placeholder-zinc-400 focus:outline-none focus:border-[#FFC700]"
-              />
+            {/* Caption Input & Swipe Widgets Pill inside Video */}
+            <div className="absolute bottom-2 left-2 right-2 flex justify-center z-20">
+              <LocketCaptionWidgetSelector value={caption} onChange={setCaption} />
             </div>
           </div>
         ) : (
@@ -520,16 +514,9 @@ export const CameraView: React.FC<CameraViewProps> = ({
               )}
             </div>
 
-            {/* Caption Input Pill inside Photo at Bottom Center */}
-            <div className="absolute bottom-4 left-4 right-4 text-center">
-              <input
-                type="text"
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                placeholder="Viết chú thích..."
-                maxLength={60}
-                className="w-[85%] bg-black/75 backdrop-blur-md text-white text-xs font-semibold px-4 py-2.5 rounded-2xl border border-white/15 text-center placeholder-zinc-400 focus:outline-none focus:border-[#FFC700]"
-              />
+            {/* Caption Input & Swipe Widgets Pill inside Photo */}
+            <div className="absolute bottom-2 left-2 right-2 flex justify-center z-20">
+              <LocketCaptionWidgetSelector value={caption} onChange={setCaption} />
             </div>
           </div>
         )}
