@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
-import { Camera, Sparkles, ShieldCheck, ArrowRight, Zap, Image as ImageIcon, Users } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Camera, Sparkles, ShieldCheck, Zap, Users, Info, X, Heart } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showChangelogModal, setShowChangelogModal] = useState<boolean>(false);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -39,63 +40,84 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-full h-full flex flex-col justify-between p-6 py-8 bg-[#0A0A0C] text-white select-none relative overflow-hidden">
-      {/* Background Yellow Glow Accent */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-[#FFC700]/15 rounded-full blur-[100px] pointer-events-none z-0" />
+    <div className="min-h-full h-full flex flex-col justify-between p-6 pt-6 pb-10 sm:pb-12 bg-[#0A0A0C] text-white select-none relative overflow-y-auto custom-scrollbar">
+      {/* Background Ambient Yellow Glow */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#FFC700]/15 rounded-full blur-[110px] pointer-events-none z-0" />
 
-      {/* Top Header Logo Branding */}
-      <div className="flex items-center justify-between z-10 pt-2">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-xl bg-[#FFC700] text-black flex items-center justify-center font-black text-sm shadow-locket-glow">
+      {/* Top Header Bar */}
+      <div className="flex items-center justify-between z-10 pt-1">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#FFC700] to-[#FF9900] text-black flex items-center justify-center font-black text-base shadow-[0_0_15px_rgba(255,199,0,0.35)]">
             L
           </div>
-          <span className="text-white text-base font-black tracking-tight">
+          <span className="text-white text-lg font-black tracking-tight">
             Locket<span className="text-[#FFC700]">Web</span>
           </span>
         </div>
 
-        <span className="text-[11px] font-semibold text-zinc-400 bg-zinc-900/80 px-2.5 py-1 rounded-full border border-zinc-800">
-          v2.5 • Official
-        </span>
+        {/* Interactive Version Badge */}
+        <button
+          onClick={() => setShowChangelogModal(true)}
+          className="text-[11px] font-bold text-zinc-300 bg-zinc-900/90 hover:bg-zinc-800 px-3 py-1 rounded-full border border-zinc-800/80 flex items-center space-x-1.5 transition-all active:scale-95 shadow-sm"
+          title="Xem thông tin phiên bản"
+        >
+          <span>v2.5 • Official</span>
+          <Info className="w-3.5 h-3.5 text-[#FFC700]" />
+        </button>
       </div>
 
-      {/* Main Content Area: Brand Hero & Google Login */}
-      <div className="flex flex-col items-center text-center my-auto z-10 w-full max-w-sm mx-auto space-y-6">
-        {/* Animated Camera Lens Badge */}
+      {/* Main Hero & Google Sign-In Area */}
+      <div className="flex flex-col items-center text-center my-auto z-10 w-full max-w-sm mx-auto space-y-6 pt-4 pb-2">
+        {/* Locket Photo Mockup Visual */}
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
+          initial={{ scale: 0.85, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
-          className="relative group"
+          transition={{ duration: 0.45, ease: [0.32, 0.72, 0, 1] }}
+          className="relative"
         >
-          <div className="w-24 h-24 rounded-[2.5rem] bg-gradient-to-tr from-[#FFC700] via-[#FFE580] to-[#FFC700] p-1 shadow-[0_0_50px_rgba(255,199,0,0.35)] transition-transform duration-300 group-hover:scale-105">
-            <div className="w-full h-full bg-[#121215] rounded-[2.25rem] flex items-center justify-center text-[#FFC700] border border-[#FFC700]/40">
-              <Camera className="w-11 h-11 stroke-[2.2]" />
+          {/* Outer Glowing Locket Photo Card Preview */}
+          <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-[2.8rem] bg-gradient-to-tr from-[#FFC700] via-[#FFE580] to-[#FF9900] p-1 shadow-[0_0_45px_rgba(255,199,0,0.4)] relative flex items-center justify-center">
+            <div className="w-full h-full bg-[#141418] rounded-[2.5rem] p-2 flex flex-col items-center justify-between border border-[#FFC700]/30 relative overflow-hidden">
+              {/* Top Mini Tag */}
+              <div className="flex items-center space-x-1 bg-black/60 backdrop-blur-md border border-white/15 px-2 py-0.5 rounded-full z-10">
+                <div className="w-2 h-2 rounded-full bg-[#FFC700] animate-ping" />
+                <span className="text-[9px] text-white font-bold">Locket Live</span>
+              </div>
+
+              {/* Center Shutter Lens Icon */}
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FFC700] to-[#FF9900] text-black flex items-center justify-center shadow-lg my-auto">
+                <Camera className="w-6 h-6 stroke-[2.2]" />
+              </div>
+
+              {/* Floating Heart Reaction Badge */}
+              <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-md border border-white/20 p-1 rounded-full text-xs shadow-md">
+                💛
+              </div>
             </div>
           </div>
         </motion.div>
 
-        {/* Headlines */}
+        {/* Headline Copywriting */}
         <div className="space-y-2">
           <h1 className="text-white text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight">
             Khoảnh khắc tức thời <br />
             cùng <span className="text-[#FFC700]">Bạn bè</span>
           </h1>
           <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed max-w-xs mx-auto">
-            Chụp và chia sẻ khoảnh khắc trực tiếp lên màn hình của bạn bè 100% tự nhiên.
+            Chụp & chia sẻ khoảnh khắc trực tiếp lên màn hình của bạn bè 100% tự nhiên.
           </p>
         </div>
 
-        {/* Single Primary Action: Google Login Button */}
-        <div className="w-full space-y-3 pt-2">
+        {/* High Contrast Google Sign-In Button */}
+        <div className="w-full space-y-3 pt-1">
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full py-4 px-5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-sm rounded-2xl border-2 border-zinc-700/90 hover:border-[#FFC700]/70 flex items-center justify-between transition-all active:scale-95 shadow-xl group relative overflow-hidden"
+            className="w-full py-4 px-5 bg-white hover:bg-zinc-100 text-black font-extrabold text-sm rounded-2xl border-2 border-white flex items-center justify-between transition-all active:scale-95 shadow-[0_4px_25px_rgba(255,255,255,0.25)] group relative overflow-hidden"
           >
             <div className="flex items-center space-x-3">
-              {/* Google G Logo SVG */}
-              <div className="w-7 h-7 rounded-xl bg-white p-1 flex items-center justify-center flex-shrink-0 shadow-sm">
+              {/* Official Multicolored Google G Logo */}
+              <div className="w-7 h-7 rounded-xl bg-white p-1 flex items-center justify-center flex-shrink-0 shadow-sm border border-zinc-200">
                 <svg className="w-full h-full" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
@@ -116,13 +138,13 @@ export default function LoginPage() {
                 </svg>
               </div>
 
-              <span className="text-left font-bold text-sm tracking-wide">
+              <span className="text-left font-black text-sm tracking-wide text-black">
                 {loading ? 'Đang kết nối Google...' : 'Đăng nhập bằng Google'}
               </span>
             </div>
 
-            <span className="text-[11px] font-extrabold text-[#FFC700] bg-[#FFC700]/15 px-2.5 py-1 rounded-full border border-[#FFC700]/30 group-hover:bg-[#FFC700] group-hover:text-black transition-colors">
-              1-Click
+            <span className="text-[11px] font-extrabold text-black bg-[#FFC700] px-3 py-1 rounded-full shadow-sm">
+              1-Chạm
             </span>
           </button>
 
@@ -134,25 +156,69 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Bottom Feature Badges */}
-      <div className="z-10 pt-4 border-t border-zinc-900/80">
+      {/* Bottom Feature Badges with Lifted Safe Spacing */}
+      <div className="z-10 pt-4 border-t border-zinc-900/80 mb-2">
         <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="flex flex-col items-center bg-[#141417] p-2 rounded-xl border border-zinc-800/60">
+          <div className="flex flex-col items-center bg-[#141417] p-2.5 rounded-2xl border border-zinc-800/70 shadow-sm">
             <ShieldCheck className="w-4 h-4 text-green-400 mb-1" />
-            <span className="text-[10px] text-zinc-400 font-semibold">Google OAuth</span>
+            <span className="text-[10px] text-zinc-300 font-semibold">Google OAuth</span>
           </div>
 
-          <div className="flex flex-col items-center bg-[#141417] p-2 rounded-xl border border-zinc-800/60">
+          <div className="flex flex-col items-center bg-[#141417] p-2.5 rounded-2xl border border-zinc-800/70 shadow-sm">
             <Users className="w-4 h-4 text-[#FFC700] mb-1" />
-            <span className="text-[10px] text-zinc-400 font-semibold">Tự động kết bạn</span>
+            <span className="text-[10px] text-zinc-300 font-semibold">Kết nối 1-chạm</span>
           </div>
 
-          <div className="flex flex-col items-center bg-[#141417] p-2 rounded-xl border border-zinc-800/60">
+          <div className="flex flex-col items-center bg-[#141417] p-2.5 rounded-2xl border border-zinc-800/70 shadow-sm">
             <Zap className="w-4 h-4 text-blue-400 mb-1" />
-            <span className="text-[10px] text-zinc-400 font-semibold">Ảnh vuông 1:1 HD</span>
+            <span className="text-[10px] text-zinc-300 font-semibold">Ảnh vuông 1:1 HD</span>
           </div>
         </div>
       </div>
+
+      {/* Interactive Version Changelog Modal */}
+      <AnimatePresence>
+        {showChangelogModal && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-sm bg-[#18181C] border border-zinc-800 rounded-3xl p-6 shadow-2xl text-left space-y-4"
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
+                <div className="flex items-center space-x-2">
+                  <Sparkles className="w-5 h-5 text-[#FFC700]" />
+                  <h3 className="text-white text-base font-extrabold">LocketWeb v2.5 Official</h3>
+                </div>
+                <button
+                  onClick={() => setShowChangelogModal(false)}
+                  className="p-1 text-zinc-400 hover:text-white rounded-full bg-zinc-800"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-2.5 text-xs text-zinc-300">
+                <p className="font-bold text-white">✨ Tính năng nổi bật trong bản cập nhật:</p>
+                <ul className="space-y-2 text-zinc-400 list-disc pl-4">
+                  <li>Khung ảnh chuẩn iOS Continuous Curve (Squircle bo mượt).</li>
+                  <li>Nhắn tin trực tiếp kiểu Facebook Messenger / iMessage.</li>
+                  <li>Thêm sticker âm nhạc và hiệu ứng thả tim bay sinh động.</li>
+                  <li>Đồng bộ Cloud tức thời qua Supabase.</li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => setShowChangelogModal(false)}
+                className="w-full py-3 bg-[#FFC700] hover:bg-[#FFE066] text-black font-extrabold text-xs rounded-2xl active:scale-95 transition-all shadow-[0_0_15px_rgba(255,199,0,0.3)]"
+              >
+                Đóng
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
