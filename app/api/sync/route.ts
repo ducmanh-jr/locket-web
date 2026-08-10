@@ -175,7 +175,9 @@ export async function POST(request: Request) {
         media_url: moment.media_url,
         thumbnail_url: moment.thumbnail_url || null,
         media_type: moment.media_type || (isVideoMoment(moment) ? 'video' : 'photo'),
+        audio_option: moment.audio_option || null,
         caption: moment.caption || '',
+        music: moment.music || null,
         created_at: moment.created_at || new Date().toISOString(),
       });
 

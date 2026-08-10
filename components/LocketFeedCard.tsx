@@ -383,7 +383,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                   autoPlay
                   loop
                   playsInline
-                  muted={isMuted}
+                  muted={moment.music ? true : isMuted}
                   controls={false}
                   preload="auto"
                   onLoadedData={() => {
@@ -393,23 +393,26 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                   }}
                   className="w-full h-full object-cover rounded-[2.8rem] select-none pointer-events-none"
                 />
-                <button
-                  onClick={toggleVideoMute}
-                  className="absolute bottom-3.5 right-3.5 bg-black/70 backdrop-blur-md border border-[#FFC700]/60 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-1.5 z-20 shadow-xl active:scale-95 transition-all no-card-click"
-                  title="Bật/Tắt âm thanh video"
-                >
-                  {!isMuted ? (
-                    <>
-                      <Volume2 className="w-3.5 h-3.5 text-[#FFC700] animate-pulse" />
-                      <span className="font-bold text-xs text-[#FFC700]">Bật 🎙️</span>
-                    </>
-                  ) : (
-                    <>
-                      <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
-                      <span className="font-semibold text-xs text-zinc-300">Tắt 🔇</span>
-                    </>
-                  )}
-                </button>
+                {/* Only show video mute/unmute button if NO music attached */}
+                {!moment.music && (
+                  <button
+                    onClick={toggleVideoMute}
+                    className="absolute bottom-3.5 right-3.5 bg-black/70 backdrop-blur-md border border-[#FFC700]/60 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-1.5 z-20 shadow-xl active:scale-95 transition-all no-card-click"
+                    title="Bật/Tắt âm thanh video"
+                  >
+                    {!isMuted ? (
+                      <>
+                        <Volume2 className="w-3.5 h-3.5 text-[#FFC700] animate-pulse" />
+                        <span className="font-bold text-xs text-[#FFC700]">Bật 🎙️</span>
+                      </>
+                    ) : (
+                      <>
+                        <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
+                        <span className="font-semibold text-xs text-zinc-300">Tắt 🔇</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             ) : (
               <img
@@ -418,24 +421,6 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                 className="w-full h-full object-cover rounded-[2.8rem] select-none pointer-events-none"
               />
             )}
-
-            {/* Top Gradient Overlay for Header Readability */}
-            <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/75 via-black/30 to-transparent pointer-events-none z-10" />
-
-            {/* Sender Avatar & Name Overlay at Top-Left of Photo Card */}
-            <div className="absolute top-3.5 left-3.5 flex items-center space-x-2 bg-black/50 backdrop-blur-md border border-white/15 px-3 py-1.5 rounded-full shadow-lg z-20 pointer-events-none">
-              <div className="w-5 h-5 rounded-full overflow-hidden bg-zinc-800 border border-[#FFC700]/70 flex-shrink-0">
-                <img
-                  src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
-                  alt={sender.display_name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <span className="text-white text-xs font-bold truncate max-w-[120px]">
-                {isMyMoment ? `${sender.display_name} (Bạn)` : sender.display_name}
-              </span>
-              <span className="text-white/60 text-[10px] font-semibold">{formatLocketTime(moment.created_at)}</span>
-            </div>
 
             {/* Floating Emoji Reaction Particles */}
             {floatingEmojis.map((item) => (
@@ -461,11 +446,11 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               </motion.div>
             ))}
 
-            {/* Music Badge Sticker on Photo */}
+            {/* Music Badge at Top-Left of Photo */}
             {moment.music && (
               <button
                 onClick={toggleAudio}
-                className="absolute bottom-3.5 left-3.5 bg-black/75 backdrop-blur-md border border-[#FFC700]/50 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-2 z-20 shadow-lg active:scale-95 transition-all max-w-[70%]"
+                className="absolute top-3.5 left-3.5 bg-black/65 backdrop-blur-md border border-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-2 z-20 shadow-lg active:scale-95 transition-all max-w-[70%] no-card-click"
                 title="Bật/Tắt nhạc"
               >
                 <div
@@ -498,7 +483,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               <MoreVertical className="w-4 h-4" />
             </button>
 
-            {/* Glassmorphic Time Stamp & Caption Overlay at Bottom Center */}
+            {/* Caption Overlay at Bottom Edge of Photo (centered) */}
             {moment.caption && (
               <div className="absolute bottom-4 left-4 right-4 flex justify-center pointer-events-none z-20">
                 <div className="bg-black/60 backdrop-blur-xl border border-white/15 text-white/95 text-xs font-semibold px-4 py-2 rounded-2xl shadow-2xl max-w-[90%] text-center break-words tracking-tight">
@@ -508,6 +493,23 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             )}
           </motion.div>
         </AnimatePresence>
+      </div>
+
+      {/* Sender Avatar, Name & Time BELOW the Photo Card (centered) */}
+      <div className="w-full flex justify-center mt-3 pointer-events-none">
+        <div className="flex items-center space-x-2">
+          <div className="w-7 h-7 rounded-full overflow-hidden bg-zinc-800 border-2 border-[#FFC700]/70 flex-shrink-0">
+            <img
+              src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
+              alt={sender.display_name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <span className="text-white text-sm font-bold truncate max-w-[160px]">
+            {isMyMoment ? `${sender.display_name}` : sender.display_name}
+          </span>
+          <span className="text-white/50 text-xs font-medium">{formatLocketTime(moment.created_at)}</span>
+        </div>
       </div>
 
       {/* Options Modal Sheet */}

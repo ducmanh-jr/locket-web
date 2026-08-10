@@ -245,7 +245,9 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
         media_url: compressedMoment.media_url,
         thumbnail_url: compressedMoment.thumbnail_url || null,
         media_type: compressedMoment.media_type || 'photo',
+        audio_option: compressedMoment.audio_option || null,
         caption: compressedMoment.caption || '',
+        music: compressedMoment.music || null,
         created_at: compressedMoment.created_at || new Date().toISOString(),
       });
       return !dbErr;
