@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Profile } from '@/lib/types';
-import { Users, ChevronDown, Check, X, Sparkles } from 'lucide-react';
+import { Users, ChevronDown, Check, X, Sparkles, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export interface MemberFilterOption {
@@ -16,6 +16,7 @@ export interface MemberFilterOption {
 interface LocketHeaderProps {
   currentUser: Profile;
   onOpenProfile: () => void;
+  onOpenChat?: () => void;
   selectedFilterId: string;
   onSelectFilter: (id: string) => void;
   members: MemberFilterOption[];
@@ -24,6 +25,7 @@ interface LocketHeaderProps {
 export const LocketHeader: React.FC<LocketHeaderProps> = ({
   currentUser,
   onOpenProfile,
+  onOpenChat,
   selectedFilterId,
   onSelectFilter,
   members,
@@ -71,8 +73,15 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
           <ChevronDown className="w-3.5 h-3.5 text-zinc-400 stroke-[2.2]" />
         </button>
 
-        {/* Right Spacer for Absolute Dead-Center Alignment */}
-        <div className="w-9 h-9 flex-shrink-0" />
+        {/* Right: Message / Chat Icon Button (Exact Official Locket Gold Style) */}
+        <button
+          onClick={onOpenChat}
+          className="w-9 h-9 rounded-full bg-[#18181C] hover:bg-[#262626] border border-zinc-800 text-white flex items-center justify-center flex-shrink-0 active:scale-95 transition-all shadow-md relative group"
+          title="Mở Trò chuyện Locket 💬"
+        >
+          <MessageSquare className="w-4.5 h-4.5 text-[#FFC700]" />
+          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#FFC700] border-2 border-black animate-pulse" />
+        </button>
       </div>
 
       {/* Friend Filter Selector Sheet Modal */}

@@ -6,6 +6,7 @@ import { LocketDock } from '@/components/LocketDock';
 import { LocketFeedCard } from '@/components/LocketFeedCard';
 import { LocketHistoryGrid } from '@/components/LocketHistoryGrid';
 import { CameraView } from '@/components/CameraView';
+import { LocketChatSheet } from '@/components/LocketChatSheet';
 import { SupabaseConfigNotice } from '@/components/SupabaseConfigNotice';
 import { useAuth } from '@/lib/providers/AuthProvider';
 import { useMoments } from '@/lib/providers/MomentsProvider';
@@ -32,6 +33,7 @@ export default function HomePage() {
   const [selectedMomentId, setSelectedMomentId] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<'feed' | 'grid'>('feed');
   const [showCamera, setShowCamera] = useState<boolean>(false);
+  const [showChatSheet, setShowChatSheet] = useState<boolean>(false);
   const [lastReaction, setLastReaction] = useState<{ emoji: string; timestamp: number } | null>(null);
 
   const currentUser = userProfile || {
@@ -139,6 +141,7 @@ export default function HomePage() {
       <LocketHeader
         currentUser={currentUser}
         onOpenProfile={() => router.push('/profile')}
+        onOpenChat={() => setShowChatSheet(true)}
         selectedFilterId={selectedFriendFilter}
         onSelectFilter={setSelectedFriendFilter}
         members={membersFilterOptions}
@@ -244,6 +247,17 @@ export default function HomePage() {
           onSendMoment={handleSendMoment}
         />
       )}
+
+      {/* Locket Direct Messaging Chat Sheet */}
+      <AnimatePresence>
+        {showChatSheet && (
+          <LocketChatSheet
+            currentUser={currentUser}
+            friends={membersFilterOptions}
+            onClose={() => setShowChatSheet(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
