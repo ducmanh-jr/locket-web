@@ -105,7 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const profile = buildProfileFromSupabaseUser(user);
           saveCachedProfile(profile);
           setUserProfile(profile);
-          pushProfileToGlobalCloud({
+          await pushProfileToGlobalCloud({
             id: profile.id,
             username: profile.username,
             display_name: profile.display_name,

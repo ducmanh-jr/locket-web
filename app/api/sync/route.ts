@@ -158,24 +158,31 @@ export async function POST(request: Request) {
 
       const senderId = moment.sender_id || moment.sender?.id;
 
-      // Guaranteed Profile Upsert first so foreign key constraint is satisfied
-      if (senderId && moment.sender) {
+      // Guaranteed Profile Upsert first so foreign key constraint is ALWAYS satisfied
+      if (senderId) {
+        const senderObj = moment.sender || {};
         await supabase.from('profiles').upsert({
           id: senderId,
-          username: moment.sender.username || `user_${senderId.substring(0, 6)}`,
-          display_name: moment.sender.display_name || 'Thành viên Locket',
-          avatar_url: moment.sender.avatar_url || '',
+          username: senderObj.username || `user_${senderId.substring(0, 6)}`,
+          display_name: senderObj.display_name || 'Thành viên Locket',
+          avatar_url: senderObj.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${senderId}`,
         });
       }
 
-      await supabase.from('moments').upsert({
+      const { error: insertErr } = await supabase.from('moments').upsert({
         id: moment.id,
         sender_id: senderId,
         media_url: moment.media_url,
+        thumbnail_url: moment.thumbnail_url || null,
         media_type: moment.media_type || (isVideoMoment(moment) ? 'video' : 'photo'),
         caption: moment.caption || '',
         created_at: moment.created_at || new Date().toISOString(),
       });
+
+      if (insertErr) {
+        console.error('Lỗi lưu khoảnh khắc vào Supabase DB:', insertErr.message);
+        return NextResponse.json({ error: insertErr.message }, { status: 500 });
+      }
 
       return NextResponse.json({ success: true });
     }
