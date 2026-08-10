@@ -61,29 +61,30 @@ export const PWAInstallBanner: React.FC<PWAInstallBannerProps> = ({ forceDisplay
 
   return (
     <>
-      {/* Smart Banner Top/Bottom */}
-      <div className="w-full bg-gradient-to-r from-[#18181C] via-[#222228] to-[#18181C] border border-[#FFC700]/30 rounded-2xl p-3.5 mb-4 shadow-xl flex items-center justify-between">
+      {/* Sleek Standardized PWA Card */}
+      <div className="w-full bg-[#18181C] border border-zinc-800/80 rounded-2xl p-4 shadow-lg flex items-center justify-between transition-all">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-[#FFC700] flex items-center justify-center text-[#0E0E10] font-black text-xl shadow-locket-glow">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FFC700] to-[#FF9900] text-black font-black text-xl shadow-[0_0_15px_rgba(255,199,0,0.3)] flex items-center justify-center flex-shrink-0">
             L
           </div>
-          <div>
-            <h4 className="text-white text-sm font-bold leading-tight">Cài đặt LocketWeb</h4>
-            <p className="text-zinc-400 text-xs mt-0.5">Trải nghiệm như App thật trên Màn hình chính</p>
+          <div className="text-left">
+            <h4 className="text-white text-xs font-bold leading-tight">Cài đặt LocketWeb</h4>
+            <p className="text-zinc-400 text-[11px] mt-0.5">Trải nghiệm như App thật trên Màn hình chính</p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
           <button
             onClick={handleInstallClick}
-            className="py-1.5 px-3 bg-[#FFC700] hover:bg-[#FFD633] text-[#0E0E10] font-bold text-xs rounded-xl shadow-sm transition-transform active:scale-95 flex items-center space-x-1"
+            className="py-2 px-4 bg-[#FFC700] hover:bg-[#FFE066] text-black font-extrabold text-xs rounded-full shadow-[0_0_15px_rgba(255,199,0,0.3)] transition-all active:scale-95 flex items-center space-x-1.5"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Tải ngay</span>
           </button>
           <button
             onClick={() => setDismissed(true)}
-            className="w-7 h-7 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center hover:text-white"
+            className="w-8 h-8 rounded-full bg-zinc-800/90 text-zinc-400 hover:text-white flex items-center justify-center hover:bg-zinc-700 transition-colors"
+            title="Đóng thông báo"
           >
             <X className="w-4 h-4" />
           </button>
