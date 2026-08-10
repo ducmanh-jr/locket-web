@@ -28,6 +28,8 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [displayName, setDisplayName] = useState<string>('');
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(true);
+  const [showWidgetModal, setShowWidgetModal] = useState<boolean>(false);
 
   useEffect(() => {
     if (userProfile) {
@@ -86,8 +88,7 @@ export default function ProfilePage() {
         <div className="w-10 h-10 rounded-full border-4 border-[#FFC700] border-t-transparent animate-spin" />
       </div>
     );
-  }  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(true);
-  const [showWidgetModal, setShowWidgetModal] = useState<boolean>(false);
+  }
 
   return (
     <div className="h-full flex flex-col justify-between bg-black text-white px-4 pt-3 pb-4 select-none overflow-y-auto custom-scrollbar">
