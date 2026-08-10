@@ -345,7 +345,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       <div
         onClick={handleCardClick}
         onDoubleClick={handleDoubleTap}
-        className="w-[calc(100%-1rem)] max-w-[385px] aspect-square bg-[#18181C] border border-zinc-800/80 shadow-2xl flex-shrink-0 my-auto relative overflow-hidden rounded-[2.5rem] cursor-pointer"
+        className="w-[94%] max-w-[400px] aspect-square bg-[#18181C] border border-zinc-800/80 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex-shrink-0 my-auto relative overflow-hidden rounded-[2.8rem] cursor-pointer"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -372,7 +372,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               duration: 0.28,
               ease: [0.32, 0.72, 0, 1],
             }}
-            className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.5rem] transform-gpu will-change-[transform,opacity]"
+            className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.8rem] transform-gpu will-change-[transform,opacity]"
           >
             {isVideo ? (
               <div className="relative w-full h-full">
@@ -391,22 +391,22 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                       videoRef.current.play().catch(() => {});
                     }
                   }}
-                  className="w-full h-full object-cover rounded-[2.5rem] select-none pointer-events-none"
+                  className="w-full h-full object-cover rounded-[2.8rem] select-none pointer-events-none"
                 />
                 <button
                   onClick={toggleVideoMute}
-                  className="absolute top-3.5 left-3.5 bg-black/80 backdrop-blur-md border border-[#FFC700]/60 text-white text-xs px-3.5 py-1.5 rounded-full flex items-center space-x-1.5 z-20 shadow-xl active:scale-95 transition-all no-card-click"
+                  className="absolute bottom-3.5 right-3.5 bg-black/70 backdrop-blur-md border border-[#FFC700]/60 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-1.5 z-20 shadow-xl active:scale-95 transition-all no-card-click"
                   title="Bật/Tắt âm thanh video"
                 >
                   {!isMuted ? (
                     <>
                       <Volume2 className="w-3.5 h-3.5 text-[#FFC700] animate-pulse" />
-                      <span className="font-bold text-xs text-[#FFC700]">Âm thanh: Bật 🎙️</span>
+                      <span className="font-bold text-xs text-[#FFC700]">Bật 🎙️</span>
                     </>
                   ) : (
                     <>
                       <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
-                      <span className="font-semibold text-xs text-zinc-300">Âm thanh: Tắt 🔇 (Bấm để bật)</span>
+                      <span className="font-semibold text-xs text-zinc-300">Tắt 🔇</span>
                     </>
                   )}
                 </button>
@@ -415,9 +415,27 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               <img
                 src={moment.media_url || moment.thumbnail_url}
                 alt={moment.caption || 'Khoảnh khắc Locket'}
-                className="w-full h-full object-cover rounded-[2.5rem] select-none pointer-events-none"
+                className="w-full h-full object-cover rounded-[2.8rem] select-none pointer-events-none"
               />
             )}
+
+            {/* Top Gradient Overlay for Header Readability */}
+            <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/75 via-black/30 to-transparent pointer-events-none z-10" />
+
+            {/* Sender Avatar & Name Overlay at Top-Left of Photo Card */}
+            <div className="absolute top-3.5 left-3.5 flex items-center space-x-2 bg-black/50 backdrop-blur-md border border-white/15 px-3 py-1.5 rounded-full shadow-lg z-20 pointer-events-none">
+              <div className="w-5 h-5 rounded-full overflow-hidden bg-zinc-800 border border-[#FFC700]/70 flex-shrink-0">
+                <img
+                  src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
+                  alt={sender.display_name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <span className="text-white text-xs font-bold truncate max-w-[120px]">
+                {isMyMoment ? `${sender.display_name} (Bạn)` : sender.display_name}
+              </span>
+              <span className="text-white/60 text-[10px] font-semibold">{formatLocketTime(moment.created_at)}</span>
+            </div>
 
             {/* Floating Emoji Reaction Particles */}
             {floatingEmojis.map((item) => (
@@ -447,11 +465,11 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             {moment.music && (
               <button
                 onClick={toggleAudio}
-                className="absolute top-3.5 left-3.5 bg-black/75 backdrop-blur-md border border-[#FFC700]/50 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-2 z-20 shadow-lg active:scale-95 transition-all max-w-[70%]"
+                className="absolute bottom-3.5 left-3.5 bg-black/75 backdrop-blur-md border border-[#FFC700]/50 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-2 z-20 shadow-lg active:scale-95 transition-all max-w-[70%]"
                 title="Bật/Tắt nhạc"
               >
                 <div
-                  className={`w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-[#FFC700] ${
+                  className={`w-4.5 h-4.5 rounded-full overflow-hidden flex-shrink-0 border border-[#FFC700] ${
                     isPlayingAudio ? 'animate-spin' : ''
                   }`}
                 >
@@ -474,44 +492,23 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                 e.stopPropagation();
                 setShowOptionsModal(true);
               }}
-              className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md text-white/80 hover:text-white flex items-center justify-center border border-white/10 opacity-80 hover:opacity-100 transition-all active:scale-90 z-20"
+              className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md text-white/80 hover:text-white flex items-center justify-center border border-white/15 opacity-90 hover:opacity-100 transition-all active:scale-90 z-20 shadow-md"
               title="Tùy chọn ảnh"
             >
               <MoreVertical className="w-4 h-4" />
             </button>
 
-            {/* Caption Overlay */}
+            {/* Glassmorphic Time Stamp & Caption Overlay at Bottom Center */}
             {moment.caption && (
-              <div className="absolute bottom-4 left-4 right-4 text-center pointer-events-none z-10">
-                <span className="inline-block bg-black/75 backdrop-blur-md text-white text-xs font-semibold px-4 py-2 rounded-2xl shadow-lg max-w-[85%] break-words border border-white/10">
+              <div className="absolute bottom-4 left-4 right-4 flex justify-center pointer-events-none z-20">
+                <div className="bg-black/60 backdrop-blur-xl border border-white/15 text-white/95 text-xs font-semibold px-4 py-2 rounded-2xl shadow-2xl max-w-[90%] text-center break-words tracking-tight">
                   {moment.caption}
-                </span>
+                </div>
               </div>
             )}
           </motion.div>
         </AnimatePresence>
       </div>
-
-      {/* Sender Avatar & Name Tag Centered DIRECTLY Below Card */}
-      <motion.div
-        key={`sender-${moment.id}`}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.18, delay: 0.05 }}
-        className="w-full h-8 flex items-center justify-center space-x-2 my-2 text-center flex-shrink-0 z-10"
-      >
-        <div className="w-6 h-6 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700 flex-shrink-0">
-          <img
-            src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
-            alt={sender.display_name}
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <span className="text-white text-xs font-bold truncate max-w-[160px]">
-          {isMyMoment ? `${sender.display_name} (Bạn)` : sender.display_name}
-        </span>
-        <span className="text-zinc-500 text-xs font-medium flex-shrink-0">{formatLocketTime(moment.created_at)}</span>
-      </motion.div>
 
       {/* Options Modal Sheet */}
       <AnimatePresence>
