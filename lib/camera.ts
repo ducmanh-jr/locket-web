@@ -163,6 +163,9 @@ export function createVideoRecorder(stream: MediaStream): {
         };
 
         if (mediaRecorder.state !== 'inactive') {
+          try {
+            mediaRecorder.requestData();
+          } catch (e) {}
           mediaRecorder.stop();
         }
       });

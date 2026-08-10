@@ -397,20 +397,23 @@ export const CameraView: React.FC<CameraViewProps> = ({
               autoPlay
               loop
               playsInline
-              muted={audioOption !== 'original' || !videoPlaying}
+              muted={audioOption !== 'original'}
               controls={false}
-              onLoadedMetadata={(e) => {
+              preload="auto"
+              onLoadedData={(e) => {
                 const v = e.currentTarget;
-                v.currentTime = 0;
-                v.muted = true;
                 v.play().then(() => {
                   setVideoPlaying(true);
-                }).catch(() => {});
+                }).catch(() => {
+                  v.muted = true;
+                  v.play().then(() => setVideoPlaying(true)).catch(() => {});
+                });
               }}
-              onPlaying={() => {
-                setVideoPlaying(true);
+              onCanPlay={(e) => {
+                const v = e.currentTarget;
+                v.play().then(() => setVideoPlaying(true)).catch(() => {});
               }}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover rounded-[2.5rem]"
             />
             {/* 3 Audio Mode Selector Pill Top Bar */}
             <div className="absolute top-4 left-3 right-3 flex items-center justify-center space-x-1.5 bg-black/80 backdrop-blur-md p-1.5 rounded-full border border-white/20 shadow-xl z-20">
