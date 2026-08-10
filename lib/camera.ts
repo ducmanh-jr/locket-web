@@ -153,28 +153,13 @@ export function createVideoRecorder(stream: MediaStream): {
           const finalMime = mediaRecorder?.mimeType || selectedType || 'video/mp4';
           const blob = new Blob(chunks, { type: finalMime });
 
-          // Fast local preview URL for immediate rendering
+          // Fast local blob ObjectURL for instant HTML5 video playback
           let previewDataUrl = '';
           try {
             previewDataUrl = URL.createObjectURL(blob);
           } catch (e) {}
 
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            let dataUrl = (reader.result as string) || previewDataUrl;
-            const actualMime = (finalMime || 'video/mp4').split(';')[0];
-            if (dataUrl && dataUrl.startsWith('data:')) {
-              dataUrl = dataUrl.replace(/^data:[^;,]+(?:;[^;,]+)*;/, `data:${actualMime};`);
-            }
-            resolve({ type: 'video', dataUrl, blob });
-          };
-
-          reader.onerror = () => {
-            // Fallback to object URL if FileReader fails
-            resolve({ type: 'video', dataUrl: previewDataUrl, blob });
-          };
-
-          reader.readAsDataURL(blob);
+          resolve({ type: 'video', dataUrl: previewDataUrl || '', blob });
         };
 
         if (mediaRecorder.state !== 'inactive') {

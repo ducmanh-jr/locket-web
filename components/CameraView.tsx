@@ -40,6 +40,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
   onSendMoment,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const previewVideoRef = useRef<HTMLVideoElement>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [capturedMedia, setCapturedMedia] = useState<CapturedMedia | null>(null);
@@ -386,17 +387,35 @@ export const CameraView: React.FC<CameraViewProps> = ({
           </div>
         ) : capturedMedia.type === 'video' ? (
           /* Captured Video Review & 3 Audio Option Overlay */
-          <div className="relative w-full h-full">
+          <div className="relative w-full h-full bg-black">
             <video
+              ref={previewVideoRef}
               src={capturedMedia.dataUrl}
               autoPlay
               loop
               playsInline
-              muted={audioOption !== 'original'}
+              muted={audioOption === 'mute'}
               controls={false}
-              onLoadedData={(e) => {
-                const v = e.target as HTMLVideoElement;
-                v.play().catch(() => {});
+              onLoadedMetadata={(e) => {
+                const v = e.currentTarget;
+                v.currentTime = 0;
+                const p = v.play();
+                if (p !== undefined) {
+                  p.catch(() => {
+                    v.muted = true;
+                    v.play().catch(() => {});
+                  });
+                }
+              }}
+              onCanPlay={(e) => {
+                const v = e.currentTarget;
+                const p = v.play();
+                if (p !== undefined) {
+                  p.catch(() => {
+                    v.muted = true;
+                    v.play().catch(() => {});
+                  });
+                }
               }}
               className="w-full h-full object-cover"
             />
