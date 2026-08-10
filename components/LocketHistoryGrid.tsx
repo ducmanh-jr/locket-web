@@ -3,6 +3,7 @@
 import React from 'react';
 import { Moment } from '@/lib/types';
 import { Grid, Video } from 'lucide-react';
+import { getSafeMediaUrl } from '@/lib/media';
 
 interface LocketHistoryGridProps {
   moments: Moment[];
@@ -49,9 +50,11 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
                 moment.media_url?.endsWith('.mp4') ||
                 moment.media_url?.endsWith('.webm');
 
-              const displayUrl = isVideo
-                ? moment.thumbnail_url || moment.media_url
-                : moment.media_url;
+              const displayUrl = getSafeMediaUrl(
+                isVideo
+                  ? moment.thumbnail_url || moment.media_url
+                  : moment.media_url
+              );
 
               return (
                 <div
@@ -61,7 +64,7 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
                 >
                   {isVideo && !moment.thumbnail_url ? (
                     <video
-                      src={moment.media_url}
+                      src={getSafeMediaUrl(moment.media_url)}
                       muted
                       playsInline
                       preload="metadata"

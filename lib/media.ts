@@ -63,3 +63,30 @@ export function sanitizeMoments(moments: Moment[]): Moment[] {
   return sortMoments(filtered) as Moment[];
 }
 
+const blobUrlCache = new Map<string, string>();
+
+export function getSafeMediaUrl(url?: string): string {
+  if (!url) return '';
+  if (url.startsWith('data:video/')) {
+    if (blobUrlCache.has(url)) return blobUrlCache.get(url)!;
+    try {
+      const parts = url.split(',');
+      const mimeMatch = parts[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : 'video/mp4';
+      const bstr = atob(parts[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], { type: mime });
+      const objectUrl = URL.createObjectURL(blob);
+      blobUrlCache.set(url, objectUrl);
+      return objectUrl;
+    } catch (e) {
+      return url;
+    }
+  }
+  return url;
+}
+

@@ -5,6 +5,7 @@ import { Moment, Profile } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, Trash2, MoreVertical, Volume2, VolumeX, Music, Video } from 'lucide-react';
 import { killGlobalAudio, playGlobalAudio } from '@/lib/audioPlayer';
+import { getSafeMediaUrl } from '@/lib/media';
 
 interface LocketFeedCardProps {
   moment: Moment;
@@ -377,8 +378,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               <div className="relative w-full h-full">
                 <video
                   ref={videoRef}
-                  src={moment.media_url}
-                  poster={moment.thumbnail_url}
+                  src={getSafeMediaUrl(moment.media_url)}
+                  poster={getSafeMediaUrl(moment.thumbnail_url)}
                   autoPlay
                   loop
                   playsInline

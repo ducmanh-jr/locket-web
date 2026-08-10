@@ -45,7 +45,9 @@ export async function POST(request: Request) {
     }
 
     const mime = file.type || '';
-    if (mime && !ALLOWED_MIME_TYPES.some((type) => mime.startsWith(type.split('/')[0]))) {
+    const cleanContentType = (mime.split(';')[0] || 'application/octet-stream').trim();
+
+    if (mime && !ALLOWED_MIME_TYPES.some((type) => cleanContentType.startsWith(type.split('/')[0]))) {
       return NextResponse.json(
         { error: 'Định dạng file không được hỗ trợ' },
         { status: 400 }
@@ -62,7 +64,7 @@ export async function POST(request: Request) {
         const { data, error } = await supabase.storage
           .from('moments')
           .upload(fileName, buffer, {
-            contentType: file.type || 'application/octet-stream',
+            contentType: cleanContentType,
             upsert: true,
           });
 
