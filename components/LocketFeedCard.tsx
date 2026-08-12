@@ -347,7 +347,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       <div
         onClick={handleCardClick}
         onDoubleClick={handleDoubleTap}
-        className="w-full aspect-square bg-black/20 flex-shrink-0 relative overflow-hidden rounded-[2.2rem] cursor-pointer"
+        className="w-full aspect-square bg-black/20 flex-shrink-0 mt-2.5 relative overflow-hidden rounded-[2.2rem] cursor-pointer"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
