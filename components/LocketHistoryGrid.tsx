@@ -17,11 +17,11 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
   onOpenCamera,
 }) => {
   return (
-    <div className="w-full h-full bg-black text-white flex flex-col justify-between p-4 pt-3 pb-24 overflow-y-auto custom-scrollbar select-none">
+    <div className="w-full h-full bg-[#10091D]/85 backdrop-blur-xl text-white flex flex-col justify-between p-4 pt-3 pb-24 overflow-y-auto custom-scrollbar select-none">
       {/* Top Header Bar */}
-      <div className="flex items-center justify-between pb-3 border-b border-zinc-900 flex-shrink-0">
+      <div className="flex items-center justify-between pb-3 border-b border-zinc-900/80 flex-shrink-0">
         <div className="flex items-center space-x-2">
-          <Grid className="w-5 h-5 text-[#FFC700]" />
+          <Grid className="w-5 h-5 text-[#FF2A85]" />
           <h1 className="text-white text-base font-extrabold tracking-wide uppercase">
             Lịch sử khoảnh khắc ({moments.length})
           </h1>

@@ -11,7 +11,7 @@ export default function HistoryPage() {
   const { filteredMoments } = useMoments();
 
   return (
-    <div className="h-full flex flex-col justify-between bg-black text-white px-4 pt-3 pb-4 select-none">
+    <div className="h-full flex flex-col justify-between bg-[#10091D] text-white px-4 pt-3 pb-4 select-none">
       <div className="flex items-center space-x-3 pb-3 border-b border-zinc-900 flex-shrink-0">
         <button
           onClick={() => router.push('/profile')}
