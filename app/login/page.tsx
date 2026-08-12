@@ -40,18 +40,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-full h-full flex flex-col justify-between p-6 pt-6 pb-10 sm:pb-12 bg-[#0A0A0C] text-white select-none relative overflow-y-auto custom-scrollbar">
-      {/* Background Ambient Yellow Glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#FFC700]/15 rounded-full blur-[110px] pointer-events-none z-0" />
+    <div className="min-h-full h-full flex flex-col justify-between p-6 pt-6 pb-10 sm:pb-12 bg-[#10091D] text-white select-none relative overflow-y-auto custom-scrollbar">
+      {/* Background Ambient Pink Glow */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#FF2A85]/15 rounded-full blur-[110px] pointer-events-none z-0" />
 
       {/* Top Header Bar */}
       <div className="flex items-center justify-between z-10 pt-1">
         <div className="flex items-center space-x-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#FFC700] to-[#FF9900] text-black flex items-center justify-center font-black text-base shadow-[0_0_15px_rgba(255,199,0,0.35)]">
-            L
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#FF2A85] to-[#FF69B4] text-white flex items-center justify-center font-black text-base shadow-[0_0_15px_rgba(255,42,133,0.4)]">
+            <img src="/icon.svg" alt="Locket Logo" className="w-6 h-6 object-contain" />
           </div>
           <span className="text-white text-lg font-black tracking-tight">
-            Locket<span className="text-[#FFC700]">Web</span>
+            Locket<span className="text-[#FF2A85]">Web</span>
           </span>
         </div>
 
@@ -62,7 +62,7 @@ export default function LoginPage() {
           title="Xem thông tin phiên bản"
         >
           <span>v2.5 • Official</span>
-          <Info className="w-3.5 h-3.5 text-[#FFC700]" />
+          <Info className="w-3.5 h-3.5 text-[#FF2A85]" />
         </button>
       </div>
 
@@ -76,22 +76,22 @@ export default function LoginPage() {
           className="relative"
         >
           {/* Outer Glowing Locket Photo Card Preview */}
-          <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-[2.8rem] bg-gradient-to-tr from-[#FFC700] via-[#FFE580] to-[#FF9900] p-1 shadow-[0_0_45px_rgba(255,199,0,0.4)] relative flex items-center justify-center">
-            <div className="w-full h-full bg-[#141418] rounded-[2.5rem] p-2 flex flex-col items-center justify-between border border-[#FFC700]/30 relative overflow-hidden">
+          <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-[2.8rem] bg-gradient-to-tr from-[#FF2A85] via-[#FF69B4] to-[#FF2A85] p-1 shadow-[0_0_45px_rgba(255,42,133,0.4)] relative flex items-center justify-center">
+            <div className="w-full h-full bg-[#140a17] rounded-[2.5rem] p-2 flex flex-col items-center justify-between border border-[#FF2A85]/30 relative overflow-hidden">
               {/* Top Mini Tag */}
               <div className="flex items-center space-x-1 bg-black/60 backdrop-blur-md border border-white/15 px-2 py-0.5 rounded-full z-10">
-                <div className="w-2 h-2 rounded-full bg-[#FFC700] animate-ping" />
+                <div className="w-2 h-2 rounded-full bg-[#FF2A85] animate-ping" />
                 <span className="text-[9px] text-white font-bold">Locket Live</span>
               </div>
 
               {/* Center Shutter Lens Icon */}
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FFC700] to-[#FF9900] text-black flex items-center justify-center shadow-lg my-auto">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF2A85] to-[#FF69B4] text-white flex items-center justify-center shadow-lg my-auto">
                 <Camera className="w-6 h-6 stroke-[2.2]" />
               </div>
 
               {/* Floating Heart Reaction Badge */}
               <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-md border border-white/20 p-1 rounded-full text-xs shadow-md">
-                💛
+                💖
               </div>
             </div>
           </div>
@@ -101,7 +101,7 @@ export default function LoginPage() {
         <div className="space-y-2">
           <h1 className="text-white text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight">
             Khoảnh khắc tức thời <br />
-            cùng <span className="text-[#FFC700]">Bạn bè</span>
+            cùng <span className="text-[#FF2A85]">Bạn bè</span>
           </h1>
           <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed max-w-xs mx-auto">
             Chụp & chia sẻ khoảnh khắc trực tiếp lên màn hình của bạn bè 100% tự nhiên.
@@ -113,7 +113,7 @@ export default function LoginPage() {
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full py-4 px-5 bg-white hover:bg-zinc-100 text-black font-extrabold text-sm rounded-2xl border-2 border-white flex items-center justify-between transition-all active:scale-95 shadow-[0_4px_25px_rgba(255,255,255,0.25)] group relative overflow-hidden"
+            className="w-full py-4 px-5 bg-white hover:bg-zinc-100 text-black font-extrabold text-sm rounded-2xl border-2 border-white flex items-center justify-between transition-all active:scale-95 shadow-[0_4px_25px_rgba(255,42,133,0.3)] group relative overflow-hidden"
           >
             <div className="flex items-center space-x-3">
               {/* Official Multicolored Google G Logo */}
@@ -143,7 +143,7 @@ export default function LoginPage() {
               </span>
             </div>
 
-            <span className="text-[11px] font-extrabold text-black bg-[#FFC700] px-3 py-1 rounded-full shadow-sm">
+            <span className="text-[11px] font-extrabold text-white bg-[#FF2A85] px-3 py-1 rounded-full shadow-sm">
               1-Chạm
             </span>
           </button>
