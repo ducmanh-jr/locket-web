@@ -51,7 +51,7 @@ export const LocketDock: React.FC<LocketDockProps> = ({
           <Grid3x3 className="w-5 h-5 stroke-[2]" />
         </button>
 
-        {/* Center: Home Pink Circle */}
+        {/* Center: Pink Circle Button with Inner White Circle */}
         <button
           onClick={() => {
             triggerHaptic();
@@ -60,7 +60,7 @@ export const LocketDock: React.FC<LocketDockProps> = ({
           className="w-12 h-12 rounded-full bg-[#FF2A85] text-white flex items-center justify-center active:scale-90 transition-all shadow-[0_0_18px_rgba(255,42,133,0.55)] cursor-pointer"
           title="Chụp khoảnh khắc mới"
         >
-          <Home className="w-5.5 h-5.5 fill-white stroke-[1.5]" />
+          <div className="w-4.5 h-4.5 rounded-full bg-white shadow-sm" />
         </button>
 
         {/* Right: MessageCircle with badge */}
