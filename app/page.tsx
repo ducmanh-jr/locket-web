@@ -65,18 +65,72 @@ export default function HomePage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-full flex flex-col items-center justify-center bg-[#10091D] text-white space-y-5 select-none">
-        <div className="relative w-32 h-32 flex items-center justify-center">
-          <img
-            src="/icon.svg"
-            alt="Locket Logo"
-            className="w-24 h-24 object-contain rounded-3xl drop-shadow-[0_0_25px_rgba(156,191,222,0.6)]"
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-28 h-28 rounded-[2.2rem] border-4 border-[#8EB5D6] border-t-transparent animate-spin" />
-          </div>
+      <div className="min-h-full flex flex-col items-center justify-center bg-[#10091D] text-white select-none relative overflow-hidden p-6">
+        {/* Background Ambient Glowing Orbs */}
+        <motion.div
+          animate={{
+            scale: [1, 1.25, 1],
+            opacity: [0.35, 0.65, 0.35],
+          }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#9CBFDE]/20 rounded-full blur-[110px] pointer-events-none z-0"
+        />
+        <motion.div
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.25, 0.5, 0.25],
+          }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-1/3 left-1/2 -translate-x-1/2 translate-y-1/2 w-72 h-72 bg-[#FF2A85]/15 rounded-full blur-[100px] pointer-events-none z-0"
+        />
+
+        {/* Center Animated Logo & Orbit Rings */}
+        <div className="relative z-10 flex flex-col items-center space-y-6">
+          <motion.div
+            initial={{ scale: 0.75, opacity: 0, y: 15 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="relative w-36 h-36 flex items-center justify-center"
+          >
+            {/* Spinning Outer Gradient Border Ring */}
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-0 rounded-[2.6rem] p-[3px] bg-gradient-to-tr from-[#9CBFDE] via-[#FF69B4] to-[#FF2A85] opacity-80 shadow-[0_0_30px_rgba(156,191,222,0.4)]"
+            />
+
+            {/* Pulsing Inner Heartbeat Container */}
+            <motion.div
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="w-32 h-32 rounded-[2.3rem] bg-[#160B26] p-2 flex items-center justify-center shadow-2xl relative z-10 border border-white/10"
+            >
+              <img
+                src="/icon.svg"
+                alt="Locket Logo"
+                className="w-full h-full object-contain rounded-2xl drop-shadow-[0_0_20px_rgba(156,191,222,0.7)]"
+              />
+            </motion.div>
+          </motion.div>
+
+          {/* Title & Animated Status Text */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-center space-y-2"
+          >
+            <h2 className="text-xl font-black text-white tracking-tight flex items-center justify-center space-x-1.5">
+              <span>Locket</span>
+              <span className="bg-gradient-to-r from-[#9CBFDE] to-[#FF69B4] bg-clip-text text-transparent">Web</span>
+            </h2>
+
+            <div className="flex items-center justify-center space-x-2 text-zinc-400 text-xs font-semibold">
+              <div className="w-3.5 h-3.5 rounded-full border-2 border-[#9CBFDE] border-t-transparent animate-spin" />
+              <span>Đang kết nối khoảnh khắc...</span>
+            </div>
+          </motion.div>
         </div>
-        <p className="text-xs font-bold text-zinc-300 tracking-wide">Đang kiểm tra tài khoản Google...</p>
       </div>
     );
   }
