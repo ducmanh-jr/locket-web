@@ -80,7 +80,7 @@ export default function ProfilePage() {
   const avatarSrc = user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`;
 
   return (
-    <div className="h-full flex flex-col justify-between bg-[#0c050a] text-white px-4 pt-3 pb-4 select-none overflow-y-auto custom-scrollbar">
+    <div className="h-full flex flex-col justify-between bg-[#10091D] text-white px-4 pt-3 pb-4 select-none overflow-y-auto custom-scrollbar">
       <div>
         <div className="flex items-center space-x-3 pb-4 border-b border-zinc-900">
           <button
@@ -109,29 +109,52 @@ export default function ProfilePage() {
           {!isEditing ? (
             <div className="flex flex-col items-center">
               <h2 className="text-white text-lg font-black tracking-tight">{user.display_name}</h2>
-              <p className="text-zinc-500 text-xs font-semibold mt-0.5">@{user.username}</p>
+              <div className="flex items-center space-x-1.5 mt-1 px-3 py-1 rounded-full bg-black/40 border border-zinc-800 text-zinc-400 text-xs font-medium">
+                <span>@{user.username}</span>
+                <span className="text-[10px] text-[#FF2A85] font-bold">🔒 Cố định</span>
+              </div>
 
               <button
                 onClick={() => {
                   setDisplayName(user.display_name);
                   setIsEditing(true);
                 }}
-                className="mt-3 px-4 py-1.5 bg-[#1a0c16] hover:bg-[#281423] border border-[#FF2A85]/30 text-zinc-200 hover:text-white font-bold text-xs rounded-full flex items-center space-x-1.5 transition-all active:scale-95 shadow-md"
+                className="mt-3 px-4 py-1.5 bg-[#1a0c16] hover:bg-[#281423] border border-[#FF2A85]/40 text-zinc-200 hover:text-white font-bold text-xs rounded-full flex items-center space-x-1.5 transition-all active:scale-95 shadow-md"
               >
                 <Edit3 className="w-3.5 h-3.5 text-[#FF2A85]" />
                 <span>Chỉnh sửa hồ sơ</span>
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSaveProfile} className="w-full max-w-xs flex flex-col items-center space-y-2.5">
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                className="w-full text-white text-xs font-semibold rounded-2xl px-4 py-2.5 text-center focus:outline-none shadow-inner bg-[#1a0c16] border border-[#FF2A85]"
-                placeholder="Nhập tên mới..."
-              />
-              <div className="flex items-center space-x-2 w-full">
+            <form onSubmit={handleSaveProfile} className="w-full max-w-xs flex flex-col items-center space-y-3">
+              <div className="w-full text-left space-y-1">
+                <label className="text-[11px] font-bold text-zinc-400">Tên hiển thị Locket</label>
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="w-full text-white text-xs font-semibold rounded-2xl px-4 py-2.5 focus:outline-none shadow-inner bg-[#1a0c16] border border-[#FF2A85]"
+                  placeholder="Nhập tên mới..."
+                />
+              </div>
+
+              <div className="w-full text-left space-y-1">
+                <label className="text-[11px] font-bold text-zinc-400 flex items-center justify-between">
+                  <span>Gmail / Username</span>
+                  <span className="text-[#FF2A85] font-semibold text-[10px]">🔒 Không thể đổi</span>
+                </label>
+                <input
+                  type="text"
+                  disabled
+                  value={`@${user.username}`}
+                  className="w-full text-zinc-400 text-xs font-semibold rounded-2xl px-4 py-2.5 bg-zinc-900/80 border border-zinc-800 cursor-not-allowed opacity-80"
+                />
+                <p className="text-[10px] text-zinc-500 italic mt-0.5">
+                  Gmail/Tài khoản cố định theo tài khoản Google đã đăng nhập.
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-2 w-full pt-1">
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
@@ -144,7 +167,7 @@ export default function ProfilePage() {
                   className="flex-1 py-2 bg-[#FF2A85] text-white text-xs font-extrabold rounded-xl flex items-center justify-center space-x-1 active:scale-95 transition-all shadow-[0_0_15px_rgba(255,42,133,0.5)]"
                 >
                   <Check className="w-3.5 h-3.5" />
-                  <span>Lưu</span>
+                  <span>Lưu thay đổi</span>
                 </button>
               </div>
             </form>

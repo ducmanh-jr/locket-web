@@ -59,7 +59,7 @@ export default function FriendsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm kiếm thành viên theo tên..."
-            className="w-full bg-[#18181C] border border-zinc-800 text-white text-xs font-semibold rounded-2xl pl-10 pr-4 py-3 placeholder-zinc-500 focus:outline-none focus:border-[#FFC700]"
+            className="w-full bg-[#18181C] border border-zinc-800 text-white text-xs font-semibold rounded-2xl pl-10 pr-4 py-3 placeholder-zinc-500 focus:outline-none focus:border-[#FF2A85]"
           />
           <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
         </div>
@@ -68,12 +68,12 @@ export default function FriendsPage() {
         {userProfile && (
           <div className="mb-4">
             <div className="flex items-center space-x-1.5 text-xs font-extrabold text-zinc-400 uppercase tracking-wider px-1 mb-2">
-              <Users className="w-3.5 h-3.5 text-[#FFC700]" />
+              <Users className="w-3.5 h-3.5 text-[#FF2A85]" />
               <span>Tài khoản của bạn</span>
             </div>
-            <div className="w-full bg-[#18181C] border border-[#FFC700]/30 rounded-2xl p-3.5 flex items-center justify-between">
+            <div className="w-full bg-[#18181C] border border-[#FF2A85]/30 rounded-2xl p-3.5 flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#FFC700] bg-zinc-800 flex-shrink-0">
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#FF2A85] bg-zinc-800 flex-shrink-0">
                   <img
                     src={userProfile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.username}`}
                     alt={userProfile.display_name}
@@ -85,7 +85,7 @@ export default function FriendsPage() {
                   <p className="text-zinc-500 text-[11px]">@{userProfile.username}</p>
                 </div>
               </div>
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#FFC700]/20 text-[#FFC700] border border-[#FFC700]/30">
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#FF2A85]/20 text-[#FF2A85] border border-[#FF2A85]/30">
                 {userProfile.isAdmin ? '👑 Admin' : 'Bạn'}
               </span>
             </div>
@@ -95,7 +95,7 @@ export default function FriendsPage() {
         {/* Members List */}
         <div className="space-y-3">
           <div className="flex items-center space-x-1.5 text-xs font-extrabold text-zinc-400 uppercase tracking-wider px-1">
-            <Sparkles className="w-3.5 h-3.5 text-[#FFC700]" />
+            <Sparkles className="w-3.5 h-3.5 text-[#FF2A85]" />
             <span>Thành viên khác trong căn phòng ({filteredMembers.length})</span>
           </div>
 
