@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Profile } from '@/lib/types';
 import {
   ArrowLeft,
@@ -12,12 +12,15 @@ import {
   Edit3,
   Check,
   ChevronRight,
-  Sparkles,
+  Camera,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/lib/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
+import { uploadBlobToPublicUrl } from '@/lib/cloudSync';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -25,13 +28,22 @@ export default function ProfilePage() {
   const [user, setUser] = useState<Profile | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [displayName, setDisplayName] = useState<string>('');
+  const [username, setUsername] = useState<string>('');
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
   const [showWidgetModal, setShowWidgetModal] = useState<boolean>(false);
+
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (userProfile) {
       setUser(userProfile);
-      setDisplayName(userProfile.display_name);
+      setDisplayName(userProfile.display_name || '');
+      setUsername(userProfile.username || '');
+      setAvatarUrl(userProfile.avatar_url || '');
     }
   }, [userProfile]);
 
@@ -41,27 +53,136 @@ export default function ProfilePage() {
     }
   }, [authLoading, userProfile, router]);
 
+  // Handle Avatar Image File Selection
+  const handleAvatarFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userProfile) return;
+
+    setIsUploadingAvatar(true);
+    try {
+      // 1. Try uploading to public Cloud URL
+      const publicUrl = await uploadBlobToPublicUrl(file, `avatar-${userProfile.id}`);
+      let finalUrl = publicUrl;
+
+      // 2. Fallback to compressed Data URL
+      if (!finalUrl) {
+        finalUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const dataUrl = event.target?.result as string;
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+              const maxDim = 250;
+              let w = img.width;
+              let h = img.height;
+              if (w > maxDim || h > maxDim) {
+                if (w > h) {
+                  h = Math.round((h * maxDim) / w);
+                  w = maxDim;
+                } else {
+                  w = Math.round((w * maxDim) / h);
+                  h = maxDim;
+                }
+              }
+              canvas.width = w;
+              canvas.height = h;
+              ctx?.drawImage(img, 0, 0, w, h);
+              resolve(canvas.toDataURL('image/jpeg', 0.8));
+            };
+            img.onerror = () => resolve(dataUrl);
+            img.src = dataUrl;
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      if (finalUrl) {
+        setAvatarUrl(finalUrl);
+        // Persist avatar change immediately to DB if configured
+        if (isSupabaseConfigured() && userProfile) {
+          try {
+            await supabase
+              .from('profiles')
+              .update({ avatar_url: finalUrl })
+              .eq('id', userProfile.id);
+          } catch (e) {}
+        }
+        updateProfile({ avatar_url: finalUrl });
+        if (user) setUser({ ...user, avatar_url: finalUrl });
+      }
+    } catch (err) {
+      console.error('Failed to process avatar:', err);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!displayName.trim() || !user) return;
 
-    if (isSupabaseConfigured() && userProfile) {
-      try {
-        await supabase
-          .from('profiles')
-          .update({ display_name: displayName })
-          .eq('id', userProfile.id);
-      } catch (e) {
-        console.error('Failed to update profile:', e);
-      }
+    setUsernameError(null);
+    const cleanedUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+    if (!cleanedUsername) {
+      setUsernameError('Vui lòng nhập tên ID/username hợp lệ (chỉ gồm chữ cái, số và dấu gạch dưới)!');
+      return;
     }
 
-    const updatedUser = { ...user, display_name: displayName };
-    setUser(updatedUser);
-    updateProfile({ display_name: displayName });
-    setIsEditing(false);
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 2000);
+    setIsSaving(true);
+
+    try {
+      // Check if username is taken by someone else in Supabase
+      if (isSupabaseConfigured() && userProfile && cleanedUsername !== userProfile.username) {
+        const { data: existing } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', cleanedUsername)
+          .maybeSingle();
+
+        if (existing && existing.id !== userProfile.id) {
+          setUsernameError(`❌ Tên ID @${cleanedUsername} đã có người sử dụng! Vui lòng chọn tên khác.`);
+          setIsSaving(false);
+          return;
+        }
+      }
+
+      // Update Supabase profiles table
+      if (isSupabaseConfigured() && userProfile) {
+        await supabase
+          .from('profiles')
+          .update({
+            display_name: displayName.trim(),
+            username: cleanedUsername,
+            avatar_url: avatarUrl,
+          })
+          .eq('id', userProfile.id);
+      }
+
+      const updatedUser: Profile = {
+        ...user,
+        display_name: displayName.trim(),
+        username: cleanedUsername,
+        avatar_url: avatarUrl,
+      };
+
+      setUser(updatedUser);
+      updateProfile({
+        display_name: displayName.trim(),
+        username: cleanedUsername,
+        avatar_url: avatarUrl,
+      });
+
+      setIsEditing(false);
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3000);
+    } catch (err) {
+      console.error('Failed to save profile:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSignOut = async () => {
@@ -71,13 +192,13 @@ export default function ProfilePage() {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-full flex items-center justify-center bg-[#0c050a]">
+      <div className="min-h-full flex items-center justify-center bg-[#10091D]">
         <div className="w-10 h-10 rounded-full border-4 border-[#FF2A85] border-t-transparent animate-spin" />
       </div>
     );
   }
 
-  const avatarSrc = user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`;
+  const avatarSrc = avatarUrl || user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`;
 
   return (
     <div className="h-full flex flex-col justify-between bg-[#10091D] text-white px-4 pt-3 pb-4 select-none overflow-y-auto custom-scrollbar">
@@ -92,31 +213,57 @@ export default function ProfilePage() {
           <h1 className="text-white text-lg font-extrabold">Cài đặt tài khoản</h1>
         </div>
 
-        {/* Profile Header with Neon Pink Ring */}
+        {/* Hidden Avatar File Input */}
+        <input
+          ref={avatarInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleAvatarFileSelect}
+        />
+
+        {/* Profile Header with Avatar & Neon Pink Ring */}
         <div className="flex flex-col items-center text-center my-6">
-          <div className="relative mb-3">
-            <div className="w-24 h-24 rounded-full p-[2.5px] pink-ring-pulse bg-gradient-to-tr from-[#FF2A85] to-[#FF69B4]">
-              <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
+          <div className="relative mb-3 group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
+            <div className="w-24 h-24 rounded-full p-[2.5px] pink-ring-pulse bg-gradient-to-tr from-[#FF2A85] to-[#FF69B4] relative">
+              <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900 relative">
                 <img
                   src={avatarSrc}
                   alt={user.display_name}
                   className="w-full h-full object-cover rounded-full"
                 />
+                {isUploadingAvatar && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 text-[#FF2A85] animate-spin" />
+                  </div>
+                )}
+              </div>
+              {/* Camera Badge Overlay */}
+              <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#FF2A85] text-white flex items-center justify-center shadow-lg border-2 border-[#10091D] active:scale-90 transition-transform">
+                <Camera className="w-4 h-4" />
               </div>
             </div>
           </div>
 
+          <button
+            type="button"
+            onClick={() => avatarInputRef.current?.click()}
+            className="text-[11px] font-bold text-[#FF2A85] hover:underline mb-2 flex items-center space-x-1"
+          >
+            <Camera className="w-3.5 h-3.5" />
+            <span>Đổi ảnh đại diện</span>
+          </button>
+
           {!isEditing ? (
             <div className="flex flex-col items-center">
               <h2 className="text-white text-lg font-black tracking-tight">{user.display_name}</h2>
-              <div className="flex items-center space-x-1.5 mt-1 px-3 py-1 rounded-full bg-black/40 border border-zinc-800 text-zinc-400 text-xs font-medium">
-                <span>@{user.username}</span>
-                <span className="text-[10px] text-[#FF2A85] font-bold">🔒 Cố định</span>
-              </div>
+              <p className="text-zinc-400 text-xs font-medium mt-0.5">@{user.username}</p>
 
               <button
                 onClick={() => {
                   setDisplayName(user.display_name);
+                  setUsername(user.username);
+                  setUsernameError(null);
                   setIsEditing(true);
                 }}
                 className="mt-3 px-4 py-1.5 bg-[#1a0c16] hover:bg-[#281423] border border-[#FF2A85]/40 text-zinc-200 hover:text-white font-bold text-xs rounded-full flex items-center space-x-1.5 transition-all active:scale-95 shadow-md"
@@ -127,47 +274,80 @@ export default function ProfilePage() {
             </div>
           ) : (
             <form onSubmit={handleSaveProfile} className="w-full max-w-xs flex flex-col items-center space-y-3">
+              {/* Display Name Input */}
               <div className="w-full text-left space-y-1">
                 <label className="text-[11px] font-bold text-zinc-400">Tên hiển thị Locket</label>
                 <input
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full text-white text-xs font-semibold rounded-2xl px-4 py-2.5 focus:outline-none shadow-inner bg-[#1a0c16] border border-[#FF2A85]"
+                  className="w-full text-white text-xs font-semibold rounded-2xl px-4 py-2.5 focus:outline-none bg-[#1a0c16] border border-[#FF2A85]"
                   placeholder="Nhập tên mới..."
                 />
               </div>
 
+              {/* Username (@handle) Input — FULLY EDITABLE WITH UNIQUE CHECK */}
               <div className="w-full text-left space-y-1">
                 <label className="text-[11px] font-bold text-zinc-400 flex items-center justify-between">
-                  <span>Gmail / Username</span>
-                  <span className="text-[#FF2A85] font-semibold text-[10px]">🔒 Không thể đổi</span>
+                  <span>Tên ID / Username (@handle)</span>
+                  <span className="text-[#FF2A85] text-[10px] font-bold">✨ Có thể đổi</span>
                 </label>
-                <input
-                  type="text"
-                  disabled
-                  value={`@${user.username}`}
-                  className="w-full text-zinc-400 text-xs font-semibold rounded-2xl px-4 py-2.5 bg-zinc-900/80 border border-zinc-800 cursor-not-allowed opacity-80"
-                />
-                <p className="text-[10px] text-zinc-500 italic mt-0.5">
-                  Gmail/Tài khoản cố định theo tài khoản Google đã đăng nhập.
-                </p>
+                <div className="relative flex items-center">
+                  <span className="absolute left-3.5 text-zinc-400 font-bold text-xs">@</span>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => {
+                      setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''));
+                      setUsernameError(null);
+                    }}
+                    className="w-full text-white text-xs font-semibold rounded-2xl pl-8 pr-4 py-2.5 focus:outline-none bg-[#1a0c16] border border-[#FF2A85]"
+                    placeholder="nguyenducmn..."
+                  />
+                </div>
               </div>
 
+              {/* Error Alert */}
+              {usernameError && (
+                <div className="w-full text-left p-2.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-medium flex items-center space-x-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{usernameError}</span>
+                </div>
+              )}
+
+              {/* Read-only Gmail Banner */}
+              {user.email && (
+                <div className="w-full text-left text-[11px] text-zinc-400 bg-black/30 p-2.5 rounded-xl border border-zinc-800">
+                  <span className="text-zinc-500">Gmail liên kết: </span>
+                  <span className="text-zinc-300 font-semibold">{user.email}</span>
+                </div>
+              )}
+
+              {/* Buttons */}
               <div className="flex items-center space-x-2 w-full pt-1">
                 <button
                   type="button"
-                  onClick={() => setIsEditing(false)}
+                  onClick={() => {
+                    setIsEditing(false);
+                    setUsernameError(null);
+                  }}
                   className="flex-1 py-2 bg-zinc-800 text-zinc-400 text-xs font-bold rounded-xl active:scale-95 transition-all"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-[#FF2A85] text-white text-xs font-extrabold rounded-xl flex items-center justify-center space-x-1 active:scale-95 transition-all shadow-[0_0_15px_rgba(255,42,133,0.5)]"
+                  disabled={isSaving}
+                  className="flex-1 py-2 bg-[#FF2A85] text-white text-xs font-extrabold rounded-xl flex items-center justify-center space-x-1 active:scale-95 transition-all shadow-[0_0_15px_rgba(255,42,133,0.5)] disabled:opacity-50"
                 >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Lưu thay đổi</span>
+                  {isSaving ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Lưu thay đổi</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -175,7 +355,7 @@ export default function ProfilePage() {
 
           {savedSuccess && (
             <p className="text-xs font-semibold mt-2 text-[#FF2A85]">
-              ✓ Đã cập nhật tên thành công!
+              ✓ Đã cập nhật hồ sơ & ID thành công!
             </p>
           )}
         </div>
