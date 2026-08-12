@@ -30,7 +30,7 @@ export const LocketDock: React.FC<LocketDockProps> = ({
 
       {/* Translucent Compact Pill Dock */}
       <div
-        className="rounded-full py-1.5 px-4 flex items-center justify-around gap-2 backdrop-blur-xl"
+        className="w-[78%] max-w-[300px] rounded-full py-2 px-6 flex items-center justify-between backdrop-blur-xl"
         style={{
           background: 'rgba(50, 35, 70, 0.65)',
           border: '1px solid rgba(255,255,255,0.10)',
