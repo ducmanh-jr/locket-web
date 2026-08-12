@@ -322,8 +322,29 @@ export const CameraView: React.FC<CameraViewProps> = ({
         <div className="w-10" />
       </div>
 
-      {/* Main Viewfinder with Sleek Neon Pink Rounded Border (Exact Screenshot) */}
-      <div className="relative w-full max-w-sm aspect-square my-auto rounded-[2.8rem] overflow-hidden bg-[#180a14] pink-card-border shadow-2xl flex items-center justify-center">
+      {/* Main Viewfinder Box */}
+      <div className="relative w-full max-w-sm aspect-square my-auto rounded-[2.8rem] overflow-hidden bg-[#180a14] border border-zinc-800/80 shadow-2xl flex items-center justify-center">
+        {/* Video Recording Progress Border (Runs around outer viewfinder box clockwise - Exact Image 2!) */}
+        {isRecording && (
+          <svg className="absolute inset-0 w-full h-full pointer-events-none z-30" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <rect
+              x="1.5"
+              y="1.5"
+              width="97"
+              height="97"
+              rx="12"
+              ry="12"
+              fill="none"
+              stroke="#FF2A85"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              strokeDasharray={370}
+              strokeDashoffset={370 - (370 * recordingProgress) / 100}
+              className="transition-all duration-75 ease-linear"
+              style={{ filter: 'drop-shadow(0 0 8px #FF2A85)' }}
+            />
+          </svg>
+        )}
         {cameraError ? (
           <div className="p-6 text-center text-red-400 text-xs">
             {cameraError}

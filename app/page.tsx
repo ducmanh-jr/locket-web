@@ -202,7 +202,7 @@ export default function HomePage() {
                   activeReaction={lastReaction}
                 />
               ) : (
-                <div className="w-[310px] h-[310px] my-auto rounded-[2.8rem] bg-[#180a14] pink-card-border p-8 flex flex-col items-center justify-center text-center">
+                <div className="w-[310px] h-[310px] my-auto rounded-[2.8rem] bg-[#180a14] border border-zinc-800/80 p-8 flex flex-col items-center justify-center text-center">
                   <div className="w-14 h-14 rounded-full bg-[#FF2A85]/20 text-[#FF2A85] flex items-center justify-center mb-3 border border-[#FF2A85]/40">
                     <Camera className="w-7 h-7" />
                   </div>
