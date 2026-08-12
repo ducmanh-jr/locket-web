@@ -502,7 +502,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         <div className="w-full flex justify-center mt-2.5 pointer-events-none">
           <div className="flex items-center space-x-2">
             <div
-              className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 relative"
+              className="w-7.5 h-7.5 rounded-full overflow-visible flex-shrink-0 relative"
               style={{
                 padding: '1.5px',
                 background: 'linear-gradient(135deg, #FF2A85, #FF69B4)',
@@ -516,6 +516,11 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                   className="w-full h-full object-cover"
                 />
               </div>
+              {(sender.isAdmin || sender.username?.includes('manh') || sender.email === 'nguyenducmanh.ovaltine@gmail.com') && (
+                <span className="absolute -top-2 -right-1 text-[11px] drop-shadow-[0_0_6px_rgba(255,215,0,0.9)] animate-bounce select-none z-10">
+                  👑
+                </span>
+              )}
             </div>
             <span className="text-white text-sm font-bold truncate max-w-[160px]">
               {sender.display_name}

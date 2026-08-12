@@ -72,20 +72,27 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
           <ChevronDown className="w-3.5 h-3.5 text-zinc-400 stroke-[2.2]" />
         </button>
 
-        {/* Right: Circular User Avatar (Exact Screenshot) */}
+        {/* Right: Circular User Avatar with Crown for Admin */}
         <button
           onClick={onOpenProfile}
-          className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-[#FF2A85] p-0.5 bg-zinc-900 flex-shrink-0 active:scale-95 transition-transform shadow-md"
+          className="relative w-9 h-9 rounded-full border-2 border-[#FF2A85] p-0.5 bg-zinc-900 flex-shrink-0 active:scale-95 transition-transform shadow-md"
           title="Trang cá nhân của bạn"
         >
-          <img
-            src={avatarSrc}
-            alt={currentUser.display_name}
-            onError={(e) => {
-              e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
-            }}
-            className="w-full h-full object-cover rounded-full"
-          />
+          <div className="w-full h-full rounded-full overflow-hidden">
+            <img
+              src={avatarSrc}
+              alt={currentUser.display_name}
+              onError={(e) => {
+                e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
+              }}
+              className="w-full h-full object-cover rounded-full"
+            />
+          </div>
+          {(currentUser.isAdmin || currentUser.email === 'nguyenducmanh.ovaltine@gmail.com') && (
+            <span className="absolute -top-1.5 -right-1 text-[11px] drop-shadow-[0_0_6px_rgba(255,215,0,0.9)] animate-bounce select-none">
+              👑
+            </span>
+          )}
         </button>
       </div>
 

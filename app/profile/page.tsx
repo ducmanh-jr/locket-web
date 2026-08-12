@@ -238,6 +238,12 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
+              {/* Admin Crown Badge */}
+              {(user.isAdmin || user.email === 'nguyenducmanh.ovaltine@gmail.com') && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-black px-2.5 py-0.5 rounded-full text-[11px] font-black shadow-[0_0_12px_rgba(255,215,0,0.9)] border border-yellow-200 flex items-center space-x-1 animate-bounce z-20">
+                  <span>👑 Admin</span>
+                </div>
+              )}
               {/* Camera Badge Overlay */}
               <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#FF2A85] text-white flex items-center justify-center shadow-lg border-2 border-[#10091D] active:scale-90 transition-transform">
                 <Camera className="w-4 h-4" />
