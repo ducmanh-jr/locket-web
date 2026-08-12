@@ -339,7 +339,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
       style={{ touchAction: 'none', overscrollBehavior: 'none' }}
-      className={`w-full flex-1 flex flex-col items-center justify-center select-none p-2 my-auto overflow-hidden relative ${
+      className={`w-full flex-1 flex flex-col items-center justify-center select-none my-auto overflow-hidden relative ${
         isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
       }`}
     >
@@ -347,7 +347,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       <div
         onClick={handleCardClick}
         onDoubleClick={handleDoubleTap}
-        className="w-[94%] max-w-[400px] aspect-square bg-black/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex-shrink-0 my-auto relative overflow-hidden rounded-[2.8rem] cursor-pointer"
+        className="w-full aspect-square bg-black/20 flex-shrink-0 my-auto relative overflow-hidden rounded-[2.2rem] cursor-pointer"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div

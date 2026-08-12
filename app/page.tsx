@@ -178,7 +178,7 @@ export default function HomePage() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ duration: 0.2 }}
-              className="w-full flex-1 flex flex-col justify-center items-center overflow-hidden p-1 relative"
+              className="w-full flex-1 flex flex-col justify-center items-center overflow-hidden relative"
             >
               <div className="w-full px-2 pt-1">
                 <SupabaseConfigNotice />
