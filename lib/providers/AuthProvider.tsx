@@ -78,19 +78,21 @@ function buildProfileFromSupabaseUser(user: any): Profile {
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize with cached profile for instant render, but loading=true until verified
-  const [userProfile, setUserProfile] = useState<Profile | null>(() => readCachedProfile());
+  const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
     async function initAuth() {
+      // Hydration-safe initial profile read
+      const cached = readCachedProfile();
+      if (cached && mounted) {
+        setUserProfile(cached);
+      }
+
       if (!isSupabaseConfigured()) {
-        // No Supabase → rely on cached profile only
-        const cached = readCachedProfile();
         if (mounted) {
-          setUserProfile(cached);
           setLoading(false);
         }
         return;
