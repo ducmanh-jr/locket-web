@@ -304,7 +304,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
   };
 
   return (
-    <div className="absolute inset-0 z-50 bg-[#0c050a] flex flex-col justify-between items-center p-4 selection:bg-[#FF2A85] selection:text-white">
+    <div className="absolute inset-0 z-50 bg-locket-purple flex flex-col justify-between items-center p-4 selection:bg-[#FF2A85] selection:text-white">
       {/* Top Header Bar */}
       <div className="w-full max-w-sm flex items-center justify-between z-10 pt-2">
         <button
@@ -323,7 +323,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
       </div>
 
       {/* Main Viewfinder Box */}
-      <div className="relative w-full max-w-sm aspect-square my-auto rounded-[2.8rem] overflow-hidden bg-[#180a14] border border-zinc-800/80 shadow-2xl flex items-center justify-center">
+      <div className="relative w-full max-w-sm aspect-square my-auto rounded-[2.8rem] overflow-hidden bg-black/30 shadow-2xl flex items-center justify-center">
         {/* Video Recording Progress Border (Runs around outer viewfinder box clockwise - Exact Image 2!) */}
         {isRecording && (
           <svg className="absolute inset-0 w-full h-full pointer-events-none z-30" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -463,14 +463,14 @@ export const CameraView: React.FC<CameraViewProps> = ({
             />
 
             <div className="w-full flex items-center justify-around px-4">
-              {/* Left: Gallery Upload Icon Button (Exact Screenshot) */}
+              {/* Left: Gallery Upload Icon (Simple - Exact Screenshot) */}
               <button
                 onClick={() => galleryInputRef.current?.click()}
                 disabled={isRecording}
-                className="w-13 h-13 rounded-2xl bg-[#1c0f18] hover:bg-[#281523] border border-[#FF2A85]/40 text-zinc-300 hover:text-white flex items-center justify-center active:scale-90 transition-all disabled:opacity-30 shadow-lg"
+                className="w-12 h-12 flex items-center justify-center text-white/70 hover:text-white active:scale-90 transition-all disabled:opacity-30"
                 title="Tải ảnh/video từ thư viện 🖼️"
               >
-                <ImagePlus className="w-6 h-6 text-zinc-300" />
+                <ImagePlus className="w-7 h-7" />
               </button>
 
               {/* Center: Large Neon Pink Shutter Ring + 360° Progress Bar (Exact Screenshot) */}
@@ -523,14 +523,14 @@ export const CameraView: React.FC<CameraViewProps> = ({
                 </button>
               </div>
 
-              {/* Right: Flip Camera Icon Button (Exact Screenshot) */}
+              {/* Right: Flip Camera Icon (Simple - Exact Screenshot) */}
               <button
                 onClick={triggerCameraFlip}
                 disabled={isRecording}
-                className="w-13 h-13 rounded-2xl bg-[#1c0f18] hover:bg-[#281523] border border-[#FF2A85]/40 text-zinc-300 hover:text-white flex items-center justify-center active:scale-90 transition-all disabled:opacity-30 shadow-lg"
+                className="w-12 h-12 flex items-center justify-center text-white/70 hover:text-white active:scale-90 transition-all disabled:opacity-30"
                 title="Đổi camera trước/sau 🔄"
               >
-                <RotateCcw className="w-6 h-6 text-zinc-300" />
+                <RotateCcw className="w-7 h-7" />
               </button>
             </div>
 

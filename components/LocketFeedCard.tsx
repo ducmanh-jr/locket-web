@@ -343,11 +343,11 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
       }`}
     >
-      {/* 1:1 Square Photo Card Container with Sleek Neon Pink Glowing Border (Exact Screenshot) */}
+      {/* 1:1 Square Photo Card Container */}
       <div
         onClick={handleCardClick}
         onDoubleClick={handleDoubleTap}
-        className="w-[94%] max-w-[400px] aspect-square bg-[#180a14] border border-zinc-800/80 shadow-[0_20px_50px_rgba(0,0,0,0.85)] flex-shrink-0 my-auto relative overflow-hidden rounded-[2.8rem] cursor-pointer transition-all duration-300"
+        className="w-[94%] max-w-[400px] aspect-square bg-black/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex-shrink-0 my-auto relative overflow-hidden rounded-[2.8rem] cursor-pointer"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -496,8 +496,24 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         </AnimatePresence>
       </div>
 
+      {/* Caption / Music Text Below Photo (Decorative italic style - Exact Screenshot) */}
+      {(moment.caption || moment.music) && (
+        <div className="w-full flex flex-col items-center mt-2 pointer-events-none px-4">
+          {moment.caption && (
+            <p className="text-white text-sm font-semibold italic text-center tracking-wide drop-shadow-lg">
+              {moment.caption}
+            </p>
+          )}
+          {moment.music && (
+            <p className="text-white/70 text-xs font-medium uppercase tracking-widest text-center mt-0.5">
+              ~ {moment.music.title} ~
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Sender Avatar, Name & Time BELOW Photo Card */}
-      <div className="w-full flex justify-center mt-3 pointer-events-none">
+      <div className="w-full flex justify-center mt-2 pointer-events-none">
         <div className="flex items-center space-x-2">
           <div
             className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 relative"

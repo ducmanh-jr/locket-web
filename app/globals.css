@@ -7,24 +7,32 @@
     overscroll-behavior: none;
     overscroll-behavior-y: none;
     touch-action: manipulation;
-    background-color: #0c050a;
+    background-color: #4A1D6A;
     color: #f4f4f5;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
   }
 
-  /* ===== FIXED NEON PINK LOCKET THEME ===== */
+  /* ===== LOCKET PURPLE WARM THEME ===== */
   :root {
     --locket-pink: #FF2A85;
     --locket-pink-light: #FF69B4;
     --locket-pink-dark: #C70055;
+    --locket-purple-start: #7B3FA0;
+    --locket-purple-mid: #5C2D82;
+    --locket-purple-end: #3D1560;
     --locket-pink-glow: 0 0 20px rgba(255, 42, 133, 0.65), 0 0 40px rgba(255, 105, 180, 0.35);
     --locket-pink-border: 2.5px solid #FF2A85;
   }
 }
 
-/* Custom sleek scrollbar for Locket dark theme */
+/* Purple gradient background utility */
+.bg-locket-purple {
+  background: linear-gradient(180deg, #7B3FA0 0%, #5C2D82 40%, #4A1D6A 100%);
+}
+
+/* Custom sleek scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
@@ -32,7 +40,7 @@
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #2c2c34;
+  background: rgba(255,255,255,0.2);
   border-radius: 9999px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {

@@ -46,7 +46,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
 
   return (
     <>
-      <div className="relative w-full z-40 px-4 pt-3 sm:pt-4 pb-2 flex items-center justify-between bg-black flex-shrink-0 border-b border-zinc-900/60">
+      <div className="relative w-full z-40 px-4 pt-3 sm:pt-4 pb-2 flex items-center justify-between bg-transparent flex-shrink-0">
 
         {/* Left: Speaker / Announcement Icon Button (Exact Screenshot) */}
         <button
@@ -55,16 +55,16 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
               try { navigator.vibrate(20); } catch (e) {}
             }
           }}
-          className="w-9 h-9 rounded-full bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center active:scale-95 transition-all shadow-md"
+          className="w-9 h-9 flex items-center justify-center text-white/80 hover:text-white active:scale-95 transition-all"
           title="Thông báo Locket"
         >
-          <Megaphone className="w-4.5 h-4.5 text-zinc-300 stroke-[2.2]" />
+          <Megaphone className="w-5 h-5 stroke-[2]" />
         </button>
 
         {/* Center: "👥 18 người bạn" Black Pill Button (Exact Screenshot) */}
         <button
           onClick={() => setShowFilterModal(true)}
-          className="flex items-center space-x-2 bg-[#1c141a] hover:bg-[#281c26] border border-[#FF2A85]/30 text-white font-extrabold px-4 py-1.5 rounded-full shadow-lg active:scale-95 transition-all cursor-pointer"
+          className="flex items-center space-x-2 bg-black/40 hover:bg-black/50 backdrop-blur-sm text-white font-extrabold px-4 py-1.5 rounded-full shadow-lg active:scale-95 transition-all cursor-pointer"
           title="Bấm để xem danh sách bạn bè"
         >
           <Users className="w-4 h-4 text-[#FF2A85] stroke-[2.4]" />

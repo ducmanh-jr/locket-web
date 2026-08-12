@@ -57,7 +57,7 @@ export default function HomePage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-full flex flex-col items-center justify-center bg-[#0c050a] text-white space-y-4">
+      <div className="min-h-full flex flex-col items-center justify-center bg-locket-purple text-white space-y-4">
         <div className="w-10 h-10 rounded-full border-4 border-[#FF2A85] border-t-transparent animate-spin" />
         <p className="text-xs font-semibold text-zinc-400">Đang kiểm tra tài khoản Google...</p>
       </div>
@@ -66,7 +66,7 @@ export default function HomePage() {
 
   if (!userProfile) {
     return (
-      <div className="min-h-full flex flex-col items-center justify-center bg-[#0c050a] text-white space-y-4 p-4 text-center">
+      <div className="min-h-full flex flex-col items-center justify-center bg-locket-purple text-white space-y-4 p-4 text-center">
         <div className="w-12 h-12 rounded-2xl bg-[#FF2A85]/20 text-[#FF2A85] flex items-center justify-center mb-2 border border-[#FF2A85]/40">
           <Camera className="w-6 h-6" />
         </div>
@@ -139,7 +139,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="h-full flex flex-col justify-between bg-[#0c050a] selection:bg-[#FF2A85] selection:text-white overflow-hidden relative">
+    <div className="h-full flex flex-col justify-between bg-locket-purple selection:bg-[#FF2A85] selection:text-white overflow-hidden relative">
       {/* Shared Room Header */}
       <LocketHeader
         currentUser={currentUser}
@@ -160,7 +160,7 @@ export default function HomePage() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-              className="w-full h-full absolute inset-0 bg-[#0c050a] z-30 transform-gpu will-change-transform"
+              className="w-full h-full absolute inset-0 bg-locket-purple z-30 transform-gpu will-change-transform"
             >
               <LocketHistoryGrid
                 moments={roomMoments}
@@ -185,7 +185,7 @@ export default function HomePage() {
               </div>
 
               {momentsLoading ? (
-                <div className="w-[310px] h-[310px] my-auto rounded-[2.8rem] bg-[#180a14] border border-zinc-800 flex items-center justify-center animate-pulse">
+                <div className="w-[310px] h-[310px] my-auto rounded-[2.8rem] bg-black/30 flex items-center justify-center animate-pulse">
                   <div className="w-10 h-10 rounded-full border-4 border-[#FF2A85] border-t-transparent animate-spin" />
                 </div>
               ) : roomMoments.length > 0 && currentMoment ? (
@@ -202,7 +202,7 @@ export default function HomePage() {
                   activeReaction={lastReaction}
                 />
               ) : (
-                <div className="w-[310px] h-[310px] my-auto rounded-[2.8rem] bg-[#180a14] border border-zinc-800/80 p-8 flex flex-col items-center justify-center text-center">
+                <div className="w-[310px] h-[310px] my-auto rounded-[2.8rem] bg-black/30 p-8 flex flex-col items-center justify-center text-center">
                   <div className="w-14 h-14 rounded-full bg-[#FF2A85]/20 text-[#FF2A85] flex items-center justify-center mb-3 border border-[#FF2A85]/40">
                     <Camera className="w-7 h-7" />
                   </div>
