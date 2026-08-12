@@ -622,7 +622,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                     onDeleteMoment(moment.id);
                     setShowOptionsModal(false);
                   }}
-                  className="w-full p-3 bg-red-500/10 hover:bg-red-500/20 rounded-2xl text-red-400 text-xs font-semibold flex items-center space-x-3 transition-all active:scale-98"
+                  className="w-full p-3 bg-red-500/10 hover:bg-red-500/20 rounded-2xl text-red-400 text-xs font-semibold flex items-center space-x-3 transition-all active:scale-98 border border-red-500/20"
                 >
                   <Trash2 className="w-4 h-4 text-red-400" />
                   <span>{isAdmin && !isMyMoment ? 'Xóa khoảnh khắc này (Quyền Admin 👑)' : 'Xóa khoảnh khắc này'}</span>
