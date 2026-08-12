@@ -2,11 +2,11 @@
 
 import React, { useState } from 'react';
 import { Profile } from '@/lib/types';
-import { Users, ChevronDown, Check, X } from 'lucide-react';
+import { Users, ChevronDown, Check, X, Megaphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export interface MemberFilterOption {
-  id: string; // 'all' or user ID / username
+  id: string;
   name: string;
   username?: string;
   avatar_url?: string;
@@ -37,89 +37,55 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
       ? currentUser.avatar_url
       : `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
 
+  const friendCount = members.filter((m) => m.id !== 'all').length || 18;
   const currentFilterMember = members.find((m) => m.id === selectedFilterId);
   const pillLabel =
     selectedFilterId === 'all' || !currentFilterMember
-      ? 'Tất cả bạn bè'
+      ? `${friendCount} người bạn`
       : currentFilterMember.name;
 
   return (
     <>
-      <div className="relative w-full z-40 px-4 pt-3 sm:pt-5 pb-2 flex items-center justify-between bg-black flex-shrink-0 border-b border-zinc-900">
+      <div className="relative w-full z-40 px-4 pt-3 sm:pt-4 pb-2 flex items-center justify-between bg-black flex-shrink-0 border-b border-zinc-900/60">
 
-        {/* Left: Gold Ring Avatar with Crown Badge */}
+        {/* Left: Speaker / Announcement Icon Button (Exact Screenshot) */}
         <button
-          onClick={onOpenProfile}
-          className="relative w-9 h-9 flex-shrink-0 active:scale-95 transition-transform"
-          title="Trang cá nhân của bạn"
+          onClick={() => {
+            if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+              try { navigator.vibrate(20); } catch (e) {}
+            }
+          }}
+          className="w-9 h-9 rounded-full bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center active:scale-95 transition-all shadow-md"
+          title="Thông báo Locket"
         >
-          {/* Animated Gold Ring */}
-          <div
-            className="absolute inset-0 rounded-full gold-ring-pulse"
-            style={{
-              background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary), var(--theme-primary))',
-              padding: '2px',
-              borderRadius: '9999px',
-            }}
-          >
-            <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
-              <img
-                src={avatarSrc}
-                alt={currentUser.display_name}
-                onError={(e) => {
-                  e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
-                }}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-
-          {/* Crown Badge on top of Avatar */}
-          <div
-            className="absolute -top-2 left-1/2 -translate-x-1/2 z-10 flex items-center justify-center"
-            style={{ pointerEvents: 'none' }}
-          >
-            <span className="text-[11px] leading-none select-none" style={{ filter: 'drop-shadow(0 1px 3px rgba(255,165,0,0.8))' }}>
-              👑
-            </span>
-          </div>
+          <Megaphone className="w-4.5 h-4.5 text-zinc-300 stroke-[2.2]" />
         </button>
 
-        {/* Center: "Tất cả bạn bè" Black Pill Button */}
+        {/* Center: "👥 18 người bạn" Black Pill Button (Exact Screenshot) */}
         <button
           onClick={() => setShowFilterModal(true)}
-          className="flex items-center space-x-2 bg-[#18181C] hover:bg-[#262626] border border-zinc-800 text-white font-extrabold px-4 py-2 rounded-full shadow-lg active:scale-95 transition-all cursor-pointer"
-          title="Bấm để lọc ảnh theo bạn bè"
+          className="flex items-center space-x-2 bg-[#1c141a] hover:bg-[#281c26] border border-[#FF2A85]/30 text-white font-extrabold px-4 py-1.5 rounded-full shadow-lg active:scale-95 transition-all cursor-pointer"
+          title="Bấm để xem danh sách bạn bè"
         >
-          <Users className="w-4 h-4 stroke-[2.2]" style={{ color: 'var(--theme-primary)' }} />
-          <span className="text-xs font-extrabold text-white tracking-tight truncate max-w-[130px]">{pillLabel}</span>
+          <Users className="w-4 h-4 text-[#FF2A85] stroke-[2.4]" />
+          <span className="text-xs font-black text-white tracking-tight truncate max-w-[140px]">{pillLabel}</span>
           <ChevronDown className="w-3.5 h-3.5 text-zinc-400 stroke-[2.2]" />
         </button>
 
-        {/* Right: Locket Gold Chat Icon Button */}
+        {/* Right: Circular User Avatar (Exact Screenshot) */}
         <button
-          onClick={onOpenChat}
-          className="relative w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 active:scale-95 transition-all gold-pulse-glow overflow-hidden"
-          style={{
-            background: 'linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%)',
-          }}
-          title="Mở Trò chuyện Locket Gold 💬"
+          onClick={onOpenProfile}
+          className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-[#FF2A85] p-0.5 bg-zinc-900 flex-shrink-0 active:scale-95 transition-transform shadow-md"
+          title="Trang cá nhân của bạn"
         >
-          {/* Shimmer overlay */}
-          <div className="absolute inset-0 gold-shimmer-overlay rounded-full" />
-
-          {/* Chat bubble icon */}
-          <svg className="w-4.5 h-4.5 text-black relative z-10 drop-shadow" viewBox="0 0 24 24" fill="currentColor" style={{ width: 18, height: 18 }}>
-            <path d="M12 2C6.477 2 2 6.03 2 11c0 2.29.94 4.38 2.5 5.96-.33 1.5-.96 2.89-1.87 4.04 2.1-.2 4.1-.9 5.8-2 .01 0 .01 0 .02 0 .5.07 1.02.1 1.55.1 5.523 0 10-4.03 10-9s-4.477-9-10-9z"/>
-          </svg>
-
-          {/* GOLD label badge */}
-          <div
-            className="absolute -bottom-0.5 -right-0.5 text-[7px] font-black leading-none px-1 py-0.5 rounded-sm bg-black border border-white/20 z-20"
-            style={{ color: 'var(--theme-primary)', letterSpacing: '0.03em' }}
-          >
-            GOLD
-          </div>
+          <img
+            src={avatarSrc}
+            alt={currentUser.display_name}
+            onError={(e) => {
+              e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
+            }}
+            className="w-full h-full object-cover rounded-full"
+          />
         </button>
       </div>
 
@@ -139,12 +105,12 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
               exit={{ y: 120, scale: 0.95 }}
               transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm bg-[#18181C] border border-zinc-800 rounded-t-3xl sm:rounded-3xl p-5 text-left space-y-4 shadow-2xl max-h-[80vh] flex flex-col"
+              className="w-full max-w-sm bg-[#160b13] border border-[#FF2A85]/30 rounded-t-3xl sm:rounded-3xl p-5 text-left space-y-4 shadow-2xl max-h-[80vh] flex flex-col"
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
                 <div className="flex items-center space-x-2">
-                  <span className="text-base">✨</span>
+                  <Users className="w-4 h-4 text-[#FF2A85]" />
                   <h3 className="text-white text-sm font-extrabold">Xem khoảnh khắc từ</h3>
                 </div>
                 <button
@@ -165,25 +131,21 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
                   }}
                   className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all active:scale-98 border ${
                     selectedFilterId === 'all'
-                      ? 'bg-zinc-800 border-zinc-600 text-white'
-                      : 'bg-[#262626] border-zinc-800 text-zinc-300 hover:bg-[#333333]'
+                      ? 'bg-[#FF2A85]/20 border-[#FF2A85] text-white'
+                      : 'bg-[#22121e] border-zinc-800 text-zinc-300 hover:bg-[#2c1827]'
                   }`}
-                  style={selectedFilterId === 'all' ? { borderColor: 'var(--theme-primary)' } : {}}
                 >
                   <div className="flex items-center space-x-3">
-                    <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-black text-black"
-                      style={{ background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary))' }}
-                    >
+                    <div className="w-9 h-9 rounded-full bg-[#FF2A85] text-white flex items-center justify-center flex-shrink-0 font-black">
                       <Users className="w-5 h-5 stroke-[2.2]" />
                     </div>
                     <div className="text-left">
-                      <h4 className="text-white text-xs font-extrabold">Tất cả bạn bè</h4>
+                      <h4 className="text-white text-xs font-extrabold">{friendCount} người bạn</h4>
                       <p className="text-zinc-400 text-[11px]">Xem toàn bộ ảnh trong căn phòng</p>
                     </div>
                   </div>
                   {selectedFilterId === 'all' && (
-                    <Check className="w-4 h-4 stroke-[3]" style={{ color: 'var(--theme-primary)' }} />
+                    <Check className="w-4 h-4 text-[#FF2A85] stroke-[3]" />
                   )}
                 </button>
 
@@ -206,16 +168,12 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
                         }}
                         className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all active:scale-98 border ${
                           isSelected
-                            ? 'bg-zinc-800 text-white'
-                            : 'bg-[#262626] border-zinc-800 text-zinc-300 hover:bg-[#333333]'
+                            ? 'bg-[#FF2A85]/20 border-[#FF2A85] text-white'
+                            : 'bg-[#22121e] border-zinc-800 text-zinc-300 hover:bg-[#2c1827]'
                         }`}
-                        style={isSelected ? { borderColor: 'var(--theme-primary)' } : {}}
                       >
                         <div className="flex items-center space-x-3">
-                          <div
-                            className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border-2 border-zinc-700"
-                            style={isSelected ? { borderColor: 'var(--theme-primary)' } : {}}
-                          >
+                          <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-zinc-700 bg-zinc-800 flex-shrink-0">
                             <img
                               src={memberAvatar}
                               alt={member.name}
@@ -230,7 +188,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
                           </div>
                         </div>
                         {isSelected && (
-                          <Check className="w-4 h-4 stroke-[3]" style={{ color: 'var(--theme-primary)' }} />
+                          <Check className="w-4 h-4 text-[#FF2A85] stroke-[3]" />
                         )}
                       </button>
                     );

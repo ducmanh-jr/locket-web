@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
-import { LayoutGrid, MoreHorizontal, Send } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
+import { LayoutGrid, Home, MessageSquare } from 'lucide-react';
 
 interface LocketDockProps {
   currentView: 'feed' | 'grid';
@@ -19,14 +18,7 @@ export const LocketDock: React.FC<LocketDockProps> = ({
   onToggleView,
   onOpenCamera,
   onOpenMenu,
-  onSendDirectMessage,
-  onReactEmoji,
-  isMyMoment = false,
 }) => {
-  const [messageText, setMessageText] = useState('');
-  const [goldFlashes, setGoldFlashes] = useState<{ id: number; emoji: string; x: number }[]>([]);
-  const emojiBarRef = useRef<HTMLDivElement>(null);
-
   const triggerHaptic = () => {
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {
       try {
@@ -35,186 +27,76 @@ export const LocketDock: React.FC<LocketDockProps> = ({
     }
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!messageText.trim()) return;
-    triggerHaptic();
-    if (onSendDirectMessage) {
-      onSendDirectMessage(messageText);
-    }
-    setMessageText('');
-  };
-
-  const handleQuickEmoji = (emoji: string, index: number) => {
-    triggerHaptic();
-    if (onReactEmoji) {
-      onReactEmoji(emoji);
-    }
-
-    const newFlash = { id: Date.now() + index, emoji, x: index };
-    setGoldFlashes((prev) => [...prev, newFlash]);
-    setTimeout(() => {
-      setGoldFlashes((prev) => prev.filter((f) => f.id !== newFlash.id));
-    }, 700);
-  };
-
-  const REACTION_EMOJIS = ['💛', '😂', '💖', '🔥', '👍', '😍', '⭐', '🏆'];
-
   return (
-    <div className="w-full flex flex-col items-center z-40 px-4 pb-5 pt-1 bg-black space-y-2.5 flex-shrink-0">
+    <div className="w-full flex flex-col items-center z-40 px-4 pb-4 pt-1 space-y-3 flex-shrink-0 bg-transparent pointer-events-auto">
 
-      {/* Feed View: Emoji Reaction Bar + Chat Input */}
-      {currentView === 'feed' && (
-        <div className="w-full max-w-xs flex flex-col items-center space-y-2">
-
-          {/* Dynamic Themed Emoji Reaction Bar */}
-          <div
-            className="w-full rounded-full px-3 py-1.5 shadow-xl flex items-center justify-around relative overflow-hidden"
-            ref={emojiBarRef}
-            style={{
-              background: 'rgba(24,24,28,0.95)',
-              border: '1px solid var(--theme-glow)',
-              boxShadow: '0 0 15px var(--theme-bg-tint)',
-              backdropFilter: 'blur(12px)',
-            }}
-          >
-            <div
-              className="absolute inset-0 pointer-events-none rounded-full"
-              style={{
-                background: 'linear-gradient(90deg, transparent 0%, var(--theme-bg-tint) 50%, transparent 100%)',
-              }}
-            />
-
-            {REACTION_EMOJIS.map((emoji, i) => {
-              const isFlashing = goldFlashes.some((f) => f.x === i);
-              return (
-                <div key={emoji} className="relative flex items-center justify-center">
-                  <button
-                    onClick={() => handleQuickEmoji(emoji, i)}
-                    className="text-xl p-1 cursor-pointer transition-all duration-150 relative z-10"
-                    style={{
-                      transform: isFlashing ? 'scale(1.5)' : 'scale(1)',
-                      filter: isFlashing
-                        ? 'drop-shadow(0 0 8px var(--theme-primary))'
-                        : 'none',
-                      transition: 'transform 0.15s ease, filter 0.15s ease',
-                    }}
-                    title={`Thả emoji ${emoji}`}
-                  >
-                    {emoji}
-                  </button>
-
-                  <AnimatePresence>
-                    {isFlashing && (
-                      <motion.div
-                        key={`flash-${emoji}-${i}`}
-                        initial={{ scale: 0, opacity: 1 }}
-                        animate={{ scale: 2.5, opacity: 0 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.5, ease: 'easeOut' }}
-                        className="absolute inset-0 rounded-full pointer-events-none"
-                        style={{
-                          background: 'radial-gradient(circle, var(--theme-glow) 0%, transparent 70%)',
-                        }}
-                      />
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Chat Input Pill */}
-          <form
-            onSubmit={handleSendMessage}
-            className="w-full flex items-center rounded-full px-4 py-2 shadow-lg"
-            style={{
-              background: '#18181C',
-              border: '1px solid rgba(255,255,255,0.1)',
-            }}
-          >
-            <input
-              type="text"
-              value={messageText}
-              onChange={(e) => setMessageText(e.target.value)}
-              placeholder="Gửi tin nhắn..."
-              className="w-full bg-transparent text-white text-xs font-medium placeholder-zinc-500 focus:outline-none"
-            />
-            {messageText.trim() && (
-              <button type="submit" className="p-1 flex-shrink-0 active:scale-90 transition-transform">
-                <Send
-                  className="w-4 h-4 stroke-[2.5]"
-                  style={{ color: 'var(--theme-primary)' }}
-                />
-              </button>
-            )}
-          </form>
+      {/* Pill "518 Lịch sử ˅" Button (Exact Screenshot) */}
+      <button
+        onClick={() => {
+          triggerHaptic();
+          onToggleView(currentView === 'grid' ? 'feed' : 'grid');
+        }}
+        className="flex items-center space-x-2 bg-[#22101e]/90 hover:bg-[#2e1628] border border-[#FF2A85]/40 text-white px-4 py-1.5 rounded-full shadow-lg active:scale-95 transition-all cursor-pointer backdrop-blur-md"
+        title="Bấm để xem lịch sử khoảnh khắc"
+      >
+        <div className="w-6 h-6 rounded-lg bg-[#FF2A85]/20 border border-[#FF2A85]/40 flex items-center justify-center text-[10px] font-black text-[#FF2A85]">
+          518
         </div>
-      )}
+        <span className="text-xs font-bold text-white tracking-tight">Lịch sử</span>
+        <span className="text-xs text-zinc-400">˅</span>
+      </button>
 
-      {/* Bottom Main Dock Bar */}
-      <div className="w-full max-w-xs flex items-center justify-between px-4 pt-1">
-
-        {/* Left: Grid Icon */}
+      {/* Translucent Floating Bottom Navbar Dock (3 Icons: Grid 🔳, Home 🏠, Chat 💬 with Badge) */}
+      <div
+        className="w-[82%] max-w-[280px] rounded-full py-2 px-5 flex items-center justify-around shadow-2xl backdrop-blur-xl border"
+        style={{
+          background: 'rgba(28, 12, 24, 0.75)',
+          borderColor: 'rgba(255, 42, 133, 0.25)',
+          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 42, 133, 0.15)',
+        }}
+      >
+        {/* Left: Grid Icon (🔳) */}
         <button
           onClick={() => {
             triggerHaptic();
             onToggleView(currentView === 'grid' ? 'feed' : 'grid');
           }}
-          className="w-12 h-12 rounded-full flex items-center justify-center transition-all active:scale-90 shadow-md"
-          style={
+          className={`w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90 ${
             currentView === 'grid'
-              ? {
-                  background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary))',
-                  boxShadow: '0 0 15px var(--theme-glow)',
-                  color: 'black',
-                }
-              : {
-                  background: '#18181C',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  color: 'white',
-                }
-          }
-          title="Lưới ảnh kỷ niệm"
+              ? 'text-[#FF2A85] bg-[#FF2A85]/20 border border-[#FF2A85]/50 shadow-md'
+              : 'text-zinc-400 hover:text-white'
+          }`}
+          title="Lưới khoảnh khắc"
         >
           <LayoutGrid className="w-5 h-5 stroke-[2.2]" />
         </button>
 
-        {/* Center: Giant Themed Locket Camera Shutter Button */}
+        {/* Center: Home Icon (🏠) - Active Shutter Button */}
         <button
           onClick={() => {
             triggerHaptic();
             onOpenCamera();
           }}
-          className="w-20 h-20 rounded-full p-1.5 flex items-center justify-center active:scale-90 transition-all cursor-pointer relative overflow-hidden"
-          style={{
-            border: '5px solid var(--theme-primary)',
-            boxShadow: '0 0 25px var(--theme-glow)',
-            background: 'black',
-          }}
-          title="Chụp ảnh mới"
+          className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#FF2A85] to-[#FF69B4] text-white flex items-center justify-center active:scale-90 transition-all shadow-[0_0_20px_rgba(255,42,133,0.6)] cursor-pointer"
+          title="Chụp khoảnh khắc mới"
         >
-          <div
-            className="w-full h-full rounded-full shadow-inner"
-            style={{ background: 'white' }}
-          />
+          <Home className="w-6 h-6 fill-white stroke-[1.5]" />
         </button>
 
-        {/* Right: 3 Dots Menu Button */}
+        {/* Right: Chat Icon (💬) with Unread Notification Badge '4' */}
         <button
           onClick={() => {
             triggerHaptic();
             onOpenMenu();
           }}
-          className="w-12 h-12 rounded-full flex items-center justify-center active:scale-90 transition-all shadow-md"
-          style={{
-            background: '#18181C',
-            border: '1px solid rgba(255,255,255,0.15)',
-            color: 'white',
-          }}
-          title="Tùy chọn & Bạn bè"
+          className="relative w-10 h-10 rounded-full flex items-center justify-center text-zinc-400 hover:text-white active:scale-90 transition-all"
+          title="Trò chuyện Locket"
         >
-          <MoreHorizontal className="w-6 h-6 stroke-[2.2]" />
+          <MessageSquare className="w-5 h-5 stroke-[2.2]" />
+          {/* Unread Counter Badge '4' (Exact Screenshot) */}
+          <span className="absolute -top-1 -right-1 w-4.5 h-4.5 rounded-full bg-[#FF2A85] text-white text-[9px] font-black flex items-center justify-center border-2 border-[#1c0c18] shadow-md">
+            4
+          </span>
         </button>
       </div>
     </div>

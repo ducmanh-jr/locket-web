@@ -5,7 +5,6 @@ import { Profile } from '@/lib/types';
 import { captureSquarePhoto, createVideoRecorder, CapturedMedia } from '@/lib/camera';
 import { LocketCaptionWidgetSelector } from '@/components/LocketCaptionWidgetSelector';
 import {
-  Camera,
   RotateCcw,
   Send,
   X,
@@ -51,7 +50,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
   const [selectedMusic, setSelectedMusic] = useState<MusicTrack | null>(null);
   const [showMusicPicker, setShowMusicPicker] = useState<boolean>(false);
 
-  // Gallery Upload (Locket Gold Feature)
+  // Gallery Upload
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -305,38 +304,26 @@ export const CameraView: React.FC<CameraViewProps> = ({
   };
 
   return (
-    <div className="absolute inset-0 z-50 bg-black flex flex-col justify-between items-center p-4 selection:bg-[#FFC700] selection:text-black">
+    <div className="absolute inset-0 z-50 bg-[#0c050a] flex flex-col justify-between items-center p-4 selection:bg-[#FF2A85] selection:text-white">
       {/* Top Header Bar */}
       <div className="w-full max-w-sm flex items-center justify-between z-10 pt-2">
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-[#18181C] text-zinc-400 flex items-center justify-center border border-zinc-800 hover:text-white transition-colors"
+          className="w-10 h-10 rounded-full bg-[#1c0f18] text-zinc-400 flex items-center justify-center border border-zinc-800 hover:text-white transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--theme-primary)' }} />
-          {isRecording ? 'Đang quay video (max 5s)...' : 'Chụp Khoảnh Khắc Locket Gold'}
+        <span className="text-xs font-bold uppercase tracking-wider text-[#FF2A85] flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5" />
+          {isRecording ? 'Đang quay video (max 5s)...' : 'Chụp khoảnh khắc Locket'}
         </span>
 
-        {!capturedMedia ? (
-          <button
-            onClick={toggleFacingMode}
-            disabled={isRecording}
-            className="w-10 h-10 rounded-full bg-[#18181C] flex items-center justify-center border border-zinc-800 hover:bg-[#262626] transition-colors disabled:opacity-40"
-            style={{ color: 'var(--theme-primary)' }}
-            title="Đổi camera trước/sau"
-          >
-            <RotateCcw className="w-5 h-5" />
-          </button>
-        ) : (
-          <div className="w-10" />
-        )}
+        <div className="w-10" />
       </div>
 
-      {/* Main Viewfinder / Media Review */}
-      <div className="relative w-full max-w-sm aspect-square my-auto rounded-[2.5rem] overflow-hidden bg-[#18181C] locket-theme-card-border shadow-2xl flex items-center justify-center transition-all duration-300">
+      {/* Main Viewfinder with Sleek Neon Pink Rounded Border (Exact Screenshot) */}
+      <div className="relative w-full max-w-sm aspect-square my-auto rounded-[2.8rem] overflow-hidden bg-[#180a14] pink-card-border shadow-2xl flex items-center justify-center">
         {cameraError ? (
           <div className="p-6 text-center text-red-400 text-xs">
             {cameraError}
@@ -363,7 +350,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
               </div>
             )}
             {isRecording && (
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-600/90 text-white font-bold text-xs px-3.5 py-1 rounded-full flex items-center space-x-2 animate-pulse shadow-lg">
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#FF2A85] text-white font-bold text-xs px-3.5 py-1 rounded-full flex items-center space-x-2 animate-pulse shadow-lg">
                 <div className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
                 <span>Quay video: {(recordingProgress * 0.05).toFixed(1)}s / 5s</span>
               </div>
@@ -381,17 +368,16 @@ export const CameraView: React.FC<CameraViewProps> = ({
               controls={false}
               preload="auto"
               onCanPlay={(e) => e.currentTarget.play().catch(() => {})}
-              className="w-full h-full object-cover rounded-[2.5rem]"
+              className="w-full h-full object-cover rounded-[2.8rem]"
             />
-            <div className="absolute top-4 left-3 right-3 flex items-center justify-center space-x-1.5 bg-black/80 backdrop-blur-md p-1.5 rounded-full border border-white/20 shadow-xl z-20">
+            <div className="absolute top-4 left-3 right-3 flex items-center justify-center space-x-1.5 bg-black/80 backdrop-blur-md p-1.5 rounded-full border border-[#FF2A85]/30 shadow-xl z-20">
               <button
                 onClick={() => { killGlobalAudio(); setAudioOption('mute'); }}
                 className={`flex-1 py-1 px-2.5 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
                   audioOption === 'mute'
-                    ? 'bg-white text-black shadow-md'
+                    ? 'bg-[#FF2A85] text-white shadow-md'
                     : 'text-zinc-400 hover:text-white'
                 }`}
-                style={audioOption === 'mute' ? { background: 'var(--theme-primary)', color: 'black' } : {}}
               >
                 <VolumeX className="w-3.5 h-3.5" />
                 <span>Im lặng 🔇</span>
@@ -401,10 +387,9 @@ export const CameraView: React.FC<CameraViewProps> = ({
                 onClick={() => { killGlobalAudio(); setAudioOption('original'); }}
                 className={`flex-1 py-1 px-2.5 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
                   audioOption === 'original'
-                    ? 'bg-white text-black shadow-md'
+                    ? 'bg-[#FF2A85] text-white shadow-md'
                     : 'text-zinc-400 hover:text-white'
                 }`}
-                style={audioOption === 'original' ? { background: 'var(--theme-primary)', color: 'black' } : {}}
               >
                 <Mic className="w-3.5 h-3.5" />
                 <span>Âm gốc 🎙️</span>
@@ -417,10 +402,9 @@ export const CameraView: React.FC<CameraViewProps> = ({
                 }}
                 className={`flex-1 py-1 px-2.5 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
                   audioOption === 'music'
-                    ? 'bg-white text-black shadow-md'
+                    ? 'bg-[#FF2A85] text-white shadow-md'
                     : 'text-zinc-400 hover:text-white'
                 }`}
-                style={audioOption === 'music' ? { background: 'var(--theme-primary)', color: 'black' } : {}}
               >
                 <Music className="w-3.5 h-3.5" />
                 <span>Thêm nhạc 🎵</span>
@@ -445,7 +429,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
         )}
       </div>
 
-      {/* Bottom Controls / Action Buttons */}
+      {/* Bottom Controls (Gallery Icon on Left + Center Neon Pink Shutter + Flip Cam on Right) */}
       <div className="w-full max-w-sm pb-6 z-10">
         {!capturedMedia ? (
           <div className="flex flex-col items-center justify-center space-y-2">
@@ -457,32 +441,22 @@ export const CameraView: React.FC<CameraViewProps> = ({
               onChange={handleGalleryUpload}
             />
 
-            <div className="flex items-center space-x-5">
-              {/* Left: Gallery Upload Button (Gold Exclusive) */}
+            <div className="w-full flex items-center justify-around px-4">
+              {/* Left: Gallery Upload Icon Button (Exact Screenshot) */}
               <button
                 onClick={() => galleryInputRef.current?.click()}
                 disabled={isRecording}
-                className="w-14 h-14 rounded-full bg-[#18181C] border-2 flex items-center justify-center flex-col space-y-0.5 active:scale-90 transition-all disabled:opacity-30 shadow-lg"
-                style={{
-                  borderColor: 'var(--theme-primary)',
-                  boxShadow: '0 0 12px var(--theme-glow)',
-                }}
-                title="Tải ảnh/video từ thư viện 🖼️ (Locket Gold)"
+                className="w-13 h-13 rounded-2xl bg-[#1c0f18] hover:bg-[#281523] border border-[#FF2A85]/40 text-zinc-300 hover:text-white flex items-center justify-center active:scale-90 transition-all disabled:opacity-30 shadow-lg"
+                title="Tải ảnh/video từ thư viện 🖼️"
               >
-                <ImagePlus className="w-5 h-5" style={{ color: 'var(--theme-primary)' }} />
-                <span
-                  className="text-[7px] font-black tracking-wider leading-none"
-                  style={{ color: 'var(--theme-primary)' }}
-                >
-                  GOLD
-                </span>
+                <ImagePlus className="w-6 h-6 text-zinc-300" />
               </button>
 
-              {/* Center: Shutter Button with Themed Progress Ring */}
+              {/* Center: Large Neon Pink Shutter Ring + 360° Progress Bar (Exact Screenshot) */}
               <div className="relative w-20 h-20 flex items-center justify-center">
                 {isRecording && (
                   <svg
-                    className="absolute inset-0 w-20 h-20 -rotate-90 pointer-events-none z-20 gold-progress-ring"
+                    className="absolute inset-0 w-20 h-20 -rotate-90 pointer-events-none z-20"
                     viewBox="0 0 80 80"
                   >
                     <circle
@@ -493,7 +467,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
                     />
                     <circle
                       cx="40" cy="40" r="36"
-                      stroke="var(--theme-primary)"
+                      stroke="#FF2A85"
                       strokeWidth="5"
                       fill="transparent"
                       strokeLinecap="round"
@@ -509,32 +483,34 @@ export const CameraView: React.FC<CameraViewProps> = ({
                   onMouseUp={handleShutterUp}
                   onTouchStart={handleShutterDown}
                   onTouchEnd={handleShutterUp}
-                  className={`w-20 h-20 rounded-full border-4 p-1.5 flex items-center justify-center transition-all active:scale-90 ${
-                    isRecording ? 'scale-105' : ''
+                  className={`w-20 h-20 rounded-full border-4 border-[#FF2A85] p-1.5 flex items-center justify-center transition-all active:scale-90 shadow-[0_0_20px_rgba(255,42,133,0.5)] ${
+                    isRecording ? 'scale-105 shadow-[0_0_30px_rgba(255,42,133,0.8)]' : ''
                   }`}
-                  style={{
-                    borderColor: 'var(--theme-primary)',
-                    boxShadow: isRecording
-                      ? '0 0 25px var(--theme-glow)'
-                      : '0 0 18px var(--theme-glow)',
-                  }}
                   title="Nhấn để chụp ảnh • Nhấn giữ để quay video (max 5s)"
                 >
                   <div
                     className="w-full h-full transition-all duration-200"
                     style={isRecording ? {
-                      background: 'var(--theme-primary)',
+                      background: '#FF2A85',
                       borderRadius: '30%',
                       transform: 'scale(0.72)',
                     } : {
-                      background: 'white',
+                      background: 'rgba(255,255,255,0.3)',
                       borderRadius: '9999px',
                     }}
                   />
                 </button>
               </div>
 
-              <div className="w-14 h-14" />
+              {/* Right: Flip Camera Icon Button (Exact Screenshot) */}
+              <button
+                onClick={triggerCameraFlip}
+                disabled={isRecording}
+                className="w-13 h-13 rounded-2xl bg-[#1c0f18] hover:bg-[#281523] border border-[#FF2A85]/40 text-zinc-300 hover:text-white flex items-center justify-center active:scale-90 transition-all disabled:opacity-30 shadow-lg"
+                title="Đổi camera trước/sau 🔄"
+              >
+                <RotateCcw className="w-6 h-6 text-zinc-300" />
+              </button>
             </div>
 
             <span className="text-[11px] font-semibold text-zinc-400 text-center">
@@ -558,17 +534,13 @@ export const CameraView: React.FC<CameraViewProps> = ({
               <button
                 onClick={handleSend}
                 disabled={isSending}
-                className="flex-1 py-3.5 text-black font-extrabold text-xs rounded-full flex items-center justify-center space-x-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed gold-shimmer-overlay"
-                style={{
-                  background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary))',
-                  boxShadow: '0 0 20px var(--theme-glow)',
-                }}
+                className="flex-1 py-3.5 bg-[#FF2A85] text-white font-extrabold text-xs rounded-full flex items-center justify-center space-x-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(255,42,133,0.6)]"
               >
                 {isSending ? (
-                  <div className="w-4 h-4 rounded-full border-2 border-black border-t-transparent animate-spin" />
+                  <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
                 ) : (
                   <>
-                    <Send className="w-4 h-4 fill-black" />
+                    <Send className="w-4 h-4 fill-white" />
                     <span>Gửi khoảnh khắc 🚀</span>
                   </>
                 )}

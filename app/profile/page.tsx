@@ -12,27 +12,21 @@ import {
   Edit3,
   Check,
   ChevronRight,
-  Crown,
-  Star,
-  Palette,
+  Sparkles,
 } from 'lucide-react';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/lib/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
-import { LocketThemePickerModal } from '@/components/LocketThemePickerModal';
-import { useTheme } from '@/lib/providers/ThemeProvider';
 
 export default function ProfilePage() {
   const router = useRouter();
   const { userProfile, loading: authLoading, signOut, updateProfile } = useAuth();
-  const { themeConfig } = useTheme();
   const [user, setUser] = useState<Profile | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [displayName, setDisplayName] = useState<string>('');
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
   const [showWidgetModal, setShowWidgetModal] = useState<boolean>(false);
-  const [showThemePicker, setShowThemePicker] = useState<boolean>(false);
 
   useEffect(() => {
     if (userProfile) {
@@ -75,18 +69,10 @@ export default function ProfilePage() {
     router.push('/login');
   };
 
-  if (authLoading) {
+  if (authLoading || !user) {
     return (
-      <div className="min-h-full flex items-center justify-center bg-black">
-        <div className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor: 'var(--theme-primary)', borderTopColor: 'transparent' }} />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-full flex items-center justify-center bg-black">
-        <div className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor: 'var(--theme-primary)', borderTopColor: 'transparent' }} />
+      <div className="min-h-full flex items-center justify-center bg-[#0c050a]">
+        <div className="w-10 h-10 rounded-full border-4 border-[#FF2A85] border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -94,8 +80,7 @@ export default function ProfilePage() {
   const avatarSrc = user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`;
 
   return (
-    <div className="h-full flex flex-col justify-between bg-black text-white px-4 pt-3 pb-4 select-none overflow-y-auto custom-scrollbar">
-      {/* Top Header Bar */}
+    <div className="h-full flex flex-col justify-between bg-[#0c050a] text-white px-4 pt-3 pb-4 select-none overflow-y-auto custom-scrollbar">
       <div>
         <div className="flex items-center space-x-3 pb-4 border-b border-zinc-900">
           <button
@@ -107,93 +92,10 @@ export default function ProfilePage() {
           <h1 className="text-white text-lg font-extrabold">Cài đặt tài khoản</h1>
         </div>
 
-        {/* ===== LOCKET GOLD MEMBERSHIP CARD ===== */}
-        <div
-          className="my-4 rounded-3xl p-4 relative overflow-hidden gold-shimmer-overlay"
-          style={{
-            background: 'linear-gradient(135deg, #1a1200 0%, #2d1f00 40%, #1a1200 100%)',
-            border: '1.5px solid var(--theme-primary)',
-            boxShadow: '0 0 25px var(--theme-glow), inset 0 1px 0 rgba(255,255,255,0.15)',
-          }}
-        >
-          {/* Background decorative stars */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
-            {['top-2 right-8', 'top-5 right-24', 'bottom-4 right-14', 'top-3 left-32', 'bottom-2 left-20'].map((pos, i) => (
-              <span key={i} className={`absolute ${pos} text-[10px] opacity-30`} style={{ color: 'var(--theme-primary)' }}>★</span>
-            ))}
-          </div>
-
-          <div className="flex items-center space-x-3 relative z-10">
-            {/* Crown icon */}
-            <div
-              className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-              style={{
-                background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary))',
-                boxShadow: '0 0 16px var(--theme-glow)',
-              }}
-            >
-              <Crown className="w-6 h-6 text-black" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center space-x-1.5 mb-0.5">
-                <span
-                  className="text-sm font-black tracking-wide"
-                  style={{
-                    background: 'linear-gradient(90deg, var(--theme-primary), var(--theme-secondary))',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}
-                >
-                  LOCKET GOLD
-                </span>
-                <Star className="w-3.5 h-3.5 fill-current" style={{ color: 'var(--theme-primary)' }} />
-              </div>
-              <p className="text-[11px] text-zinc-400 leading-tight">
-                Thành viên Premium · Toàn bộ tính năng Gold 🚀
-              </p>
-            </div>
-            {/* Active badge */}
-            <div
-              className="text-[10px] font-black px-2.5 py-1 rounded-full flex-shrink-0"
-              style={{
-                background: 'var(--theme-bg-tint)',
-                border: '1px solid var(--theme-primary)',
-                color: 'var(--theme-primary)',
-              }}
-            >
-              ✓ Active
-            </div>
-          </div>
-
-          {/* Gold features chips */}
-          <div className="flex flex-wrap gap-1.5 mt-3 relative z-10">
-            {['📸 Gallery Upload', '🎵 Nhạc nền Gold', '✨ Caption VIP', '🎥 Video HD', '👑 Crown Badge'].map((feat) => (
-              <span
-                key={feat}
-                className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid var(--theme-primary)',
-                  color: 'var(--theme-primary)',
-                }}
-              >
-                {feat}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Profile Header with Gold Animated Ring */}
-        <div className="flex flex-col items-center text-center mb-6">
+        {/* Profile Header with Neon Pink Ring */}
+        <div className="flex flex-col items-center text-center my-6">
           <div className="relative mb-3">
-            {/* Themed animated ring */}
-            <div
-              className="w-24 h-24 rounded-full p-[2.5px] gold-ring-pulse"
-              style={{
-                background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary), var(--theme-primary))',
-              }}
-            >
+            <div className="w-24 h-24 rounded-full p-[2.5px] pink-ring-pulse bg-gradient-to-tr from-[#FF2A85] to-[#FF69B4]">
               <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
                 <img
                   src={avatarSrc}
@@ -201,10 +103,6 @@ export default function ProfilePage() {
                   className="w-full h-full object-cover rounded-full"
                 />
               </div>
-            </div>
-            {/* Crown overlay */}
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-              <span className="text-xl" style={{ filter: 'drop-shadow(0 2px 6px rgba(255,165,0,0.9))' }}>👑</span>
             </div>
           </div>
 
@@ -218,9 +116,9 @@ export default function ProfilePage() {
                   setDisplayName(user.display_name);
                   setIsEditing(true);
                 }}
-                className="mt-3 px-4 py-1.5 bg-[#18181C] hover:bg-[#262626] border border-zinc-800 text-zinc-200 hover:text-white font-bold text-xs rounded-full flex items-center space-x-1.5 transition-all active:scale-95 shadow-md"
+                className="mt-3 px-4 py-1.5 bg-[#1a0c16] hover:bg-[#281423] border border-[#FF2A85]/30 text-zinc-200 hover:text-white font-bold text-xs rounded-full flex items-center space-x-1.5 transition-all active:scale-95 shadow-md"
               >
-                <Edit3 className="w-3.5 h-3.5" style={{ color: 'var(--theme-primary)' }} />
+                <Edit3 className="w-3.5 h-3.5 text-[#FF2A85]" />
                 <span>Chỉnh sửa hồ sơ</span>
               </button>
             </div>
@@ -230,11 +128,7 @@ export default function ProfilePage() {
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                className="w-full text-white text-xs font-semibold rounded-2xl px-4 py-2.5 text-center focus:outline-none shadow-inner"
-                style={{
-                  background: '#262626',
-                  border: '1.5px solid var(--theme-primary)',
-                }}
+                className="w-full text-white text-xs font-semibold rounded-2xl px-4 py-2.5 text-center focus:outline-none shadow-inner bg-[#1a0c16] border border-[#FF2A85]"
                 placeholder="Nhập tên mới..."
               />
               <div className="flex items-center space-x-2 w-full">
@@ -247,11 +141,7 @@ export default function ProfilePage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 text-black text-xs font-extrabold rounded-xl flex items-center justify-center space-x-1 active:scale-95 transition-all"
-                  style={{
-                    background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary))',
-                    boxShadow: '0 0 15px var(--theme-glow)',
-                  }}
+                  className="flex-1 py-2 bg-[#FF2A85] text-white text-xs font-extrabold rounded-xl flex items-center justify-center space-x-1 active:scale-95 transition-all shadow-[0_0_15px_rgba(255,42,133,0.5)]"
                 >
                   <Check className="w-3.5 h-3.5" />
                   <span>Lưu</span>
@@ -261,7 +151,7 @@ export default function ProfilePage() {
           )}
 
           {savedSuccess && (
-            <p className="text-xs font-semibold mt-2" style={{ color: 'var(--theme-primary)' }}>
+            <p className="text-xs font-semibold mt-2 text-[#FF2A85]">
               ✓ Đã cập nhật tên thành công!
             </p>
           )}
@@ -269,13 +159,12 @@ export default function ProfilePage() {
 
         {/* Grouped Settings List */}
         <div className="space-y-2.5">
-          {/* Menu Item 1: Bạn bè */}
           <button
             onClick={() => router.push('/friends')}
-            className="w-full bg-[#18181C] hover:bg-[#262626] border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between transition-all active:scale-98 shadow-sm"
+            className="w-full bg-[#160b13] hover:bg-[#22121d] border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between transition-all active:scale-98 shadow-sm"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-zinc-800/80 flex items-center justify-center border border-zinc-700/50" style={{ color: 'var(--theme-primary)' }}>
+              <div className="w-10 h-10 rounded-xl bg-zinc-800/80 text-[#FF2A85] flex items-center justify-center border border-zinc-700/50">
                 <Users className="w-5 h-5 stroke-[2.2]" />
               </div>
               <div className="text-left">
@@ -286,13 +175,12 @@ export default function ProfilePage() {
             <ChevronRight className="w-4 h-4 text-zinc-500" />
           </button>
 
-          {/* Menu Item 2: Lịch sử */}
           <button
             onClick={() => router.push('/history')}
-            className="w-full bg-[#18181C] hover:bg-[#262626] border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between transition-all active:scale-98 shadow-sm"
+            className="w-full bg-[#160b13] hover:bg-[#22121d] border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between transition-all active:scale-98 shadow-sm"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-zinc-800/80 flex items-center justify-center border border-zinc-700/50" style={{ color: 'var(--theme-primary)' }}>
+              <div className="w-10 h-10 rounded-xl bg-zinc-800/80 text-[#FF2A85] flex items-center justify-center border border-zinc-700/50">
                 <Grid className="w-5 h-5 stroke-[2.2]" />
               </div>
               <div className="text-left">
@@ -303,44 +191,12 @@ export default function ProfilePage() {
             <ChevronRight className="w-4 h-4 text-zinc-500" />
           </button>
 
-          {/* Menu Item 3: Giao diện & Chủ đề (Gold Theme Picker) */}
-          <button
-            onClick={() => setShowThemePicker(true)}
-            className="w-full bg-[#18181C] hover:bg-[#262626] border rounded-2xl p-4 flex items-center justify-between transition-all active:scale-98 shadow-sm"
-            style={{
-              borderColor: themeConfig.primary,
-              boxShadow: `0 0 12px ${themeConfig.glow}`,
-            }}
-          >
-            <div className="flex items-center space-x-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-black font-extrabold"
-                style={{
-                  background: `linear-gradient(135deg, ${themeConfig.primary}, ${themeConfig.secondary})`,
-                }}
-              >
-                <Palette className="w-5 h-5 stroke-[2.2] text-black" />
-              </div>
-              <div className="text-left">
-                <h4 className="text-white text-xs font-bold flex items-center gap-1.5">
-                  <span>Giao diện & Chủ đề Locket Gold</span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded-full font-black text-black" style={{ background: themeConfig.primary }}>
-                    {themeConfig.emoji} {themeConfig.name}
-                  </span>
-                </h4>
-                <p className="text-zinc-400 text-[11px] mt-0.5">8 bộ màu Neon Pink, Purple, Cyan, Gold...</p>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-zinc-400" />
-          </button>
-
-          {/* Menu Item 4: Widget */}
           <button
             onClick={() => setShowWidgetModal(true)}
-            className="w-full bg-[#18181C] hover:bg-[#262626] border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between transition-all active:scale-98 shadow-sm"
+            className="w-full bg-[#160b13] hover:bg-[#22121d] border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between transition-all active:scale-98 shadow-sm"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-zinc-800/80 flex items-center justify-center border border-zinc-700/50" style={{ color: 'var(--theme-primary)' }}>
+              <div className="w-10 h-10 rounded-xl bg-zinc-800/80 text-[#FF2A85] flex items-center justify-center border border-zinc-700/50">
                 <Smartphone className="w-5 h-5 stroke-[2.2]" />
               </div>
               <div className="text-left">
@@ -351,10 +207,9 @@ export default function ProfilePage() {
             <ChevronRight className="w-4 h-4 text-zinc-500" />
           </button>
 
-          {/* Menu Item 5: Bảo mật */}
-          <div className="w-full bg-[#18181C] border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+          <div className="w-full bg-[#160b13] border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between shadow-sm">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-zinc-800/80 flex items-center justify-center border border-zinc-700/50" style={{ color: 'var(--theme-primary)' }}>
+              <div className="w-10 h-10 rounded-xl bg-zinc-800/80 text-[#FF2A85] flex items-center justify-center border border-zinc-700/50">
                 <ShieldCheck className="w-5 h-5 stroke-[2.2]" />
               </div>
               <div className="text-left">
@@ -362,25 +217,16 @@ export default function ProfilePage() {
                 <p className="text-zinc-500 text-[11px] mt-0.5">Bảo vệ dữ liệu & quyền riêng tư cá nhân</p>
               </div>
             </div>
-            <span
-              className="text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center space-x-1"
-              style={{
-                background: 'var(--theme-bg-tint)',
-                border: '1px solid var(--theme-primary)',
-                color: 'var(--theme-primary)',
-              }}
-            >
+            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center space-x-1 bg-[#FF2A85]/10 border border-[#FF2A85]/30 text-[#FF2A85]">
               <Check className="w-3 h-3" />
               <span>An toàn</span>
             </span>
           </div>
 
-          {/* Menu Item 6: PWA Install */}
           <PWAInstallBanner forceDisplay={true} />
         </div>
       </div>
 
-      {/* Logout Button */}
       <button
         onClick={handleSignOut}
         className="w-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-2xl p-4 flex items-center justify-center space-x-2 text-red-400 text-xs font-bold transition-all active:scale-98 mt-6 shadow-sm"
@@ -389,25 +235,10 @@ export default function ProfilePage() {
         <span>Đăng xuất tài khoản</span>
       </button>
 
-      {/* Widget Guide Modal */}
       {showWidgetModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div
-            className="w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center space-y-4"
-            style={{
-              background: '#18181C',
-              border: '1.5px solid var(--theme-primary)',
-              boxShadow: '0 0 30px var(--theme-glow)',
-            }}
-          >
-            <div
-              className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto"
-              style={{
-                background: 'var(--theme-bg-tint)',
-                border: '1px solid var(--theme-primary)',
-                color: 'var(--theme-primary)',
-              }}
-            >
+          <div className="w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center space-y-4 bg-[#160b13] border border-[#FF2A85]/40 shadow-[0_0_30px_rgba(255,42,133,0.2)]">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto bg-[#FF2A85]/20 border border-[#FF2A85]/40 text-[#FF2A85]">
               <Smartphone className="w-6 h-6" />
             </div>
             <h3 className="text-white text-base font-bold">Cài đặt Widget Màn hình</h3>
@@ -421,23 +252,13 @@ export default function ProfilePage() {
             </div>
             <button
               onClick={() => setShowWidgetModal(false)}
-              className="w-full py-3 text-black font-extrabold text-xs rounded-2xl active:scale-95 transition-all"
-              style={{
-                background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary))',
-                boxShadow: '0 0 15px var(--theme-glow)',
-              }}
+              className="w-full py-3 bg-[#FF2A85] text-white font-extrabold text-xs rounded-2xl active:scale-95 transition-all shadow-[0_0_15px_rgba(255,42,133,0.5)]"
             >
-              Đã hiểu 👑
+              Đã hiểu ✨
             </button>
           </div>
         </div>
       )}
-
-      {/* Theme Picker Modal */}
-      <LocketThemePickerModal
-        isOpen={showThemePicker}
-        onClose={() => setShowThemePicker(false)}
-      />
     </div>
   );
 }

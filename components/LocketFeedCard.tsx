@@ -3,7 +3,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Moment, Profile } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, Trash2, MoreVertical, Volume2, VolumeX, Music, Video } from 'lucide-react';
+import { Download, Trash2, MoreVertical, Volume2, VolumeX } from 'lucide-react';
 import { killGlobalAudio, playGlobalAudio } from '@/lib/audioPlayer';
 import { getSafeMediaUrl } from '@/lib/media';
 
@@ -53,7 +53,6 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     moment.media_url?.endsWith('.mp4') ||
     moment.media_url?.endsWith('.webm');
 
-  // Track current moment ID for cleanup
   currentMomentIdRef.current = moment.id;
 
   useEffect(() => {
@@ -68,13 +67,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     setIsMuted((prev) => !prev);
   };
 
-  // Auto-play music when moment changes, auto-stop when switching away
   useEffect(() => {
-    // ALWAYS kill previous audio immediately when moment changes
     killGlobalAudio();
     setIsPlayingAudio(false);
 
-    // Only play if this moment has music
     if (moment.music?.preview_url) {
       setIsPlayingAudio(true);
       playGlobalAudio(moment.music.preview_url, () => {
@@ -88,10 +84,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       killGlobalAudio();
       setIsPlayingAudio(false);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [moment.id]);
 
-  // Pause music when user switches to another browser tab
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
@@ -120,7 +114,6 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     }
   }, [isPlayingAudio, moment.id, moment.music?.preview_url]);
 
-  // Trigger Floating Emoji Fountain Effect when user clicks quick reaction emojis
   useEffect(() => {
     if (activeReaction?.emoji) {
       const now = Date.now();
@@ -140,7 +133,6 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     }
   }, [activeReaction]);
 
-  // Preload Next & Previous Photos into Browser Cache
   useEffect(() => {
     if (nextMomentUrl) {
       const img = new Image();
@@ -152,7 +144,6 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     }
   }, [nextMomentUrl, prevMomentUrl]);
 
-  // Keyboard Shortcuts (ArrowUp / ArrowDown for PC)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeTag = document.activeElement?.tagName;
@@ -196,7 +187,6 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
 
   const isDraggingRef = useRef<boolean>(false);
 
-  // Touch Swipe Vertical Handlers (Mobile)
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
     isDraggingRef.current = false;
@@ -206,7 +196,6 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     if (touchStartY.current !== null) {
       const touchCurrentY = e.touches[0].clientY;
       const diffY = touchStartY.current - touchCurrentY;
-      // Prevent browser default pull-to-refresh gesture when swiping down
       if (Math.abs(diffY) > 5 && e.cancelable) {
         e.preventDefault();
       }
@@ -233,7 +222,6 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     touchStartY.current = null;
   };
 
-  // Mouse Drag Vertical Handlers (PC Mouse Click & Drag like phone swipe)
   const handleMouseDown = (e: React.MouseEvent) => {
     mouseStartY.current = e.clientY;
     setIsMouseDown(true);
@@ -265,7 +253,6 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     setIsMouseDown(false);
   };
 
-  // Mouse Wheel Vertical Scroll Handler (with throttle to prevent rapid-fire)
   const handleWheel = (e: React.WheelEvent) => {
     if (wheelCooldown.current) return;
     if (e.deltaY > 35 && hasNext && onNext) {
@@ -287,7 +274,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     const randomRot = Math.floor(Math.random() * 30) - 15;
     setFloatingEmojis((prev) => [
       ...prev,
-      { id: newId, emoji: '💛', x: randomX, rotation: randomRot },
+      { id: newId, emoji: '💖', x: randomX, rotation: randomRot },
     ]);
     setTimeout(() => {
       setFloatingEmojis((prev) => prev.filter((item) => item.id !== newId));
@@ -356,11 +343,11 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
       }`}
     >
-      {/* 1:1 Square Photo Card Container Touching Near Screen Edges */}
+      {/* 1:1 Square Photo Card Container with Sleek Neon Pink Glowing Border (Exact Screenshot) */}
       <div
         onClick={handleCardClick}
         onDoubleClick={handleDoubleTap}
-        className="w-[94%] max-w-[400px] aspect-square bg-[#18181C] locket-theme-card-border shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex-shrink-0 my-auto relative overflow-hidden rounded-[2.8rem] cursor-pointer transition-all duration-300"
+        className="w-[94%] max-w-[400px] aspect-square bg-[#180a14] pink-card-border shadow-[0_20px_50px_rgba(0,0,0,0.85)] flex-shrink-0 my-auto relative overflow-hidden rounded-[2.8rem] cursor-pointer transition-all duration-300"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -408,17 +395,16 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                   }}
                   className="w-full h-full object-cover rounded-[2.8rem] select-none pointer-events-none"
                 />
-                {/* Only show video mute/unmute button if NO music attached */}
                 {!moment.music && (
                   <button
                     onClick={toggleVideoMute}
-                    className="absolute bottom-3.5 right-3.5 bg-black/70 backdrop-blur-md border border-[#FFC700]/60 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-1.5 z-20 shadow-xl active:scale-95 transition-all no-card-click"
+                    className="absolute bottom-3.5 right-3.5 bg-black/70 backdrop-blur-md border border-[#FF2A85]/50 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-1.5 z-20 shadow-xl active:scale-95 transition-all no-card-click"
                     title="Bật/Tắt âm thanh video"
                   >
                     {!isMuted ? (
                       <>
-                        <Volume2 className="w-3.5 h-3.5 text-[#FFC700] animate-pulse" />
-                        <span className="font-bold text-xs text-[#FFC700]">Bật 🎙️</span>
+                        <Volume2 className="w-3.5 h-3.5 text-[#FF2A85] animate-pulse" />
+                        <span className="font-bold text-xs text-[#FF2A85]">Bật 🎙️</span>
                       </>
                     ) : (
                       <>
@@ -437,7 +423,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               />
             )}
 
-            {/* Floating Emoji Reaction Particles */}
+            {/* Floating Emoji Particles */}
             {floatingEmojis.map((item) => (
               <motion.div
                 key={item.id}
@@ -465,11 +451,11 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             {moment.music && (
               <button
                 onClick={toggleAudio}
-                className="absolute top-3.5 left-3.5 bg-black/65 backdrop-blur-md border border-white/20 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-2 z-20 shadow-lg active:scale-95 transition-all max-w-[70%] no-card-click"
+                className="absolute top-3.5 left-3.5 bg-black/65 backdrop-blur-md border border-[#FF2A85]/40 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-2 z-20 shadow-lg active:scale-95 transition-all max-w-[70%] no-card-click"
                 title="Bật/Tắt nhạc"
               >
                 <div
-                  className={`w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-[#FFC700] ${
+                  className={`w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-[#FF2A85] ${
                     isPlayingAudio ? 'animate-spin' : ''
                   }`}
                 >
@@ -479,14 +465,14 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                   {moment.music.title} • {moment.music.artist}
                 </span>
                 {isPlayingAudio ? (
-                  <Volume2 className="w-3.5 h-3.5 text-[#FFC700] flex-shrink-0 animate-pulse" />
+                  <Volume2 className="w-3.5 h-3.5 text-[#FF2A85] flex-shrink-0 animate-pulse" />
                 ) : (
                   <VolumeX className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
                 )}
               </button>
             )}
 
-            {/* Options button on top right of photo */}
+            {/* Options button */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -498,10 +484,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               <MoreVertical className="w-4 h-4" />
             </button>
 
-            {/* Caption Overlay at Bottom Edge of Photo (centered) */}
+            {/* Caption Overlay at Bottom */}
             {moment.caption && (
               <div className="absolute bottom-4 left-4 right-4 flex justify-center pointer-events-none z-20">
-                <div className="bg-black/60 backdrop-blur-xl border border-white/15 text-white/95 text-xs font-semibold px-4 py-2 rounded-2xl shadow-2xl max-w-[90%] text-center break-words tracking-tight">
+                <div className="bg-black/70 backdrop-blur-xl border border-[#FF2A85]/30 text-white/95 text-xs font-semibold px-4 py-2 rounded-2xl shadow-2xl max-w-[90%] text-center break-words tracking-tight">
                   {moment.caption}
                 </div>
               </div>
@@ -510,16 +496,15 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* Sender Avatar, Name & Time BELOW the Photo Card (centered) */}
+      {/* Sender Avatar, Name & Time BELOW Photo Card */}
       <div className="w-full flex justify-center mt-3 pointer-events-none">
         <div className="flex items-center space-x-2">
-          {/* Themed ring avatar for sender */}
           <div
             className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 relative"
             style={{
               padding: '1.5px',
-              background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary))',
-              boxShadow: '0 0 8px var(--theme-glow)',
+              background: 'linear-gradient(135deg, #FF2A85, #FF69B4)',
+              boxShadow: '0 0 8px rgba(255, 42, 133, 0.5)',
             }}
           >
             <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
@@ -533,11 +518,6 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
           <span className="text-white text-sm font-bold truncate max-w-[160px]">
             {isMyMoment ? `${sender.display_name}` : sender.display_name}
           </span>
-          {isMyMoment && (
-            <span className="text-xs leading-none" style={{ filter: 'drop-shadow(0 0 3px rgba(255,215,0,0.8))' }}>
-              👑
-            </span>
-          )}
           <span className="text-white/50 text-xs font-medium">{formatLocketTime(moment.created_at)}</span>
         </div>
       </div>
@@ -558,7 +538,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               exit={{ y: 80, scale: 0.95 }}
               transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-xs bg-[#18181C] border border-zinc-800 rounded-t-3xl sm:rounded-3xl p-4 text-left space-y-2"
+              className="w-full max-w-xs bg-[#1a0b16] border border-[#FF2A85]/30 rounded-t-3xl sm:rounded-3xl p-4 text-left space-y-2"
             >
               <h4 className="text-white text-xs font-bold text-center pb-2 border-b border-zinc-800">
                 Tùy chọn Khoảnh khắc
@@ -566,9 +546,9 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
 
               <button
                 onClick={handleDownload}
-                className="w-full p-3 bg-[#262626] hover:bg-[#333333] rounded-2xl text-white text-xs font-semibold flex items-center space-x-3 transition-all active:scale-98"
+                className="w-full p-3 bg-[#261221] hover:bg-[#34182d] rounded-2xl text-white text-xs font-semibold flex items-center space-x-3 transition-all active:scale-98"
               >
-                <Download className="w-4 h-4 text-[#FFC700]" />
+                <Download className="w-4 h-4 text-[#FF2A85]" />
                 <span>Tải ảnh về máy</span>
               </button>
 

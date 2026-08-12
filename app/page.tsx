@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LocketHeader } from '@/components/LocketHeader';
 import { LocketDock } from '@/components/LocketDock';
 import { LocketFeedCard } from '@/components/LocketFeedCard';
@@ -10,12 +10,11 @@ import { LocketChatSheet } from '@/components/LocketChatSheet';
 import { SupabaseConfigNotice } from '@/components/SupabaseConfigNotice';
 import { useAuth } from '@/lib/providers/AuthProvider';
 import { useMoments } from '@/lib/providers/MomentsProvider';
-import { Camera, Palette } from 'lucide-react';
+import { Camera } from 'lucide-react';
 import { CapturedMedia } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MusicTrack } from '@/lib/types';
-import { LocketThemePickerModal } from '@/components/LocketThemePickerModal';
 
 export default function HomePage() {
   const router = useRouter();
@@ -36,30 +35,6 @@ export default function HomePage() {
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [showChatSheet, setShowChatSheet] = useState<boolean>(false);
   const [lastReaction, setLastReaction] = useState<{ emoji: string; timestamp: number } | null>(null);
-
-  // Locket Gold Theme Picker States
-  const [showThemePicker, setShowThemePicker] = useState<boolean>(false);
-  const [isZoomedOut, setIsZoomedOut] = useState<boolean>(false);
-  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const handleLongPressStart = () => {
-    longPressTimerRef.current = setTimeout(() => {
-      if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-        try {
-          navigator.vibrate(50);
-        } catch (e) {}
-      }
-      setIsZoomedOut(true);
-      setShowThemePicker(true);
-    }, 500);
-  };
-
-  const handleLongPressEnd = () => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-  };
 
   const currentUser = userProfile || {
     id: 'user-me',
@@ -82,8 +57,8 @@ export default function HomePage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-full flex flex-col items-center justify-center bg-black text-white space-y-4">
-        <div className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor: 'var(--theme-primary)', borderTopColor: 'transparent' }} />
+      <div className="min-h-full flex flex-col items-center justify-center bg-[#0c050a] text-white space-y-4">
+        <div className="w-10 h-10 rounded-full border-4 border-[#FF2A85] border-t-transparent animate-spin" />
         <p className="text-xs font-semibold text-zinc-400">Đang kiểm tra tài khoản Google...</p>
       </div>
     );
@@ -91,16 +66,15 @@ export default function HomePage() {
 
   if (!userProfile) {
     return (
-      <div className="min-h-full flex flex-col items-center justify-center bg-black text-white space-y-4 p-4 text-center">
-        <div className="w-12 h-12 rounded-2xl bg-zinc-900 flex items-center justify-center mb-2 border border-zinc-800" style={{ color: 'var(--theme-primary)' }}>
+      <div className="min-h-full flex flex-col items-center justify-center bg-[#0c050a] text-white space-y-4 p-4 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-[#FF2A85]/20 text-[#FF2A85] flex items-center justify-center mb-2 border border-[#FF2A85]/40">
           <Camera className="w-6 h-6" />
         </div>
         <p className="text-sm font-bold text-white">Yêu cầu Đăng nhập Google</p>
         <p className="text-xs text-zinc-400 max-w-xs">Chuyển hướng đến màn hình đăng nhập...</p>
         <button
           onClick={() => router.push('/login')}
-          className="mt-2 px-4 py-2 text-black font-bold text-xs rounded-xl shadow-lg"
-          style={{ background: 'var(--theme-primary)' }}
+          className="mt-2 px-4 py-2 bg-[#FF2A85] text-white font-bold text-xs rounded-xl shadow-[0_0_20px_rgba(255,42,133,0.5)]"
         >
           Đăng nhập bằng Google 🚀
         </button>
@@ -165,18 +139,7 @@ export default function HomePage() {
   };
 
   return (
-    <motion.div
-      animate={{
-        scale: isZoomedOut ? 0.85 : 1,
-        borderRadius: isZoomedOut ? '2.5rem' : '0rem',
-      }}
-      transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-      onMouseDown={handleLongPressStart}
-      onMouseUp={handleLongPressEnd}
-      onTouchStart={handleLongPressStart}
-      onTouchEnd={handleLongPressEnd}
-      className="h-full flex flex-col justify-between bg-black selection:bg-[#FFC700] selection:text-black overflow-hidden relative"
-    >
+    <div className="h-full flex flex-col justify-between bg-[#0c050a] selection:bg-[#FF2A85] selection:text-white overflow-hidden relative">
       {/* Shared Room Header */}
       <LocketHeader
         currentUser={currentUser}
@@ -197,7 +160,7 @@ export default function HomePage() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-              className="w-full h-full absolute inset-0 bg-black z-30 transform-gpu will-change-transform"
+              className="w-full h-full absolute inset-0 bg-[#0c050a] z-30 transform-gpu will-change-transform"
             >
               <LocketHistoryGrid
                 moments={roomMoments}
@@ -222,8 +185,8 @@ export default function HomePage() {
               </div>
 
               {momentsLoading ? (
-                <div className="w-[310px] h-[310px] my-auto rounded-[2.5rem] bg-[#18181C] border border-zinc-800 flex items-center justify-center animate-pulse">
-                  <div className="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor: 'var(--theme-primary)', borderTopColor: 'transparent' }} />
+                <div className="w-[310px] h-[310px] my-auto rounded-[2.8rem] bg-[#180a14] border border-zinc-800 flex items-center justify-center animate-pulse">
+                  <div className="w-10 h-10 rounded-full border-4 border-[#FF2A85] border-t-transparent animate-spin" />
                 </div>
               ) : roomMoments.length > 0 && currentMoment ? (
                 <LocketFeedCard
@@ -239,8 +202,8 @@ export default function HomePage() {
                   activeReaction={lastReaction}
                 />
               ) : (
-                <div className="w-[310px] h-[310px] my-auto rounded-[2.5rem] bg-[#18181C] border border-zinc-800 p-8 flex flex-col items-center justify-center text-center">
-                  <div className="w-14 h-14 rounded-full bg-zinc-900 flex items-center justify-center mb-3 border border-zinc-800" style={{ color: 'var(--theme-primary)' }}>
+                <div className="w-[310px] h-[310px] my-auto rounded-[2.8rem] bg-[#180a14] pink-card-border p-8 flex flex-col items-center justify-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-[#FF2A85]/20 text-[#FF2A85] flex items-center justify-center mb-3 border border-[#FF2A85]/40">
                     <Camera className="w-7 h-7" />
                   </div>
                   <h3 className="text-white font-bold text-sm mb-1">Chưa có khoảnh khắc nào trong phòng</h3>
@@ -249,28 +212,12 @@ export default function HomePage() {
                   </p>
                   <button
                     onClick={() => setShowCamera(true)}
-                    className="py-2.5 px-5 text-black font-bold text-xs rounded-xl shadow-lg active:scale-95 transition-transform"
-                    style={{ background: 'var(--theme-primary)' }}
+                    className="py-2.5 px-5 bg-[#FF2A85] text-white font-bold text-xs rounded-xl shadow-[0_0_20px_rgba(255,42,133,0.5)] active:scale-95 transition-transform"
                   >
                     Chụp ảnh ngay 📸
                   </button>
                 </div>
               )}
-
-              {/* Theme Picker Quick Floating Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsZoomedOut(true);
-                  setShowThemePicker(true);
-                }}
-                className="absolute top-2 right-3 z-30 bg-black/60 backdrop-blur-md border border-white/20 text-xs font-bold px-2.5 py-1 rounded-full flex items-center space-x-1 shadow-lg active:scale-90 transition-all hover:bg-black/80"
-                style={{ color: 'var(--theme-primary)' }}
-                title="Đổi Giao Diện Theme Locket Gold (Hoặc giữ màn hình 0.5s) 🎨"
-              >
-                <Palette className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>Đổi Theme 🎨</span>
-              </button>
             </motion.div>
           )}
         </AnimatePresence>
@@ -281,7 +228,7 @@ export default function HomePage() {
         currentView={currentView}
         onToggleView={(view) => setCurrentView(view)}
         onOpenCamera={() => setShowCamera(true)}
-        onOpenMenu={() => router.push('/profile')}
+        onOpenMenu={() => setShowChatSheet(true)}
         onSendDirectMessage={handleSendDirectMessage}
         onReactEmoji={(emoji) => {
           if (currentMoment) handleReact(currentMoment.id, emoji);
@@ -314,15 +261,6 @@ export default function HomePage() {
           />
         )}
       </AnimatePresence>
-
-      {/* Locket Gold Theme Picker Modal */}
-      <LocketThemePickerModal
-        isOpen={showThemePicker}
-        onClose={() => {
-          setShowThemePicker(false);
-          setIsZoomedOut(false);
-        }}
-      />
-    </motion.div>
+    </div>
   );
 }
