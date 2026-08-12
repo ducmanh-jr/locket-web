@@ -373,14 +373,13 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
       { id: 'all', name: 'Tất cả bạn bè', count: moments.length },
     ];
     
-    // Group senders by normalized display name to prevent duplicate entries and include all room members
+    // Key senders strictly by unique account ID (different gmail/user = different account)
     const sendersMap = new Map<string, { id: string; name: string; avatar_url?: string; count: number }>();
     
-    // First, populate all known profiles in the room (with count = 0)
+    // First, populate registered profiles in the room
     allProfiles.forEach((p) => {
-      const nameKey = (p.display_name || p.username || 'Thành viên Locket').trim().toLowerCase();
-      if (!sendersMap.has(nameKey)) {
-        sendersMap.set(nameKey, {
+      if (p?.id) {
+        sendersMap.set(p.id, {
           id: p.id,
           name: p.display_name || p.username || 'Thành viên Locket',
           avatar_url: p.avatar_url,
@@ -389,9 +388,11 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     });
 
-    // Then, accumulate moment counts for each member
+    // Accumulate moment count per unique user ID
     moments.forEach((m) => {
-      const sid = m.sender?.id || m.sender_id || 'unknown';
+      const sid = m.sender?.id || m.sender_id;
+      if (!sid) return;
+
       const sname =
         m.sender?.display_name ||
         (sid === currentUser.id ? currentUser.display_name : 'Thành viên Locket');
@@ -399,16 +400,15 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
         m.sender?.avatar_url ||
         (sid === currentUser.id ? currentUser.avatar_url : undefined);
 
-      const nameKey = sname.trim().toLowerCase();
-      if (!sendersMap.has(nameKey)) {
-        sendersMap.set(nameKey, {
+      if (!sendersMap.has(sid)) {
+        sendersMap.set(sid, {
           id: sid,
           name: sname,
           avatar_url: savatar,
           count: 1,
         });
       } else {
-        const existing = sendersMap.get(nameKey)!;
+        const existing = sendersMap.get(sid)!;
         existing.count += 1;
         if (!existing.avatar_url && savatar) existing.avatar_url = savatar;
       }
@@ -429,19 +429,13 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const filteredMoments = useMemo(() => {
     if (selectedFriendFilter === 'all') return moments;
 
-    const selectedOption = membersFilterOptions.find((m) => m.id === selectedFriendFilter);
-    const targetName = selectedOption?.name?.trim().toLowerCase();
-
-    return moments.filter((m) => {
-      if (m.sender_id === selectedFriendFilter || m.sender?.id === selectedFriendFilter || m.sender?.username === selectedFriendFilter) {
-        return true;
-      }
-      if (targetName && m.sender?.display_name?.trim().toLowerCase() === targetName) {
-        return true;
-      }
-      return false;
-    });
-  }, [moments, selectedFriendFilter, membersFilterOptions]);
+    return moments.filter(
+      (m) =>
+        m.sender_id === selectedFriendFilter ||
+        m.sender?.id === selectedFriendFilter ||
+        m.sender?.username === selectedFriendFilter
+    );
+  }, [moments, selectedFriendFilter]);
 
   return (
     <MomentsContext.Provider
