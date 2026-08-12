@@ -343,206 +343,190 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
       }`}
     >
-      {/* 1:1 Square Photo Card Container */}
-      <div
-        onClick={handleCardClick}
-        onDoubleClick={handleDoubleTap}
-        className="w-full aspect-square bg-black/20 flex-shrink-0 mt-2.5 relative overflow-hidden rounded-[2.2rem] cursor-pointer"
-      >
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={moment.id}
-            initial={{
-              opacity: 0,
-              y: direction === 'up' ? 70 : -70,
-              scale: 0.94,
-              filter: 'blur(4px)',
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-              scale: 1,
-              filter: 'blur(0px)',
-            }}
-            exit={{
-              opacity: 0,
-              y: direction === 'up' ? -70 : 70,
-              scale: 0.94,
-              filter: 'blur(4px)',
-            }}
-            transition={{
-              duration: 0.28,
-              ease: [0.32, 0.72, 0, 1],
-            }}
-            className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.8rem] transform-gpu will-change-[transform,opacity]"
-          >
-            {isVideo ? (
-              <div className="relative w-full h-full">
-                <video
-                  ref={videoRef}
-                  src={getSafeMediaUrl(moment.media_url)}
-                  poster={getSafeMediaUrl(moment.thumbnail_url)}
-                  autoPlay
-                  loop
-                  playsInline
-                  muted={moment.music ? true : isMuted}
-                  controls={false}
-                  preload="auto"
-                  onLoadedData={() => {
-                    if (videoRef.current) {
-                      videoRef.current.play().catch(() => {});
-                    }
-                  }}
-                  className="w-full h-full object-cover rounded-[2.8rem] select-none pointer-events-none"
-                />
-                {!moment.music && (
-                  <button
-                    onClick={toggleVideoMute}
-                    className="absolute bottom-3.5 right-3.5 bg-black/70 backdrop-blur-md border border-[#FF2A85]/50 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-1.5 z-20 shadow-xl active:scale-95 transition-all no-card-click"
-                    title="Bật/Tắt âm thanh video"
-                  >
-                    {!isMuted ? (
-                      <>
-                        <Volume2 className="w-3.5 h-3.5 text-[#FF2A85] animate-pulse" />
-                        <span className="font-bold text-xs text-[#FF2A85]">Bật 🎙️</span>
-                      </>
-                    ) : (
-                      <>
-                        <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
-                        <span className="font-semibold text-xs text-zinc-300">Tắt 🔇</span>
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-            ) : (
-              <img
-                src={moment.media_url || moment.thumbnail_url}
-                alt={moment.caption || 'Khoảnh khắc Locket'}
-                className="w-full h-full object-cover rounded-[2.8rem] select-none pointer-events-none"
-              />
-            )}
-
-            {/* Floating Emoji Particles */}
-            {floatingEmojis.map((item) => (
-              <motion.div
-                key={item.id}
-                initial={{
-                  opacity: 1,
-                  y: 150,
-                  scale: 0.5,
-                  x: item.x,
-                  rotate: item.rotation,
-                }}
-                animate={{
-                  opacity: 0,
-                  y: -110,
-                  scale: [0.5, 1.4, 1.8],
-                  rotate: item.rotation * 2,
-                }}
-                transition={{ duration: 1.25, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute bottom-10 left-1/2 text-4xl pointer-events-none z-30 drop-shadow-lg"
-              >
-                {item.emoji}
-              </motion.div>
-            ))}
-
-            {/* Music Badge at Top-Left of Photo */}
-            {moment.music && (
-              <button
-                onClick={toggleAudio}
-                className="absolute top-3.5 left-3.5 bg-black/65 backdrop-blur-md border border-[#FF2A85]/40 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-2 z-20 shadow-lg active:scale-95 transition-all max-w-[70%] no-card-click"
-                title="Bật/Tắt nhạc"
-              >
-                <div
-                  className={`w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-[#FF2A85] ${
-                    isPlayingAudio ? 'animate-spin' : ''
-                  }`}
-                >
-                  <img src={moment.music.cover_url} alt="" className="w-full h-full object-cover" />
-                </div>
-                <span className="font-semibold text-xs truncate">
-                  {moment.music.title} • {moment.music.artist}
-                </span>
-                {isPlayingAudio ? (
-                  <Volume2 className="w-3.5 h-3.5 text-[#FF2A85] flex-shrink-0 animate-pulse" />
-                ) : (
-                  <VolumeX className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
-                )}
-              </button>
-            )}
-
-            {/* Options button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowOptionsModal(true);
+      {/* Centered Photo & Sender Section */}
+      <div className="w-full flex flex-col items-center my-auto">
+        {/* 1:1 Square Photo Card Container */}
+        <div
+          onClick={handleCardClick}
+          onDoubleClick={handleDoubleTap}
+          className="w-full aspect-square bg-black/20 flex-shrink-0 relative overflow-hidden rounded-[2.2rem] cursor-pointer"
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={moment.id}
+              initial={{
+                opacity: 0,
+                y: direction === 'up' ? 70 : -70,
+                scale: 0.94,
+                filter: 'blur(4px)',
               }}
-              className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md text-white/80 hover:text-white flex items-center justify-center border border-white/15 opacity-90 hover:opacity-100 transition-all active:scale-90 z-20 shadow-md"
-              title="Tùy chọn ảnh"
+              animate={{
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                filter: 'blur(0px)',
+              }}
+              exit={{
+                opacity: 0,
+                y: direction === 'up' ? -70 : 70,
+                scale: 0.94,
+                filter: 'blur(4px)',
+              }}
+              transition={{
+                duration: 0.28,
+                ease: [0.32, 0.72, 0, 1],
+              }}
+              className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.2rem] transform-gpu will-change-[transform,opacity]"
             >
-              <MoreVertical className="w-4 h-4" />
-            </button>
-
-            {/* Caption Overlay at Bottom */}
-            {moment.caption && (
-              <div className="absolute bottom-4 left-4 right-4 flex justify-center pointer-events-none z-20">
-                <div className="bg-black/70 backdrop-blur-xl border border-[#FF2A85]/30 text-white/95 text-xs font-semibold px-4 py-2 rounded-2xl shadow-2xl max-w-[90%] text-center break-words tracking-tight">
-                  {moment.caption}
+              {isVideo ? (
+                <div className="relative w-full h-full">
+                  <video
+                    ref={videoRef}
+                    src={getSafeMediaUrl(moment.media_url)}
+                    poster={getSafeMediaUrl(moment.thumbnail_url)}
+                    autoPlay
+                    loop
+                    playsInline
+                    muted={moment.music ? true : isMuted}
+                    controls={false}
+                    preload="auto"
+                    onLoadedData={() => {
+                      if (videoRef.current) {
+                        videoRef.current.play().catch(() => {});
+                      }
+                    }}
+                    className="w-full h-full object-cover rounded-[2.2rem] select-none pointer-events-none"
+                  />
+                  {!moment.music && (
+                    <button
+                      onClick={toggleVideoMute}
+                      className="absolute bottom-3.5 right-3.5 bg-black/70 backdrop-blur-md border border-[#FF2A85]/50 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-1.5 z-20 shadow-xl active:scale-95 transition-all no-card-click"
+                      title="Bật/Tắt âm thanh video"
+                    >
+                      {!isMuted ? (
+                        <>
+                          <Volume2 className="w-3.5 h-3.5 text-[#FF2A85] animate-pulse" />
+                          <span className="font-bold text-xs text-[#FF2A85]">Bật 🎙️</span>
+                        </>
+                      ) : (
+                        <>
+                          <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
+                          <span className="font-semibold text-xs text-zinc-300">Tắt 🔇</span>
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
+              ) : (
+                <img
+                  src={moment.media_url || moment.thumbnail_url}
+                  alt={moment.caption || 'Khoảnh khắc Locket'}
+                  className="w-full h-full object-cover rounded-[2.2rem] select-none pointer-events-none"
+                />
+              )}
+
+              {/* Floating Emoji Particles */}
+              {floatingEmojis.map((item) => (
+                <motion.div
+                  key={item.id}
+                  initial={{
+                    opacity: 1,
+                    y: 150,
+                    scale: 0.5,
+                    x: item.x,
+                    rotate: item.rotation,
+                  }}
+                  animate={{
+                    opacity: 0,
+                    y: -110,
+                    scale: [0.5, 1.4, 1.8],
+                    rotate: item.rotation * 2,
+                  }}
+                  transition={{ duration: 1.25, ease: [0.22, 1, 0.36, 1] }}
+                  className="absolute bottom-10 left-1/2 text-4xl pointer-events-none z-30 drop-shadow-lg"
+                >
+                  {item.emoji}
+                </motion.div>
+              ))}
+
+              {/* Music Badge at Top-Left of Photo */}
+              {moment.music && (
+                <button
+                  onClick={toggleAudio}
+                  className="absolute top-3.5 left-3.5 bg-black/65 backdrop-blur-md border border-[#FF2A85]/40 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-2 z-20 shadow-lg active:scale-95 transition-all max-w-[70%] no-card-click"
+                  title="Bật/Tắt nhạc"
+                >
+                  <div
+                    className={`w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-[#FF2A85] ${
+                      isPlayingAudio ? 'animate-spin' : ''
+                    }`}
+                  >
+                    <img src={moment.music.cover_url} alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <span className="font-semibold text-xs truncate">
+                    {moment.music.title} • {moment.music.artist}
+                  </span>
+                  {isPlayingAudio ? (
+                    <Volume2 className="w-3.5 h-3.5 text-[#FF2A85] flex-shrink-0 animate-pulse" />
+                  ) : (
+                    <VolumeX className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
+                  )}
+                </button>
+              )}
+
+              {/* Options button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowOptionsModal(true);
+                }}
+                className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md text-white/80 hover:text-white flex items-center justify-center border border-white/15 opacity-90 hover:opacity-100 transition-all active:scale-90 z-20 shadow-md"
+                title="Tùy chọn ảnh"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
+
+              {/* Caption Pill Overlay at Bottom Inside Photo (Exact Screenshot) */}
+              {moment.caption && (
+                <div className="absolute bottom-3 left-4 right-4 flex justify-center pointer-events-none z-20">
+                  <div className="bg-black/60 backdrop-blur-md border border-white/10 text-white text-xs font-semibold px-4 py-1.5 rounded-full shadow-lg max-w-[85%] text-center truncate">
+                    {moment.caption}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Sender Avatar, Name & Time — right below photo */}
+        <div className="w-full flex justify-center mt-2.5 pointer-events-none">
+          <div className="flex items-center space-x-2">
+            <div
+              className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 relative"
+              style={{
+                padding: '1.5px',
+                background: 'linear-gradient(135deg, #FF2A85, #FF69B4)',
+                boxShadow: '0 0 8px rgba(255, 42, 133, 0.5)',
+              }}
+            >
+              <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
+                <img
+                  src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
+                  alt={sender.display_name}
+                  className="w-full h-full object-cover"
+                />
               </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* Caption / Music Text Below Photo (Decorative italic style - Exact Screenshot) */}
-      {(moment.caption || moment.music) && (
-        <div className="w-full flex flex-col items-center mt-2 pointer-events-none px-4">
-          {moment.caption && (
-            <p className="text-white text-sm font-semibold italic text-center tracking-wide drop-shadow-lg">
-              {moment.caption}
-            </p>
-          )}
-          {moment.music && (
-            <p className="text-white/70 text-xs font-medium uppercase tracking-widest text-center mt-0.5">
-              ~ {moment.music.title} ~
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Sender Avatar, Name & Time — right below photo */}
-      <div className="w-full flex justify-center mt-2.5 pointer-events-none">
-        <div className="flex items-center space-x-2">
-          <div
-            className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 relative"
-            style={{
-              padding: '1.5px',
-              background: 'linear-gradient(135deg, #FF2A85, #FF69B4)',
-              boxShadow: '0 0 8px rgba(255, 42, 133, 0.5)',
-            }}
-          >
-            <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
-              <img
-                src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
-                alt={sender.display_name}
-                className="w-full h-full object-cover"
-              />
             </div>
+            <span className="text-white text-sm font-bold truncate max-w-[160px]">
+              {sender.display_name}
+            </span>
+            <span className="text-white/50 text-xs font-medium">{formatLocketTime(moment.created_at)}</span>
           </div>
-          <span className="text-white text-sm font-bold truncate max-w-[160px]">
-            {sender.display_name}
-          </span>
-          <span className="text-white/50 text-xs font-medium">{formatLocketTime(moment.created_at)}</span>
         </div>
       </div>
 
-      {/* Spacer pushes message bar to bottom */}
-      <div className="flex-1" />
-
-      {/* Message Input Bar + Emoji Reactions (Exact Screenshot) */}
-      <div className="w-full px-3 pb-2 pointer-events-auto">
+      {/* Message Input Bar + Emoji Reactions at Bottom (Exact Screenshot) */}
+      <div className="w-full px-3 pb-2.5 pointer-events-auto flex-shrink-0">
         <div
           className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-full"
           style={{
@@ -554,22 +538,18 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
           <span className="flex-1 text-white/40 text-sm select-none">Gửi tin nhắn...</span>
           {/* Emoji reaction buttons */}
           <div className="flex items-center space-x-3 flex-shrink-0">
-            <button
-              onClick={(e) => { e.stopPropagation(); }}
-              className="text-xl active:scale-110 transition-transform"
-            >❤️</button>
-            <button
-              onClick={(e) => { e.stopPropagation(); }}
-              className="text-xl active:scale-110 transition-transform"
-            >😂</button>
-            <button
-              onClick={(e) => { e.stopPropagation(); }}
-              className="text-xl active:scale-110 transition-transform"
-            >💕</button>
-            <button
-              onClick={(e) => { e.stopPropagation(); }}
-              className="text-xl active:scale-110 transition-transform"
-            >😊</button>
+            {['❤️', '😂', '💕', '😊'].map((emoji) => (
+              <button
+                key={emoji}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDoubleTap();
+                }}
+                className="text-xl active:scale-125 transition-transform"
+              >
+                {emoji}
+              </button>
+            ))}
           </div>
         </div>
       </div>
