@@ -251,14 +251,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => avatarInputRef.current?.click()}
-            className="text-[11px] font-bold text-[#FF2A85] hover:underline mb-2 flex items-center space-x-1"
-          >
-            <Camera className="w-3.5 h-3.5" />
-            <span>Đổi ảnh đại diện</span>
-          </button>
+          {/* End Avatar Header */}
 
           {!isEditing ? (
             <div className="flex flex-col items-center">
