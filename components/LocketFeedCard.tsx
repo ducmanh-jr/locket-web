@@ -339,7 +339,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
       style={{ touchAction: 'none', overscrollBehavior: 'none' }}
-      className={`w-full flex-1 flex flex-col items-center justify-center select-none my-auto overflow-hidden relative ${
+      className={`w-full flex-1 flex flex-col items-center justify-between select-none overflow-hidden relative ${
         isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
       }`}
     >
@@ -347,7 +347,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       <div
         onClick={handleCardClick}
         onDoubleClick={handleDoubleTap}
-        className="w-full aspect-square bg-black/20 flex-shrink-0 my-auto relative overflow-hidden rounded-[2.2rem] cursor-pointer"
+        className="w-full aspect-square bg-black/20 flex-shrink-0 relative overflow-hidden rounded-[2.2rem] cursor-pointer"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -512,8 +512,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         </div>
       )}
 
-      {/* Sender Avatar, Name & Time BELOW Photo Card */}
-      <div className="w-full flex justify-center mt-2 pointer-events-none">
+      {/* Sender Avatar, Name & Time — right below photo */}
+      <div className="w-full flex justify-center mt-2.5 pointer-events-none">
         <div className="flex items-center space-x-2">
           <div
             className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 relative"
@@ -532,9 +532,45 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             </div>
           </div>
           <span className="text-white text-sm font-bold truncate max-w-[160px]">
-            {isMyMoment ? `${sender.display_name}` : sender.display_name}
+            {sender.display_name}
           </span>
           <span className="text-white/50 text-xs font-medium">{formatLocketTime(moment.created_at)}</span>
+        </div>
+      </div>
+
+      {/* Spacer pushes message bar to bottom */}
+      <div className="flex-1" />
+
+      {/* Message Input Bar + Emoji Reactions (Exact Screenshot) */}
+      <div className="w-full px-3 pb-2 pointer-events-auto">
+        <div
+          className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-full"
+          style={{
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.12)',
+          }}
+        >
+          {/* Text input placeholder */}
+          <span className="flex-1 text-white/40 text-sm select-none">Gửi tin nhắn...</span>
+          {/* Emoji reaction buttons */}
+          <div className="flex items-center space-x-3 flex-shrink-0">
+            <button
+              onClick={(e) => { e.stopPropagation(); }}
+              className="text-xl active:scale-110 transition-transform"
+            >❤️</button>
+            <button
+              onClick={(e) => { e.stopPropagation(); }}
+              className="text-xl active:scale-110 transition-transform"
+            >😂</button>
+            <button
+              onClick={(e) => { e.stopPropagation(); }}
+              className="text-xl active:scale-110 transition-transform"
+            >💕</button>
+            <button
+              onClick={(e) => { e.stopPropagation(); }}
+              className="text-xl active:scale-110 transition-transform"
+            >😊</button>
+          </div>
         </div>
       </div>
 
