@@ -6,6 +6,7 @@ import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { useAuth } from './AuthProvider';
 import {
   fetchGlobalCloudMoments,
+  fetchGlobalCloudProfiles,
   pushMomentToGlobalCloud,
   deleteMomentFromGlobalCloud,
   compressImageForCloudSync,
@@ -357,11 +358,38 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
     [currentUser, userProfile]
   );
 
+  const [allProfiles, setAllProfiles] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchGlobalCloudProfiles().then((profs) => {
+      if (profs && Array.isArray(profs) && profs.length > 0) {
+        setAllProfiles(profs);
+      }
+    });
+  }, []);
+
   const membersFilterOptions: MemberFilterOption[] = useMemo(() => {
     const list: MemberFilterOption[] = [
       { id: 'all', name: 'Tất cả bạn bè', count: moments.length },
     ];
-    const sendersMap = new Map<string, { name: string; avatar_url?: string; count: number }>();
+    
+    // Group senders by normalized display name to prevent duplicate entries and include all room members
+    const sendersMap = new Map<string, { id: string; name: string; avatar_url?: string; count: number }>();
+    
+    // First, populate all known profiles in the room (with count = 0)
+    allProfiles.forEach((p) => {
+      const nameKey = (p.display_name || p.username || 'Thành viên Locket').trim().toLowerCase();
+      if (!sendersMap.has(nameKey)) {
+        sendersMap.set(nameKey, {
+          id: p.id,
+          name: p.display_name || p.username || 'Thành viên Locket',
+          avatar_url: p.avatar_url,
+          count: 0,
+        });
+      }
+    });
+
+    // Then, accumulate moment counts for each member
     moments.forEach((m) => {
       const sid = m.sender?.id || m.sender_id || 'unknown';
       const sname =
@@ -370,33 +398,50 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const savatar =
         m.sender?.avatar_url ||
         (sid === currentUser.id ? currentUser.avatar_url : undefined);
-      if (!sendersMap.has(sid)) {
-        sendersMap.set(sid, { name: sname, avatar_url: savatar, count: 1 });
+
+      const nameKey = sname.trim().toLowerCase();
+      if (!sendersMap.has(nameKey)) {
+        sendersMap.set(nameKey, {
+          id: sid,
+          name: sname,
+          avatar_url: savatar,
+          count: 1,
+        });
       } else {
-        const existing = sendersMap.get(sid)!;
+        const existing = sendersMap.get(nameKey)!;
         existing.count += 1;
+        if (!existing.avatar_url && savatar) existing.avatar_url = savatar;
       }
     });
-    sendersMap.forEach((val, key) => {
+
+    sendersMap.forEach((val) => {
       list.push({
-        id: key,
+        id: val.id,
         name: val.name,
         avatar_url: val.avatar_url,
         count: val.count,
       });
     });
+
     return list;
-  }, [moments, currentUser]);
+  }, [moments, currentUser, allProfiles]);
 
   const filteredMoments = useMemo(() => {
     if (selectedFriendFilter === 'all') return moments;
-    return moments.filter(
-      (m) =>
-        m.sender_id === selectedFriendFilter ||
-        m.sender?.id === selectedFriendFilter ||
-        m.sender?.username === selectedFriendFilter
-    );
-  }, [moments, selectedFriendFilter]);
+
+    const selectedOption = membersFilterOptions.find((m) => m.id === selectedFriendFilter);
+    const targetName = selectedOption?.name?.trim().toLowerCase();
+
+    return moments.filter((m) => {
+      if (m.sender_id === selectedFriendFilter || m.sender?.id === selectedFriendFilter || m.sender?.username === selectedFriendFilter) {
+        return true;
+      }
+      if (targetName && m.sender?.display_name?.trim().toLowerCase() === targetName) {
+        return true;
+      }
+      return false;
+    });
+  }, [moments, selectedFriendFilter, membersFilterOptions]);
 
   return (
     <MomentsContext.Provider
