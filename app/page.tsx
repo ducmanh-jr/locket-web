@@ -45,7 +45,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!authLoading && !userProfile) {
-      router.push('/login');
+      router.replace('/login');
     }
   }, [authLoading, userProfile, router]);
 
@@ -57,9 +57,14 @@ export default function HomePage() {
     }
   }, []);
 
+  // Unregister old Service Workers to clear stale cache in normal browser tabs
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (let registration of registrations) {
+          registration.unregister().catch(() => {});
+        }
+      }).catch(() => {});
     }
   }, []);
 
