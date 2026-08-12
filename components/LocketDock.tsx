@@ -60,7 +60,7 @@ export const LocketDock: React.FC<LocketDockProps> = ({
           className="w-12 h-12 rounded-full bg-[#FF2A85] text-white flex items-center justify-center active:scale-90 transition-all shadow-[0_0_18px_rgba(255,42,133,0.55)] cursor-pointer"
           title="Chụp khoảnh khắc mới"
         >
-          <div className="w-4.5 h-4.5 rounded-full bg-white shadow-sm" />
+          <div className="w-5 h-5 rounded-full bg-white shadow-sm" />
         </button>
 
         {/* Right: MessageCircle with badge */}
