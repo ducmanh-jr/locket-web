@@ -72,26 +72,45 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
           <ChevronDown className="w-3.5 h-3.5 text-zinc-400 stroke-[2.2]" />
         </button>
 
-        {/* Right: Circular User Avatar with Crown for Admin */}
+        {/* Right: Circular User Avatar with Gold Ring + Crown for Admin */}
         <button
           onClick={onOpenProfile}
-          className="relative w-9 h-9 rounded-full border-2 border-[#FF2A85] p-0.5 bg-zinc-900 flex-shrink-0 active:scale-95 transition-transform shadow-md"
+          className="relative flex-shrink-0 active:scale-95 transition-transform"
           title="Trang cá nhân của bạn"
         >
-          <div className="w-full h-full rounded-full overflow-hidden">
-            <img
-              src={avatarSrc}
-              alt={currentUser.display_name}
-              onError={(e) => {
-                e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
-              }}
-              className="w-full h-full object-cover rounded-full"
-            />
-          </div>
-          {(currentUser.isAdmin || currentUser.email === 'nguyenducmanh.ovaltine@gmail.com') && (
-            <span className="absolute -top-1.5 -right-1 text-[11px] drop-shadow-[0_0_6px_rgba(255,215,0,0.9)] animate-bounce select-none">
-              👑
-            </span>
+          {(currentUser.isAdmin || currentUser.email === 'nguyenducmanh.ovaltine@gmail.com') ? (
+            <>
+              <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[14px] z-30 drop-shadow-[0_0_6px_rgba(255,215,0,0.9)] select-none">
+                👑
+              </span>
+              <div className="w-10 h-10 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-amber-300 to-yellow-500 shadow-[0_0_12px_rgba(255,215,0,0.4)]">
+                <div className="w-full h-full rounded-full p-[1.5px] bg-gradient-to-tr from-[#FF2A85] to-[#FF69B4]">
+                  <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
+                    <img
+                      src={avatarSrc}
+                      alt={currentUser.display_name}
+                      onError={(e) => {
+                        e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
+                      }}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="w-9 h-9 rounded-full border-2 border-[#FF2A85] p-0.5 bg-zinc-900 shadow-md">
+              <div className="w-full h-full rounded-full overflow-hidden">
+                <img
+                  src={avatarSrc}
+                  alt={currentUser.display_name}
+                  onError={(e) => {
+                    e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
+                  }}
+                  className="w-full h-full object-cover rounded-full"
+                />
+              </div>
+            </div>
           )}
         </button>
       </div>

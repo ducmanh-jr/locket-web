@@ -225,30 +225,57 @@ export default function ProfilePage() {
         {/* Profile Header with Avatar & Neon Pink Ring */}
         <div className="flex flex-col items-center text-center my-6">
           <div className="relative mb-3 group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
-            <div className="w-24 h-24 rounded-full p-[2.5px] pink-ring-pulse bg-gradient-to-tr from-[#FF2A85] to-[#FF69B4] relative">
-              <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900 relative">
-                <img
-                  src={avatarSrc}
-                  alt={user.display_name}
-                  className="w-full h-full object-cover rounded-full"
-                />
-                {isUploadingAvatar && (
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                    <Loader2 className="w-6 h-6 text-[#FF2A85] animate-spin" />
+            {/* Admin: Outer Gold Ring + Crown */}
+            {(user.isAdmin || user.email === 'nguyenducmanh.ovaltine@gmail.com') ? (
+              <div className="relative">
+                {/* Crown at very top */}
+                <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-2xl z-30 drop-shadow-[0_0_8px_rgba(255,215,0,0.9)]" style={{ filter: 'drop-shadow(0 0 6px rgba(255,215,0,0.7))' }}>
+                  👑
+                </span>
+                {/* Gold outer ring */}
+                <div className="w-[104px] h-[104px] rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-amber-300 to-yellow-500 shadow-[0_0_20px_rgba(255,215,0,0.5)]">
+                  {/* Pink inner ring */}
+                  <div className="w-full h-full rounded-full p-[2.5px] pink-ring-pulse bg-gradient-to-tr from-[#FF2A85] to-[#FF69B4]">
+                    <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900 relative">
+                      <img
+                        src={avatarSrc}
+                        alt={user.display_name}
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                      {isUploadingAvatar && (
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                          <Loader2 className="w-6 h-6 text-[#FF2A85] animate-spin" />
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
-              {/* Admin Crown Badge */}
-              {(user.isAdmin || user.email === 'nguyenducmanh.ovaltine@gmail.com') && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-black px-2.5 py-0.5 rounded-full text-[11px] font-black shadow-[0_0_12px_rgba(255,215,0,0.9)] border border-yellow-200 flex items-center space-x-1 animate-bounce z-20">
-                  <span>👑 Admin</span>
                 </div>
-              )}
-              {/* Camera Badge Overlay */}
-              <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#FF2A85] text-white flex items-center justify-center shadow-lg border-2 border-[#10091D] active:scale-90 transition-transform">
-                <Camera className="w-4 h-4" />
+                {/* Camera Badge Overlay */}
+                <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#FF2A85] text-white flex items-center justify-center shadow-lg border-2 border-[#10091D] active:scale-90 transition-transform z-20">
+                  <Camera className="w-4 h-4" />
+                </div>
               </div>
-            </div>
+            ) : (
+              /* Normal user: Pink ring only */
+              <div className="w-24 h-24 rounded-full p-[2.5px] pink-ring-pulse bg-gradient-to-tr from-[#FF2A85] to-[#FF69B4] relative">
+                <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900 relative">
+                  <img
+                    src={avatarSrc}
+                    alt={user.display_name}
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                  {isUploadingAvatar && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 text-[#FF2A85] animate-spin" />
+                    </div>
+                  )}
+                </div>
+                {/* Camera Badge Overlay */}
+                <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#FF2A85] text-white flex items-center justify-center shadow-lg border-2 border-[#10091D] active:scale-90 transition-transform">
+                  <Camera className="w-4 h-4" />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* End Avatar Header */}

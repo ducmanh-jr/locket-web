@@ -501,27 +501,54 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         {/* Sender Avatar, Name & Time — right below photo */}
         <div className="w-full flex justify-center mt-2.5 pointer-events-none">
           <div className="flex items-center space-x-2">
-            <div
-              className="w-7.5 h-7.5 rounded-full overflow-visible flex-shrink-0 relative"
-              style={{
-                padding: '1.5px',
-                background: 'linear-gradient(135deg, #FF2A85, #FF69B4)',
-                boxShadow: '0 0 8px rgba(255, 42, 133, 0.5)',
-              }}
-            >
-              <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
-                <img
-                  src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
-                  alt={sender.display_name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              {(sender.isAdmin || sender.username?.includes('manh') || sender.email === 'nguyenducmanh.ovaltine@gmail.com') && (
-                <span className="absolute -top-2 -right-1 text-[11px] drop-shadow-[0_0_6px_rgba(255,215,0,0.9)] animate-bounce select-none z-10">
+            {(sender.isAdmin || sender.email === 'nguyenducmanh.ovaltine@gmail.com') ? (
+              <div className="relative flex-shrink-0">
+                <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] z-10 drop-shadow-[0_0_4px_rgba(255,215,0,0.9)] select-none">
                   👑
                 </span>
-              )}
-            </div>
+                <div
+                  className="w-8 h-8 rounded-full"
+                  style={{
+                    padding: '1.5px',
+                    background: 'linear-gradient(135deg, #f5c842, #e6a817, #f5d442)',
+                    boxShadow: '0 0 10px rgba(255,215,0,0.5)',
+                  }}
+                >
+                  <div
+                    className="w-full h-full rounded-full"
+                    style={{
+                      padding: '1.5px',
+                      background: 'linear-gradient(135deg, #FF2A85, #FF69B4)',
+                    }}
+                  >
+                    <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
+                      <img
+                        src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
+                        alt={sender.display_name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0"
+                style={{
+                  padding: '1.5px',
+                  background: 'linear-gradient(135deg, #FF2A85, #FF69B4)',
+                  boxShadow: '0 0 8px rgba(255, 42, 133, 0.5)',
+                }}
+              >
+                <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
+                  <img
+                    src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
+                    alt={sender.display_name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
             <span className="text-white text-sm font-bold truncate max-w-[160px]">
               {sender.display_name}
             </span>
