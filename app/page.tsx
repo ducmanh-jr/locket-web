@@ -66,17 +66,17 @@ export default function HomePage() {
   if (authLoading) {
     return (
       <div className="min-h-full flex flex-col items-center justify-center bg-[#10091D] text-white space-y-5 select-none">
-        <div className="relative w-28 h-28 flex items-center justify-center">
+        <div className="relative w-32 h-32 flex items-center justify-center">
           <img
-            src="/logo.png"
+            src="/icon.svg"
             alt="Locket Logo"
-            className="w-20 h-20 object-contain rounded-2xl drop-shadow-[0_0_30px_rgba(255,105,180,0.6)]"
+            className="w-24 h-24 object-contain rounded-3xl drop-shadow-[0_0_25px_rgba(156,191,222,0.6)]"
           />
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-24 h-24 rounded-[2rem] border-4 border-[#FF2A85] border-t-transparent animate-spin" />
+            <div className="w-28 h-28 rounded-[2.2rem] border-4 border-[#8EB5D6] border-t-transparent animate-spin" />
           </div>
         </div>
-        <p className="text-xs font-bold text-zinc-400 tracking-wide">Đang kiểm tra tài khoản Google...</p>
+        <p className="text-xs font-bold text-zinc-300 tracking-wide">Đang kiểm tra tài khoản Google...</p>
       </div>
     );
   }

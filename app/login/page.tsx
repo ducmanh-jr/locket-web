@@ -47,8 +47,8 @@ export default function LoginPage() {
       {/* Top Header Bar */}
       <div className="flex items-center justify-between z-10 pt-1">
         <div className="flex items-center space-x-2.5">
-          <div className="w-9 h-9 rounded-xl overflow-hidden bg-white/10 p-0.5 flex items-center justify-center shadow-[0_0_15px_rgba(255,105,180,0.4)] border border-white/20">
-            <img src="/logo.png" alt="Locket Logo" className="w-full h-full object-contain rounded-lg" />
+          <div className="w-9 h-9 rounded-xl overflow-hidden p-0.5 flex items-center justify-center drop-shadow-[0_0_15px_rgba(255,42,133,0.4)]">
+            <img src="/icon.svg" alt="Locket Logo" className="w-full h-full object-contain" />
           </div>
           <span className="text-white text-lg font-black tracking-tight">
             Locket<span className="text-[#FF2A85]">Web</span>
@@ -84,9 +84,9 @@ export default function LoginPage() {
                 <span className="text-[9px] text-white font-bold">Locket Live</span>
               </div>
 
-              {/* Center Shutter 3D Heart Logo */}
-              <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg my-auto border border-white/20">
-                <img src="/logo.png" alt="Locket 3D Logo" className="w-full h-full object-contain" />
+              {/* Center Shutter Pure SVG 3D Heart Logo */}
+              <div className="w-14 h-14 rounded-2xl overflow-hidden drop-shadow-lg my-auto">
+                <img src="/icon.svg" alt="Locket 3D Logo" className="w-full h-full object-contain" />
               </div>
 
               {/* Floating Heart Reaction Badge */}

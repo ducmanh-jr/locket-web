@@ -1,3 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <image href="/logo.png" width="512" height="512" x="0" y="0" />
+  <!-- Pastel Blue Background -->
+  <rect width="512" height="512" rx="100" fill="#9CBFDE"/>
+
+  <g transform="translate(0, 15)">
+    <!-- 1. Outermost White Heart -->
+    <path d="M 256 420 C 120 325 55 240 55 165 C 55 102 102 55 165 55 C 208 55 240 78 256 104 C 272 78 304 55 347 55 C 410 55 457 102 457 165 C 457 240 392 325 256 420 Z" fill="#FFFFFF"/>
+
+    <!-- 2. Middle Soft Blue Heart -->
+    <path transform="translate(256, 230) scale(0.76) translate(-256, -230)" d="M 256 420 C 120 325 55 240 55 165 C 55 102 102 55 165 55 C 208 55 240 78 256 104 C 272 78 304 55 347 55 C 410 55 457 102 457 165 C 457 240 392 325 256 420 Z" fill="#8EB5D6"/>
+
+    <!-- 3. Inner Deep Blue Heart -->
+    <path transform="translate(256, 230) scale(0.53) translate(-256, -230)" d="M 256 420 C 120 325 55 240 55 165 C 55 102 102 55 165 55 C 208 55 240 78 256 104 C 272 78 304 55 347 55 C 410 55 457 102 457 165 C 457 240 392 325 256 420 Z" fill="#5486AB"/>
+  </g>
 </svg>
