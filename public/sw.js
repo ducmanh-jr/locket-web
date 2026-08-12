@@ -1,4 +1,4 @@
-const CACHE_NAME = 'locket-web-v5';
+const CACHE_NAME = 'locket-web-v7';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',
