@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Grid3x3, Home, MessageCircle, ChevronDown } from 'lucide-react';
+import { Grid3x3, Home, MessageCircle } from 'lucide-react';
 
 interface LocketDockProps {
   currentView: 'feed' | 'grid';
@@ -27,26 +27,6 @@ export const LocketDock: React.FC<LocketDockProps> = ({
 
   return (
     <div className="w-full flex flex-col items-center z-40 px-4 pb-4 pt-1 space-y-2.5 flex-shrink-0 bg-transparent pointer-events-auto">
-
-      {/* Pill "Lịch sử ˅" — Photo mosaic thumbnail + chevron down */}
-      <button
-        onClick={() => {
-          triggerHaptic();
-          onToggleView(currentView === 'grid' ? 'feed' : 'grid');
-        }}
-        className="flex items-center space-x-2 text-white/80 hover:text-white px-2 py-1 rounded-full active:scale-95 transition-all cursor-pointer"
-        title="Bấm để xem lịch sử khoảnh khắc"
-      >
-        {/* Mosaic photo thumbnail — 4 tiny squares like the real Locket app */}
-        <div className="w-7 h-7 rounded-lg overflow-hidden grid grid-cols-2 gap-[1px] bg-white/10 flex-shrink-0">
-          <div className="bg-[#9D8AA6] rounded-[2px]" />
-          <div className="bg-[#8D769A] rounded-[2px]" />
-          <div className="bg-[#B3A3BA] rounded-[2px]" />
-          <div className="bg-[#7A6888] rounded-[2px]" />
-        </div>
-        <span className="text-sm font-semibold tracking-tight">Lịch sử</span>
-        <ChevronDown className="w-3.5 h-3.5 text-white/50" />
-      </button>
 
       {/* Translucent Compact Pill Dock */}
       <div
