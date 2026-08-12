@@ -68,9 +68,9 @@ export default function HomePage() {
       <div className="min-h-full flex flex-col items-center justify-center bg-[#10091D] text-white space-y-5 select-none">
         <div className="relative w-28 h-28 flex items-center justify-center">
           <img
-            src="/icon.svg"
+            src="/logo.png"
             alt="Locket Logo"
-            className="w-20 h-20 object-contain drop-shadow-[0_0_30px_rgba(255,42,133,0.6)]"
+            className="w-20 h-20 object-contain rounded-2xl drop-shadow-[0_0_30px_rgba(255,105,180,0.6)]"
           />
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-24 h-24 rounded-[2rem] border-4 border-[#FF2A85] border-t-transparent animate-spin" />

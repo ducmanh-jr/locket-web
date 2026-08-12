@@ -1,8 +1,9 @@
-const CACHE_NAME = 'locket-web-v2';
+const CACHE_NAME = 'locket-web-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',
-  '/icon.svg',
+  '/icon.png',
+  '/logo.png',
 ];
 
 self.addEventListener('install', (event) => {
