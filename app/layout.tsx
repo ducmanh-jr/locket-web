@@ -44,7 +44,7 @@ export default function RootLayout({
         <link rel="shortcut icon" href="/icon.svg" />
         <link rel="apple-touch-icon" href="/icon.svg" />
       </head>
-      <body style={{ minHeight: '100dvh', height: '100dvh', overflow: 'hidden' }}>
+      <body>
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>

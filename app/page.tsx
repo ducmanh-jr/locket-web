@@ -65,7 +65,7 @@ export default function HomePage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-full flex flex-col items-center justify-center bg-[#FFC2DC] text-white select-none relative overflow-hidden p-6">
+      <div className="w-full h-full min-h-full flex flex-col items-center justify-center bg-[#FFC2DC] text-white select-none relative overflow-hidden p-6">
         {/* Ambient Glowing Orbs */}
         <motion.div
           animate={{
@@ -128,7 +128,7 @@ export default function HomePage() {
 
   if (!userProfile) {
     return (
-      <div className="min-h-full flex flex-col items-center justify-center bg-locket-purple text-white space-y-4 p-4 text-center">
+      <div className="w-full h-full min-h-full flex flex-col items-center justify-center bg-[#10091D] text-white space-y-4 p-4 text-center">
         <div className="w-12 h-12 rounded-2xl bg-[#FF2A85]/20 text-[#FF2A85] flex items-center justify-center mb-2 border border-[#FF2A85]/40">
           <Camera className="w-6 h-6" />
         </div>
