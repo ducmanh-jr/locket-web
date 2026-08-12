@@ -9,7 +9,7 @@ interface DesktopPhoneFrameProps {
 
 export const DesktopPhoneFrame: React.FC<DesktopPhoneFrameProps> = ({ children }) => {
   return (
-    <div className="fixed inset-0 w-full h-[100dvh] lg:relative bg-[#000000] text-zinc-100 flex items-center justify-center p-0 lg:p-3 font-sans overflow-hidden">
+    <div className="w-full min-h-[100dvh] h-[100dvh] bg-[#000000] text-zinc-100 flex items-center justify-center p-0 lg:p-3 font-sans overflow-hidden relative">
       {/* Ambient Pink Locket Glow in Background */}
       <div className="hidden lg:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#FF2A85]/8 rounded-full blur-[150px] pointer-events-none z-0" />
 
