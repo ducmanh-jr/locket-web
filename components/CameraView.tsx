@@ -9,15 +9,11 @@ import {
   RotateCcw,
   Send,
   X,
-  Check,
-  CheckSquare,
-  Square,
-  Users,
   Sparkles,
   Music,
   VolumeX,
   Mic,
-  Video,
+  ImagePlus,
 } from 'lucide-react';
 import { MusicTrack } from '@/lib/types';
 import { MusicPickerModal } from './MusicPickerModal';
@@ -55,16 +51,36 @@ export const CameraView: React.FC<CameraViewProps> = ({
   const [selectedMusic, setSelectedMusic] = useState<MusicTrack | null>(null);
   const [showMusicPicker, setShowMusicPicker] = useState<boolean>(false);
 
+  // Gallery Upload (Locket Gold Feature)
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+
+  const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const isVideoFile = file.type.startsWith('video/');
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      const media: CapturedMedia = {
+        dataUrl,
+        type: isVideoFile ? 'video' : 'photo',
+        blob: file,
+      };
+      setCapturedMedia(media);
+      setAudioOption('mute');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
   // Video Recording States
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [recordingProgress, setRecordingProgress] = useState<number>(0);
-  const [videoPlaying, setVideoPlaying] = useState<boolean>(false);
   const pressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const recorderRef = useRef<{ start: () => void; stop: () => Promise<CapturedMedia> } | null>(null);
   const startTimeRef = useRef<number>(0);
 
-  // Kill any feed audio when camera opens, and clean up when it closes
   useEffect(() => {
     killGlobalAudio();
     return () => {
@@ -72,14 +88,12 @@ export const CameraView: React.FC<CameraViewProps> = ({
     };
   }, []);
 
-  // Auto-select all friends when friends prop finishes loading
   useEffect(() => {
     if (friends.length > 0 && selectedFriendIds.length === 0) {
       setSelectedFriendIds(friends.map((f) => f.id));
     }
   }, [friends]);
 
-  // Initialize Camera Stream with Video + Audio (for Video Recording capability)
   useEffect(() => {
     async function startCamera() {
       try {
@@ -92,10 +106,9 @@ export const CameraView: React.FC<CameraViewProps> = ({
               width: { ideal: 1080 },
               height: { ideal: 1080 },
             },
-            audio: true, // Try microphone for original video audio
+            audio: true,
           });
         } catch (audioErr) {
-          // Fallback to video-only if microphone permission is denied
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
               facingMode: facingMode,
@@ -113,7 +126,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
       } catch (err) {
         console.error('Error starting camera:', err);
         setCameraError(
-          'Không thể truy cập camera. Vui lòng cấp quyền camera trong trình duyệt hoặc chạy qua HTTPS/localhost.'
+          'Không thể truy cập camera. Vui lòng cấp quyền camera trong trình duyệt.'
         );
       }
     }
@@ -132,7 +145,6 @@ export const CameraView: React.FC<CameraViewProps> = ({
 
   const isFlippingRef = useRef<boolean>(false);
 
-  // Flip Front/Back Camera with 700ms Hardware Lock
   const toggleFacingMode = () => {
     if (isFlippingRef.current) return;
     isFlippingRef.current = true;
@@ -151,12 +163,11 @@ export const CameraView: React.FC<CameraViewProps> = ({
     triggerHaptic(50);
   };
 
-  // Double Tap on Viewfinder to Flip Camera (Desktop Click)
   const handleViewfinderTap = () => {
     if (capturedMedia || isRecording) return;
     if (isTouchHandledRef.current) {
       isTouchHandledRef.current = false;
-      return; // Ignore synthesized mouse click from mobile touch
+      return;
     }
     const now = Date.now();
     if (now - lastTapTimeRef.current > 60 && now - lastTapTimeRef.current < 380) {
@@ -167,7 +178,6 @@ export const CameraView: React.FC<CameraViewProps> = ({
     }
   };
 
-  // Double Tap on Viewfinder to Flip Camera (Mobile Touch)
   const handleTouchEndViewfinder = (e: React.TouchEvent) => {
     if (capturedMedia || isRecording) return;
     const now = Date.now();
@@ -181,14 +191,12 @@ export const CameraView: React.FC<CameraViewProps> = ({
     }
   };
 
-  // Trigger Haptic Feedback
   const triggerHaptic = (ms = 35) => {
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {
       try { navigator.vibrate(ms); } catch (e) {}
     }
   };
 
-  // Stop Recording Video & Save Clip
   const stopRecording = async () => {
     if (!isRecording && !recorderRef.current) return;
     setIsRecording(false);
@@ -208,7 +216,6 @@ export const CameraView: React.FC<CameraViewProps> = ({
       try {
         const media = await recorderRef.current.stop();
         recorderRef.current = null;
-        setVideoPlaying(false);
         setCapturedMedia(media);
         setAudioOption('mute');
       } catch (e) {
@@ -217,7 +224,6 @@ export const CameraView: React.FC<CameraViewProps> = ({
     }
   };
 
-  // Start Video Recording
   const startRecording = () => {
     if (!mediaStreamRef.current) return;
     triggerHaptic(60);
@@ -229,7 +235,6 @@ export const CameraView: React.FC<CameraViewProps> = ({
     recorderRef.current = recorder;
     recorder.start();
 
-    // 5-second max duration progress ticker (50ms interval)
     progressIntervalRef.current = setInterval(() => {
       const elapsed = Date.now() - startTimeRef.current;
       const pct = Math.min(100, (elapsed / 5000) * 100);
@@ -241,11 +246,8 @@ export const CameraView: React.FC<CameraViewProps> = ({
     }, 50);
   };
 
-  // Press & Hold Shutter Button Handlers
   const handleShutterDown = () => {
     if (capturedMedia || isRecording) return;
-
-    // Start 400ms hold timer to distinguish tap vs hold
     pressTimerRef.current = setTimeout(() => {
       startRecording();
     }, 400);
@@ -255,10 +257,8 @@ export const CameraView: React.FC<CameraViewProps> = ({
     if (capturedMedia) return;
 
     if (isRecording) {
-      // User released finger while recording -> Stop recording
       await stopRecording();
     } else if (pressTimerRef.current) {
-      // User released finger before 400ms -> Take Photo!
       clearTimeout(pressTimerRef.current);
       pressTimerRef.current = null;
 
@@ -275,34 +275,16 @@ export const CameraView: React.FC<CameraViewProps> = ({
     }
   };
 
-  // Retake Photo/Video
   const handleRetake = () => {
     killGlobalAudio();
     setCapturedMedia(null);
     setCaption('');
     setSelectedMusic(null);
     setAudioOption('original');
-    setVideoPlaying(false);
     setIsRecording(false);
     setRecordingProgress(0);
   };
 
-  // Toggle Friend Selection
-  const handleToggleFriend = (id: string) => {
-    setSelectedFriendIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
-
-  const handleSelectAll = () => {
-    if (selectedFriendIds.length === friends.length) {
-      setSelectedFriendIds([]);
-    } else {
-      setSelectedFriendIds(friends.map((f) => f.id));
-    }
-  };
-
-  // Final Send Moment
   const handleSend = async () => {
     if (!capturedMedia) return;
     setIsSending(true);
@@ -334,15 +316,16 @@ export const CameraView: React.FC<CameraViewProps> = ({
         </button>
 
         <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-[#FFC700]" />
-          {isRecording ? 'Đang quay video (max 5s)...' : 'Chụp Khoảnh Khắc Locket'}
+          <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--theme-primary)' }} />
+          {isRecording ? 'Đang quay video (max 5s)...' : 'Chụp Khoảnh Khắc Locket Gold'}
         </span>
 
         {!capturedMedia ? (
           <button
             onClick={toggleFacingMode}
             disabled={isRecording}
-            className="w-10 h-10 rounded-full bg-[#18181C] text-[#FFC700] flex items-center justify-center border border-zinc-800 hover:bg-[#262626] transition-colors disabled:opacity-40"
+            className="w-10 h-10 rounded-full bg-[#18181C] flex items-center justify-center border border-zinc-800 hover:bg-[#262626] transition-colors disabled:opacity-40"
+            style={{ color: 'var(--theme-primary)' }}
             title="Đổi camera trước/sau"
           >
             <RotateCcw className="w-5 h-5" />
@@ -353,13 +336,12 @@ export const CameraView: React.FC<CameraViewProps> = ({
       </div>
 
       {/* Main Viewfinder / Media Review */}
-      <div className="relative w-full max-w-sm aspect-square my-auto rounded-[2.5rem] overflow-hidden bg-[#18181C] border border-zinc-800 shadow-2xl flex items-center justify-center">
+      <div className="relative w-full max-w-sm aspect-square my-auto rounded-[2.5rem] overflow-hidden bg-[#18181C] locket-theme-card-border shadow-2xl flex items-center justify-center transition-all duration-300">
         {cameraError ? (
           <div className="p-6 text-center text-red-400 text-xs">
             {cameraError}
           </div>
         ) : !capturedMedia ? (
-          /* Live Camera Stream Video */
           <div
             onClick={handleViewfinderTap}
             onTouchEnd={handleTouchEndViewfinder}
@@ -375,13 +357,11 @@ export const CameraView: React.FC<CameraViewProps> = ({
                 facingMode === 'user' ? 'scale-x-[-1]' : ''
               }`}
             />
-            {/* Double Tap Hint Badge */}
             {!isRecording && (
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm text-white/80 text-[10px] px-2.5 py-1 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
                 Nhấn đúp để đổi cam 🔄
               </div>
             )}
-            {/* Live Recording Pulsing Banner Overlay */}
             {isRecording && (
               <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-600/90 text-white font-bold text-xs px-3.5 py-1 rounded-full flex items-center space-x-2 animate-pulse shadow-lg">
                 <div className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
@@ -390,7 +370,6 @@ export const CameraView: React.FC<CameraViewProps> = ({
             )}
           </div>
         ) : capturedMedia.type === 'video' ? (
-          /* Captured Video Review & 3 Audio Option Overlay */
           <div className="relative w-full h-full bg-black">
             <video
               ref={previewVideoRef}
@@ -401,30 +380,18 @@ export const CameraView: React.FC<CameraViewProps> = ({
               muted={audioOption !== 'original'}
               controls={false}
               preload="auto"
-              onLoadedData={(e) => {
-                const v = e.currentTarget;
-                v.play().then(() => {
-                  setVideoPlaying(true);
-                }).catch(() => {
-                  v.muted = true;
-                  v.play().then(() => setVideoPlaying(true)).catch(() => {});
-                });
-              }}
-              onCanPlay={(e) => {
-                const v = e.currentTarget;
-                v.play().then(() => setVideoPlaying(true)).catch(() => {});
-              }}
+              onCanPlay={(e) => e.currentTarget.play().catch(() => {})}
               className="w-full h-full object-cover rounded-[2.5rem]"
             />
-            {/* 3 Audio Mode Selector Pill Top Bar */}
             <div className="absolute top-4 left-3 right-3 flex items-center justify-center space-x-1.5 bg-black/80 backdrop-blur-md p-1.5 rounded-full border border-white/20 shadow-xl z-20">
               <button
                 onClick={() => { killGlobalAudio(); setAudioOption('mute'); }}
                 className={`flex-1 py-1 px-2.5 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
                   audioOption === 'mute'
-                    ? 'bg-[#FFC700] text-black shadow-md'
+                    ? 'bg-white text-black shadow-md'
                     : 'text-zinc-400 hover:text-white'
                 }`}
+                style={audioOption === 'mute' ? { background: 'var(--theme-primary)', color: 'black' } : {}}
               >
                 <VolumeX className="w-3.5 h-3.5" />
                 <span>Im lặng 🔇</span>
@@ -434,9 +401,10 @@ export const CameraView: React.FC<CameraViewProps> = ({
                 onClick={() => { killGlobalAudio(); setAudioOption('original'); }}
                 className={`flex-1 py-1 px-2.5 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
                   audioOption === 'original'
-                    ? 'bg-[#FFC700] text-black shadow-md'
+                    ? 'bg-white text-black shadow-md'
                     : 'text-zinc-400 hover:text-white'
                 }`}
+                style={audioOption === 'original' ? { background: 'var(--theme-primary)', color: 'black' } : {}}
               >
                 <Mic className="w-3.5 h-3.5" />
                 <span>Âm gốc 🎙️</span>
@@ -449,72 +417,27 @@ export const CameraView: React.FC<CameraViewProps> = ({
                 }}
                 className={`flex-1 py-1 px-2.5 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
                   audioOption === 'music'
-                    ? 'bg-[#FFC700] text-black shadow-md'
+                    ? 'bg-white text-black shadow-md'
                     : 'text-zinc-400 hover:text-white'
                 }`}
+                style={audioOption === 'music' ? { background: 'var(--theme-primary)', color: 'black' } : {}}
               >
                 <Music className="w-3.5 h-3.5" />
                 <span>Thêm nhạc 🎵</span>
               </button>
             </div>
 
-            {/* Selected Music Badge Display */}
-            {audioOption === 'music' && selectedMusic && (
-              <div className="absolute top-16 left-4 right-4 flex items-center justify-center">
-                <div className="flex items-center space-x-2 bg-black/85 backdrop-blur-md border border-[#FFC700]/50 text-white text-xs px-3.5 py-1.5 rounded-full shadow-lg max-w-[90%]">
-                  <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-[#FFC700]/60 animate-spin">
-                    <img src={selectedMusic.cover_url} alt="" className="w-full h-full object-cover" />
-                  </div>
-                  <span className="font-semibold text-xs truncate">
-                    {selectedMusic.title} • {selectedMusic.artist}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Caption Input & Swipe Widgets Pill inside Video */}
             <div className="absolute bottom-2 left-2 right-2 flex justify-center z-20">
               <LocketCaptionWidgetSelector value={caption} onChange={setCaption} />
             </div>
           </div>
         ) : (
-          /* Captured Photo Review & Caption Overlay */
           <div className="relative w-full h-full">
             <img
               src={capturedMedia.dataUrl}
               alt="Locket Snapshot"
               className="w-full h-full object-cover"
             />
-            {/* Music Badge Sticker at Top Center of Photo */}
-            <div className="absolute top-4 left-4 right-4 flex items-center justify-center">
-              {selectedMusic ? (
-                <div className="flex items-center space-x-2 bg-black/75 backdrop-blur-md border border-[#FFC700]/50 text-white text-xs px-3.5 py-1.5 rounded-full shadow-lg max-w-[90%]">
-                  <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-[#FFC700]/70 animate-spin">
-                    <img src={selectedMusic.cover_url} alt="" className="w-full h-full object-cover" />
-                  </div>
-                  <span className="font-semibold text-xs truncate max-w-[130px]">
-                    {selectedMusic.title} • {selectedMusic.artist}
-                  </span>
-                  <button
-                    onClick={() => { killGlobalAudio(); setSelectedMusic(null); }}
-                    className="text-zinc-400 hover:text-white p-0.5"
-                    title="Gỡ bài hát"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowMusicPicker(true)}
-                  className="bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-[#FFC700] text-xs font-bold px-3.5 py-1.5 rounded-full flex items-center space-x-1.5 transition-all active:scale-95 shadow-md"
-                >
-                  <Music className="w-3.5 h-3.5 text-[#FFC700]" />
-                  <span>Thêm nhạc</span>
-                </button>
-              )}
-            </div>
-
-            {/* Caption Input & Swipe Widgets Pill inside Photo */}
             <div className="absolute bottom-4 left-4 right-4 flex justify-center z-20">
               <LocketCaptionWidgetSelector value={caption} onChange={setCaption} />
             </div>
@@ -525,49 +448,102 @@ export const CameraView: React.FC<CameraViewProps> = ({
       {/* Bottom Controls / Action Buttons */}
       <div className="w-full max-w-sm pb-6 z-10">
         {!capturedMedia ? (
-          /* Live Shutter Button (Tap = Photo, Hold >= 400ms = Record Video max 5s) */
           <div className="flex flex-col items-center justify-center space-y-2">
-            <div className="relative w-20 h-20 flex items-center justify-center">
-              {/* Animated Progress Ring for Video Recording */}
-              {isRecording && (
-                <svg className="absolute inset-0 w-20 h-20 -rotate-90 pointer-events-none z-20">
-                  <circle
-                    cx="40"
-                    cy="40"
-                    r="36"
-                    stroke="#EF4444"
-                    strokeWidth="5"
-                    fill="transparent"
-                    strokeDasharray={226}
-                    strokeDashoffset={226 - (226 * recordingProgress) / 100}
-                    className="transition-all duration-75 ease-linear"
-                  />
-                </svg>
-              )}
+            <input
+              ref={galleryInputRef}
+              type="file"
+              accept="image/*,video/*"
+              className="hidden"
+              onChange={handleGalleryUpload}
+            />
 
+            <div className="flex items-center space-x-5">
+              {/* Left: Gallery Upload Button (Gold Exclusive) */}
               <button
-                onMouseDown={handleShutterDown}
-                onMouseUp={handleShutterUp}
-                onTouchStart={handleShutterDown}
-                onTouchEnd={handleShutterUp}
-                className={`w-20 h-20 rounded-full border-4 ${
-                  isRecording ? 'border-red-500 scale-105' : 'border-[#FFC700]'
-                } p-1.5 flex items-center justify-center shadow-locket-glow transition-all active:scale-90`}
-                title="Nhấn để chụp ảnh • Nhấn giữ 2s để quay video (max 5s)"
+                onClick={() => galleryInputRef.current?.click()}
+                disabled={isRecording}
+                className="w-14 h-14 rounded-full bg-[#18181C] border-2 flex items-center justify-center flex-col space-y-0.5 active:scale-90 transition-all disabled:opacity-30 shadow-lg"
+                style={{
+                  borderColor: 'var(--theme-primary)',
+                  boxShadow: '0 0 12px var(--theme-glow)',
+                }}
+                title="Tải ảnh/video từ thư viện 🖼️ (Locket Gold)"
               >
-                <div
-                  className={`w-full h-full ${
-                    isRecording ? 'bg-red-500 rounded-2xl scale-75' : 'bg-white rounded-full'
-                  } transition-all duration-200 shadow-inner`}
-                />
+                <ImagePlus className="w-5 h-5" style={{ color: 'var(--theme-primary)' }} />
+                <span
+                  className="text-[7px] font-black tracking-wider leading-none"
+                  style={{ color: 'var(--theme-primary)' }}
+                >
+                  GOLD
+                </span>
               </button>
+
+              {/* Center: Shutter Button with Themed Progress Ring */}
+              <div className="relative w-20 h-20 flex items-center justify-center">
+                {isRecording && (
+                  <svg
+                    className="absolute inset-0 w-20 h-20 -rotate-90 pointer-events-none z-20 gold-progress-ring"
+                    viewBox="0 0 80 80"
+                  >
+                    <circle
+                      cx="40" cy="40" r="36"
+                      stroke="rgba(255,255,255,0.15)"
+                      strokeWidth="5"
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="40" cy="40" r="36"
+                      stroke="var(--theme-primary)"
+                      strokeWidth="5"
+                      fill="transparent"
+                      strokeLinecap="round"
+                      strokeDasharray={226}
+                      strokeDashoffset={226 - (226 * recordingProgress) / 100}
+                      className="transition-all duration-75 ease-linear"
+                    />
+                  </svg>
+                )}
+
+                <button
+                  onMouseDown={handleShutterDown}
+                  onMouseUp={handleShutterUp}
+                  onTouchStart={handleShutterDown}
+                  onTouchEnd={handleShutterUp}
+                  className={`w-20 h-20 rounded-full border-4 p-1.5 flex items-center justify-center transition-all active:scale-90 ${
+                    isRecording ? 'scale-105' : ''
+                  }`}
+                  style={{
+                    borderColor: 'var(--theme-primary)',
+                    boxShadow: isRecording
+                      ? '0 0 25px var(--theme-glow)'
+                      : '0 0 18px var(--theme-glow)',
+                  }}
+                  title="Nhấn để chụp ảnh • Nhấn giữ để quay video (max 5s)"
+                >
+                  <div
+                    className="w-full h-full transition-all duration-200"
+                    style={isRecording ? {
+                      background: 'var(--theme-primary)',
+                      borderRadius: '30%',
+                      transform: 'scale(0.72)',
+                    } : {
+                      background: 'white',
+                      borderRadius: '9999px',
+                    }}
+                  />
+                </button>
+              </div>
+
+              <div className="w-14 h-14" />
             </div>
+
             <span className="text-[11px] font-semibold text-zinc-400 text-center">
-              Chạm để chụp • Nhấn giữ để quay video (5s)
+              {isRecording
+                ? `⏺ Đang quay… ${(recordingProgress * 0.05).toFixed(1)}s / 5s`
+                : 'Chạm để chụp • Giữ để quay video (5s)'}
             </span>
           </div>
         ) : (
-          /* Post Capture: Action Buttons (Retake & Send directly to Shared Room) */
           <div className="space-y-3 px-2">
             <div className="flex items-center space-x-3">
               <button
@@ -582,7 +558,11 @@ export const CameraView: React.FC<CameraViewProps> = ({
               <button
                 onClick={handleSend}
                 disabled={isSending}
-                className="flex-1 py-3.5 bg-[#FFC700] hover:bg-[#FFE066] text-black font-extrabold text-xs rounded-full flex items-center justify-center space-x-2 shadow-[0_0_20px_rgba(255,199,0,0.35)] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-3.5 text-black font-extrabold text-xs rounded-full flex items-center justify-center space-x-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed gold-shimmer-overlay"
+                style={{
+                  background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary))',
+                  boxShadow: '0 0 20px var(--theme-glow)',
+                }}
               >
                 {isSending ? (
                   <div className="w-4 h-4 rounded-full border-2 border-black border-t-transparent animate-spin" />
@@ -597,7 +577,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
           </div>
         )}
       </div>
-      {/* Music Picker Modal */}
+
       {showMusicPicker && (
         <MusicPickerModal
           selectedTrackId={selectedMusic?.id}

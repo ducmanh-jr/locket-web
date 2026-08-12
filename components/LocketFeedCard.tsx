@@ -360,7 +360,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       <div
         onClick={handleCardClick}
         onDoubleClick={handleDoubleTap}
-        className="w-[94%] max-w-[400px] aspect-square bg-[#18181C] border border-zinc-800/80 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex-shrink-0 my-auto relative overflow-hidden rounded-[2.8rem] cursor-pointer"
+        className="w-[94%] max-w-[400px] aspect-square bg-[#18181C] locket-theme-card-border shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex-shrink-0 my-auto relative overflow-hidden rounded-[2.8rem] cursor-pointer transition-all duration-300"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -513,16 +513,31 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       {/* Sender Avatar, Name & Time BELOW the Photo Card (centered) */}
       <div className="w-full flex justify-center mt-3 pointer-events-none">
         <div className="flex items-center space-x-2">
-          <div className="w-7 h-7 rounded-full overflow-hidden bg-zinc-800 border-2 border-[#FFC700]/70 flex-shrink-0">
-            <img
-              src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
-              alt={sender.display_name}
-              className="w-full h-full object-cover"
-            />
+          {/* Themed ring avatar for sender */}
+          <div
+            className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 relative"
+            style={{
+              padding: '1.5px',
+              background: 'linear-gradient(135deg, var(--theme-primary), var(--theme-secondary))',
+              boxShadow: '0 0 8px var(--theme-glow)',
+            }}
+          >
+            <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
+              <img
+                src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
+                alt={sender.display_name}
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
           <span className="text-white text-sm font-bold truncate max-w-[160px]">
             {isMyMoment ? `${sender.display_name}` : sender.display_name}
           </span>
+          {isMyMoment && (
+            <span className="text-xs leading-none" style={{ filter: 'drop-shadow(0 0 3px rgba(255,215,0,0.8))' }}>
+              👑
+            </span>
+          )}
           <span className="text-white/50 text-xs font-medium">{formatLocketTime(moment.created_at)}</span>
         </div>
       </div>
