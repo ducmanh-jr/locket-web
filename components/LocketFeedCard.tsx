@@ -523,9 +523,12 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                   >
                     <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
                       <img
-                        src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
+                        src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`}
                         alt={sender.display_name}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`;
+                        }}
                       />
                     </div>
                   </div>
@@ -542,9 +545,12 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               >
                 <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
                   <img
-                    src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username}`}
+                    src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`}
                     alt={sender.display_name}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`;
+                    }}
                   />
                 </div>
               </div>
