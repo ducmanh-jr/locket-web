@@ -14,30 +14,10 @@ export const DEMO_CURRENT_USER: Profile = {
   avatar_url: AVATAR_DM,
 };
 
-// 3 Main Default Friends: dm, system32, admin
-export const DEFAULT_3_FRIENDS: Profile[] = [
-  {
-    id: "user-dm",
-    username: "dm",
-    display_name: "dm",
-    avatar_url: AVATAR_DM,
-  },
-  {
-    id: "user-system32",
-    username: "system32",
-    display_name: "system32",
-    avatar_url: AVATAR_SYSTEM32,
-  },
-  {
-    id: "user-admin",
-    username: "admin",
-    display_name: "admin",
-    avatar_url: AVATAR_ADMIN,
-  },
-];
-
-export const DEMO_FRIENDS = DEFAULT_3_FRIENDS;
-export const DEMO_SUGGESTED_USERS = DEFAULT_3_FRIENDS;
+// 100% Real User Architecture: Zero fake demo accounts
+export const DEFAULT_3_FRIENDS: Profile[] = [];
+export const DEMO_FRIENDS: Profile[] = [];
+export const DEMO_SUGGESTED_USERS: Profile[] = [];
 
 // Clean 100% Real-User Architecture: Empty sample dataset
 const PHOTO_DATASET: { file: string; caption: string }[] = [];

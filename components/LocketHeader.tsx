@@ -37,7 +37,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
       ? currentUser.avatar_url
       : `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
 
-  const friendCount = members.filter((m) => m.id !== 'all').length || 18;
+  const friendCount = members.filter((m) => m.id !== 'all').length;
   const currentFilterMember = members.find((m) => m.id === selectedFilterId);
   const pillLabel =
     selectedFilterId === 'all' || !currentFilterMember

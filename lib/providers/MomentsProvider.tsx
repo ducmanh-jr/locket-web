@@ -402,12 +402,21 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
     [currentUser, userProfile]
   );
 
+  const FAKE_USER_IDS = new Set(['user-dm', 'user-system32', 'user-admin']);
+  const FAKE_USERNAMES = new Set(['dm', 'system32', 'admin']);
+
   const [allProfiles, setAllProfiles] = useState<any[]>([]);
 
   useEffect(() => {
     fetchGlobalCloudProfiles().then((profs) => {
       if (profs && Array.isArray(profs) && profs.length > 0) {
-        setAllProfiles(profs);
+        const clean = profs.filter(
+          (p) =>
+            p &&
+            !FAKE_USER_IDS.has(p.id) &&
+            !FAKE_USERNAMES.has(p.username?.toLowerCase())
+        );
+        setAllProfiles(clean);
       }
     });
   }, []);
@@ -422,7 +431,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
     
     // First, populate registered profiles in the room
     allProfiles.forEach((p) => {
-      if (p?.id) {
+      if (p?.id && !FAKE_USER_IDS.has(p.id) && !FAKE_USERNAMES.has(p.username?.toLowerCase())) {
         sendersMap.set(p.id, {
           id: p.id,
           name: p.display_name || p.username || 'Thành viên Locket',
