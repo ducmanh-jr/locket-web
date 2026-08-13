@@ -127,20 +127,35 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const deletedSet = new Set(getDeletedMomentIds());
       const cloudMoments = await fetchGlobalCloudMoments();
       const sanitized = sanitizeMoments(cloudMoments).filter((m) => !deletedSet.has(m.id));
+      const cloudIds = new Set(sanitized.map((m) => m.id));
+
       const localMoments = readLocalMoments().filter((m) => !deletedSet.has(m.id));
+      
+      // Auto-purge any stale local moment that has been deleted from Cloud DB
+      localMoments.forEach((lm) => {
+        const createdAt = new Date(lm.created_at || 0).getTime();
+        const isOlder = Date.now() - createdAt > 120000; // 2 minutes
+        const isLocalBlob = lm.media_url?.startsWith('blob:');
+        if (!cloudIds.has(lm.id) && isOlder && !isLocalBlob) {
+          removeLocalMoment(lm.id);
+          addDeletedMomentId(lm.id);
+          deletedSet.add(lm.id);
+        }
+      });
+
+      const validLocal = localMoments.filter((lm) => !deletedSet.has(lm.id) && (cloudIds.has(lm.id) || lm.media_url?.startsWith('blob:')));
 
       setMoments((prevMoments) => {
-        // Merge cloud moments with local persistent moments & recent optimistic moments
         const now = Date.now();
         const pendingOptimistic = prevMoments.filter((m) => {
           if (deletedSet.has(m.id)) return false;
           const createdAtTime = new Date(m.created_at || 0).getTime();
-          const isRecent = now - createdAtTime < 300000; // 5-minute optimistic grace period
-          const existsInCloud = sanitized.some((c) => c.id === m.id);
+          const isRecent = now - createdAtTime < 180000;
+          const existsInCloud = cloudIds.has(m.id);
           return isRecent && !existsInCloud;
         });
 
-        const merged = [...pendingOptimistic, ...localMoments, ...sanitized].map((m) => {
+        const merged = [...pendingOptimistic, ...validLocal, ...sanitized].map((m) => {
           const isMyMoment = m.sender_id === currentUser.id || m.sender?.id === currentUser.id;
           if (isMyMoment && currentUser.avatar_url) {
             return {
@@ -167,10 +182,10 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     loadMoments();
 
-    // 15-second background sync interval to guarantee 100% identical room state across all devices
+    // 5-second background sync interval to guarantee live delete sync across all devices
     const pollInterval = setInterval(() => {
       loadMoments();
-    }, 15000);
+    }, 5000);
 
     // Instant Cross-Tab Broadcast Channel Sync
     let tabChannel: BroadcastChannel | null = null;
@@ -183,6 +198,8 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
             return [event.data.moment, ...prev];
           });
         } else if (event.data?.type === 'DELETE_MOMENT' && event.data?.momentId) {
+          removeLocalMoment(event.data.momentId);
+          addDeletedMomentId(event.data.momentId);
           setMoments((prev) => prev.filter((m) => m.id !== event.data.momentId));
         }
       };
@@ -235,6 +252,8 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
           { event: 'DELETE', schema: 'public', table: 'moments' },
           (payload) => {
             if (payload?.old?.id) {
+              removeLocalMoment(payload.old.id);
+              addDeletedMomentId(payload.old.id);
               setMoments((prev) => prev.filter((m) => m.id !== payload.old.id));
             }
           }
@@ -247,7 +266,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (tabChannel) tabChannel.close();
       if (dbChannel) supabase.removeChannel(dbChannel);
     };
-  }, [currentUser.id, loadMoments]);
+  }, [loadMoments, currentUser.id]);
 
   const addMoment = useCallback(
     async (
