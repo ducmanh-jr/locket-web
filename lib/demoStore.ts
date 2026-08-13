@@ -91,6 +91,9 @@ const PHOTO_DATASET = [
 ];
 
 // Generate 47 unique moments using accurate context-matched captions & images
+// Set fixed historical base date (2024-01-01) so demo moments ALWAYS sort below real user moments
+const HISTORICAL_DEMO_BASE_TIME = new Date('2024-01-01T00:00:00.000Z').getTime();
+
 export const DEMO_50_MOMENTS: Moment[] = PHOTO_DATASET.map((item, index) => {
   const sender = DEFAULT_3_FRIENDS[index % 3];
   const timeOffsetMinutes = (index + 1) * 25;
@@ -101,7 +104,7 @@ export const DEMO_50_MOMENTS: Moment[] = PHOTO_DATASET.map((item, index) => {
     sender: sender,
     media_url: `/user-photos/${item.file}`,
     caption: item.caption,
-    created_at: new Date(Date.now() - 1000 * 60 * timeOffsetMinutes).toISOString(),
+    created_at: new Date(HISTORICAL_DEMO_BASE_TIME - 1000 * 60 * timeOffsetMinutes).toISOString(),
     reactions: [],
     music: undefined,
   };

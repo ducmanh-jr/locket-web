@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { Moment, MusicTrack } from '@/lib/types';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { useAuth } from './AuthProvider';
-import { addDeletedMomentId, getDeletedMomentIds } from '@/lib/demoStore';
+import { addDeletedMomentId, getDeletedMomentIds, getStoredDemoMoments } from '@/lib/demoStore';
 import {
   fetchGlobalCloudMoments,
   fetchGlobalCloudProfiles,
@@ -128,6 +128,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const cloudMoments = await fetchGlobalCloudMoments();
       const sanitized = sanitizeMoments(cloudMoments).filter((m) => !deletedSet.has(m.id));
       const localMoments = readLocalMoments().filter((m) => !deletedSet.has(m.id));
+      const demoMoments = getStoredDemoMoments().filter((m) => !deletedSet.has(m.id));
 
       setMoments((prevMoments) => {
         // Merge cloud moments with local persistent moments & recent optimistic moments
@@ -140,7 +141,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
           return isRecent && !existsInCloud;
         });
 
-        const merged = [...pendingOptimistic, ...localMoments, ...sanitized].map((m) => {
+        const merged = [...pendingOptimistic, ...localMoments, ...sanitized, ...demoMoments].map((m) => {
           const isMyMoment = m.sender_id === currentUser.id || m.sender?.id === currentUser.id;
           if (isMyMoment && currentUser.avatar_url) {
             return {
