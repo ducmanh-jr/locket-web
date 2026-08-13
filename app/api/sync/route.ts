@@ -182,7 +182,11 @@ export async function POST(request: Request) {
     }
 
     if (action === 'delete_moment' && moment_id) {
-      await supabase.from('moments').delete().eq('id', moment_id);
+      const { error: delErr } = await supabase.from('moments').delete().eq('id', moment_id);
+      if (delErr) {
+        console.error('Lỗi khi xóa khoảnh khắc:', delErr.message);
+        return NextResponse.json({ error: delErr.message }, { status: 500 });
+      }
       return NextResponse.json({ success: true });
     }
 

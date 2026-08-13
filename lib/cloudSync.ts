@@ -275,16 +275,28 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
 }
 
 export async function deleteMomentFromGlobalCloud(momentId: string): Promise<boolean> {
+  let apiSuccess = false;
   try {
     const res = await fetch('/api/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'delete_moment', moment_id: momentId }),
     });
-    return res.ok;
-  } catch (e) {
-    return false;
+    if (res.ok) apiSuccess = true;
+  } catch (e) {}
+
+  if (apiSuccess) return true;
+
+  if (isSupabaseConfigured()) {
+    try {
+      const { error } = await supabase.from('moments').delete().eq('id', momentId);
+      return !error;
+    } catch (e) {
+      return false;
+    }
   }
+
+  return false;
 }
 
 export async function pushMomentToGlobalCloudWithRetry(

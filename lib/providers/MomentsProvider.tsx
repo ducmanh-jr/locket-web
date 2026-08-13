@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { Moment, MusicTrack } from '@/lib/types';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { useAuth } from './AuthProvider';
+import { addDeletedMomentId, getDeletedMomentIds } from '@/lib/demoStore';
 import {
   fetchGlobalCloudMoments,
   fetchGlobalCloudProfiles,
@@ -53,10 +54,13 @@ const LOCAL_MOMENTS_KEY = 'locket_local_moments_v1';
 function readLocalMoments(): Moment[] {
   if (typeof window === 'undefined') return [];
   try {
+    const deletedSet = new Set(getDeletedMomentIds());
     const stored = localStorage.getItem(LOCAL_MOMENTS_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed)) return sanitizeMoments(parsed);
+      if (Array.isArray(parsed)) {
+        return sanitizeMoments(parsed.filter((m) => m && m.id && !deletedSet.has(m.id)));
+      }
     }
   } catch (e) {}
   return [];
@@ -72,7 +76,8 @@ function saveLocalMoment(moment: Moment): void {
 }
 
 function removeLocalMoment(momentId: string): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !momentId) return;
+  addDeletedMomentId(momentId);
   try {
     const existing = readLocalMoments();
     const updated = existing.filter((m) => m.id !== momentId);
@@ -93,33 +98,71 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
     avatar_url: '',
   };
 
+  // Keep moments' sender objects in sync with currentUser's latest avatar & display name
+  useEffect(() => {
+    if (!currentUser?.id || !currentUser?.avatar_url) return;
+    setMoments((prev) =>
+      prev.map((m) => {
+        const isMyMoment = m.sender_id === currentUser.id || m.sender?.id === currentUser.id;
+        if (
+          isMyMoment &&
+          (m.sender?.avatar_url !== currentUser.avatar_url || m.sender?.display_name !== currentUser.display_name)
+        ) {
+          return {
+            ...m,
+            sender: {
+              ...(m.sender || {}),
+              ...currentUser,
+            },
+          };
+        }
+        return m;
+      })
+    );
+  }, [currentUser]);
+
   // Pure Shared Room Fetch: All accounts fetch from the EXACT same DB source
   const loadMoments = useCallback(async () => {
     try {
+      const deletedSet = new Set(getDeletedMomentIds());
       const cloudMoments = await fetchGlobalCloudMoments();
-      const sanitized = sanitizeMoments(cloudMoments);
-      const localMoments = readLocalMoments();
+      const sanitized = sanitizeMoments(cloudMoments).filter((m) => !deletedSet.has(m.id));
+      const localMoments = readLocalMoments().filter((m) => !deletedSet.has(m.id));
 
       setMoments((prevMoments) => {
         // Merge cloud moments with local persistent moments & recent optimistic moments
         const now = Date.now();
         const pendingOptimistic = prevMoments.filter((m) => {
+          if (deletedSet.has(m.id)) return false;
           const createdAtTime = new Date(m.created_at || 0).getTime();
           const isRecent = now - createdAtTime < 300000; // 5-minute optimistic grace period
           const existsInCloud = sanitized.some((c) => c.id === m.id);
           return isRecent && !existsInCloud;
         });
 
-        const merged = [...pendingOptimistic, ...localMoments, ...sanitized];
+        const merged = [...pendingOptimistic, ...localMoments, ...sanitized].map((m) => {
+          const isMyMoment = m.sender_id === currentUser.id || m.sender?.id === currentUser.id;
+          if (isMyMoment && currentUser.avatar_url) {
+            return {
+              ...m,
+              sender: {
+                ...(m.sender || {}),
+                ...currentUser,
+              },
+            };
+          }
+          return m;
+        });
+
         const sorted = sortMoments(merged) as Moment[];
-        return sorted.filter((m, i, self) => i === self.findIndex((x) => x.id === m.id));
+        return sorted.filter((m, i, self) => !deletedSet.has(m.id) && i === self.findIndex((x) => x.id === m.id));
       });
     } catch (e) {
       console.error('Error fetching room moments:', e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
     loadMoments();
@@ -312,6 +355,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
   );
 
   const deleteMoment = useCallback(async (momentId: string) => {
+    addDeletedMomentId(momentId);
     removeLocalMoment(momentId);
     setMoments((prev) => prev.filter((m) => m.id !== momentId));
     deleteMomentFromGlobalCloud(momentId).catch(() => {});

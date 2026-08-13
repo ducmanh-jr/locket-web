@@ -100,17 +100,22 @@ export default function ProfilePage() {
 
       if (finalUrl) {
         setAvatarUrl(finalUrl);
-        // Persist avatar change immediately to DB if configured
         if (isSupabaseConfigured() && userProfile) {
           try {
             await supabase
               .from('profiles')
-              .update({ avatar_url: finalUrl })
-              .eq('id', userProfile.id);
+              .upsert({
+                id: userProfile.id,
+                avatar_url: finalUrl,
+                username: userProfile.username || `user_${userProfile.id.substring(0, 6)}`,
+                display_name: userProfile.display_name || 'Thành viên Locket',
+              });
           } catch (e) {}
         }
         updateProfile({ avatar_url: finalUrl });
         if (user) setUser({ ...user, avatar_url: finalUrl });
+        setSavedSuccess(true);
+        setTimeout(() => setSavedSuccess(false), 3000);
       }
     } catch (err) {
       console.error('Failed to process avatar:', err);

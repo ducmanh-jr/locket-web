@@ -77,6 +77,39 @@ function buildProfileFromSupabaseUser(user: any): Profile {
   };
 }
 
+async function fetchMergedProfile(user: any): Promise<Profile> {
+  const baseProfile = buildProfileFromSupabaseUser(user);
+  const cached = readCachedProfile();
+
+  let dbProfile: any = null;
+  if (isSupabaseConfigured() && user?.id) {
+    try {
+      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+      if (data) dbProfile = data;
+    } catch (e) {}
+  }
+
+  const finalUsername = dbProfile?.username || (cached && cached.id === user.id && cached.username ? cached.username : baseProfile.username);
+  const finalDisplayName = dbProfile?.display_name || (cached && cached.id === user.id && cached.display_name ? cached.display_name : baseProfile.display_name);
+
+  let finalAvatarUrl = baseProfile.avatar_url;
+  if (dbProfile?.avatar_url && dbProfile.avatar_url.trim() !== '') {
+    finalAvatarUrl = dbProfile.avatar_url;
+  } else if (cached && cached.id === user.id && cached.avatar_url && cached.avatar_url.trim() !== '') {
+    finalAvatarUrl = cached.avatar_url;
+  }
+
+  const merged: Profile = {
+    ...baseProfile,
+    username: finalUsername,
+    display_name: finalDisplayName,
+    avatar_url: finalAvatarUrl,
+  };
+
+  saveCachedProfile(merged);
+  return merged;
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,9 +137,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!mounted) return;
 
         if (user) {
-          const profile = buildProfileFromSupabaseUser(user);
-          saveCachedProfile(profile);
-          setUserProfile(profile);
+          const profile = await fetchMergedProfile(user);
+          if (mounted) {
+            setUserProfile(profile);
+          }
           await pushProfileToGlobalCloud({
             id: profile.id,
             username: profile.username,
@@ -119,10 +153,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (!cached) {
             setUserProfile(null);
           }
-          // If cached exists, keep it (may be stale but better UX)
         }
       } catch (e) {
-        // Network error — fall back to cache
         if (mounted) {
           const cached = readCachedProfile();
           setUserProfile(cached);
@@ -138,13 +170,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let subscription: { unsubscribe: () => void } | null = null;
 
     if (isSupabaseConfigured()) {
-      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
         if (!mounted) return;
 
         if (session?.user) {
-          const profile = buildProfileFromSupabaseUser(session.user);
-          saveCachedProfile(profile);
-          setUserProfile(profile);
+          const profile = await fetchMergedProfile(session.user);
+          if (mounted) {
+            setUserProfile(profile);
+          }
           pushProfileToGlobalCloud({
             id: profile.id,
             username: profile.username,
@@ -181,6 +214,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!prev) return prev;
       const updated = { ...prev, ...updates };
       saveCachedProfile(updated);
+
+      (async () => {
+        if (isSupabaseConfigured() && prev.id) {
+          try {
+            await supabase.from('profiles').upsert({
+              id: prev.id,
+              username: updated.username || prev.username,
+              display_name: updated.display_name || prev.display_name,
+              avatar_url: updated.avatar_url || prev.avatar_url || '',
+            });
+          } catch (e) {}
+
+          try {
+            await supabase.auth.updateUser({
+              data: {
+                username: updated.username,
+                full_name: updated.display_name,
+                avatar_url: updated.avatar_url,
+              },
+            });
+          } catch (e) {}
+        }
+
+        pushProfileToGlobalCloud({
+          id: prev.id,
+          username: updated.username || prev.username,
+          display_name: updated.display_name || prev.display_name,
+          avatar_url: updated.avatar_url || prev.avatar_url || '',
+        }).catch(() => {});
+      })();
+
       return updated;
     });
   }, []);

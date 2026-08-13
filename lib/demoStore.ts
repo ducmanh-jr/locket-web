@@ -117,6 +117,30 @@ const LEGACY_CACHE_KEYS = [
 
 const ACTIVE_CACHE_KEY = 'locket_moments_shared_cache_v9';
 const ACCOUNT_CACHE_PREFIX = 'locket_moments_account_v1_';
+const DELETED_CACHE_KEY = 'locket_deleted_moments_v1';
+
+export function getDeletedMomentIds(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(DELETED_CACHE_KEY);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function addDeletedMomentId(momentId: string): void {
+  if (typeof window === 'undefined' || !momentId) return;
+  try {
+    const deleted = getDeletedMomentIds();
+    if (!deleted.includes(momentId)) {
+      const updated = [...deleted, momentId];
+      localStorage.setItem(DELETED_CACHE_KEY, JSON.stringify(updated));
+    }
+  } catch (e) {}
+}
 
 function getAccountCacheKey(userId?: string): string | null {
   if (!userId) return null;
@@ -143,6 +167,7 @@ function dedupeMoments(moments: Moment[]): Moment[] {
 export function getStoredDemoMoments(userId?: string): Moment[] {
   if (typeof window === 'undefined') return DEMO_50_MOMENTS;
 
+  const deletedIds = new Set(getDeletedMomentIds());
   const accountCacheKey = getAccountCacheKey(userId);
   let storedMoments: Moment[] = [];
 
@@ -157,13 +182,15 @@ export function getStoredDemoMoments(userId?: string): Moment[] {
     storedMoments = [...readMomentsFromKey(key), ...storedMoments];
   }
 
+  const defaultNonDeleted = DEMO_50_MOMENTS.filter((m) => !deletedIds.has(m.id));
+
   if (storedMoments.length > 0) {
-    // Merge default dataset so 47 photos are always present
-    return dedupeMoments([...storedMoments, ...DEMO_50_MOMENTS]);
+    const filteredStored = storedMoments.filter((m) => !deletedIds.has(m.id));
+    return dedupeMoments([...filteredStored, ...defaultNonDeleted]);
   }
 
-  saveStoredDemoMoments(DEMO_50_MOMENTS, userId);
-  return DEMO_50_MOMENTS;
+  saveStoredDemoMoments(defaultNonDeleted, userId);
+  return defaultNonDeleted;
 }
 
 export function saveStoredDemoMoments(moments: Moment[], userId?: string): void {
