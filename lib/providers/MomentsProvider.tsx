@@ -161,6 +161,14 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
       });
 
       const localMoments = readLocalMoments().filter((m) => !deletedSet.has(m.id));
+
+      // AUTO-SYNC: Push any local moments not yet on the server up to global cloud so ALL accounts receive them
+      localMoments.forEach((lm) => {
+        if (!cloudIds.has(lm.id) && (lm.media_url?.startsWith('data:') || lm.media_url?.startsWith('http'))) {
+          pushMomentToGlobalCloud(lm).catch(() => {});
+        }
+      });
+
       const validLocal = localMoments.filter(
         (lm) => !deletedSet.has(lm.id) && (cloudIds.has(lm.id) || lm.media_url?.startsWith('blob:') || lm.media_url?.startsWith('data:') || lm.media_url?.startsWith('http'))
       );
@@ -176,7 +184,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
         });
 
         // PREFER CLOUD MOMENTS (sanitized) OVER LOCAL CACHE (validLocal)!
-        // This guarantees that uploader always gets the public Supabase HTTPS URL over expired local blob/data URLs
+        // This guarantees that all accounts receive the EXACT same shared room dataset
         const merged = [...sanitized, ...pendingOptimistic, ...validLocal].map((m) => {
           const isMyMoment = m.sender_id === currentUser.id || m.sender?.id === currentUser.id;
           if (isMyMoment && currentUser.avatar_url) {
