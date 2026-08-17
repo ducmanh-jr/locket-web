@@ -14,7 +14,7 @@
     overscroll-behavior: none;
     overscroll-behavior-y: none;
     touch-action: manipulation;
-    background-color: #09080c;
+    background-color: #0c060a;
     color: #f4f4f5;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-tap-highlight-color: transparent;
@@ -28,19 +28,19 @@
     min-height: 100dvh;
   }
 
-  /* ===== LOCKET GOLD LUXE EDITION THEME ===== */
+  /* ===== LOCKET DARK ROSE VELVET THEME ===== */
   :root {
-    --locket-gold: #E5B849;
-    --locket-gold-amber: #F59E0B;
-    --locket-gold-champagne: #D4AF37;
-    --locket-gold-glow: 0 0 20px rgba(229, 184, 73, 0.65), 0 0 40px rgba(245, 158, 11, 0.35);
-    --locket-gold-border: 2.5px solid #E5B849;
+    --locket-rose: #D9266E;
+    --locket-rose-dark: #BE185D;
+    --locket-rose-deep: #9F1239;
+    --locket-rose-glow: 0 0 20px rgba(217, 38, 110, 0.5), 0 0 40px rgba(190, 24, 93, 0.3);
+    --locket-rose-border: 2.5px solid #D9266E;
   }
 }
 
-/* Gold background utility */
+/* Background utility */
 .bg-locket-purple {
-  background: #09080c;
+  background: #0c060a;
 }
 
 /* Custom sleek scrollbar */
@@ -55,53 +55,53 @@
   border-radius: 9999px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #E5B849;
+  background: #D9266E;
 }
 
-/* ===== LOCKET GOLD UTILITIES ===== */
+/* ===== LOCKET DARK ROSE UTILITIES ===== */
 
-.gold-text {
-  color: #E5B849;
+.rose-text, .gold-text, .pink-text {
+  color: #D9266E;
 }
 
-.gold-bg {
-  background-color: #E5B849;
+.rose-bg, .gold-bg, .pink-bg {
+  background-color: #D9266E;
 }
 
-.pink-glow, .gold-glow {
-  box-shadow: var(--locket-gold-glow);
+.pink-glow, .gold-glow, .rose-glow {
+  box-shadow: var(--locket-rose-glow);
 }
 
-.pink-card-border, .gold-card-border {
-  border: 2.5px solid #E5B849;
-  box-shadow: 0 0 22px rgba(229, 184, 73, 0.6), inset 0 0 10px rgba(0,0,0,0.5);
+.pink-card-border, .gold-card-border, .rose-card-border {
+  border: 2.5px solid #D9266E;
+  box-shadow: 0 0 22px rgba(217, 38, 110, 0.5), inset 0 0 10px rgba(0,0,0,0.5);
 }
 
 /* Ring pulse animation */
-@keyframes goldRingPulseAnim {
-  0%, 100% { box-shadow: 0 0 0 2px #E5B849, 0 0 12px rgba(229, 184, 73, 0.5); }
-  50%       { box-shadow: 0 0 0 3.5px #F59E0B, 0 0 22px rgba(229, 184, 73, 0.85); }
+@keyframes roseRingPulseAnim {
+  0%, 100% { box-shadow: 0 0 0 2px #D9266E, 0 0 12px rgba(217, 38, 110, 0.4); }
+  50%       { box-shadow: 0 0 0 3.5px #BE185D, 0 0 22px rgba(217, 38, 110, 0.7); }
 }
-.pink-ring-pulse, .gold-ring-pulse {
-  animation: goldRingPulseAnim 2s ease-in-out infinite;
+.pink-ring-pulse, .gold-ring-pulse, .rose-ring-pulse {
+  animation: roseRingPulseAnim 2s ease-in-out infinite;
 }
 
 /* Shimmer overlay */
-.pink-shimmer-overlay, .gold-shimmer-overlay {
+.pink-shimmer-overlay, .gold-shimmer-overlay, .rose-shimmer-overlay {
   position: relative;
   overflow: hidden;
 }
-.pink-shimmer-overlay::after, .gold-shimmer-overlay::after {
+.pink-shimmer-overlay::after, .gold-shimmer-overlay::after, .rose-shimmer-overlay::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(229, 184, 73, 0.3) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(217, 38, 110, 0.25) 50%, transparent 100%);
   background-size: 200% 100%;
-  animation: goldShimmerAnim 2.5s ease-in-out infinite;
+  animation: roseShimmerAnim 2.5s ease-in-out infinite;
   pointer-events: none;
 }
 
-@keyframes goldShimmerAnim {
+@keyframes roseShimmerAnim {
   0% { background-position: -200% center; }
   100% { background-position: 200% center; }
 }

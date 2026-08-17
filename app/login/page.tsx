@@ -40,18 +40,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-full h-full flex flex-col justify-between p-6 pt-6 pb-10 sm:pb-12 bg-[#09080c] text-white select-none relative overflow-y-auto custom-scrollbar">
-      {/* Background Ambient Gold Glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#E5B849]/15 rounded-full blur-[110px] pointer-events-none z-0" />
+    <div className="min-h-full h-full flex flex-col justify-between p-6 pt-6 pb-10 sm:pb-12 bg-[#0c060a] text-white select-none relative overflow-y-auto custom-scrollbar">
+      {/* Background Ambient Dark Rose Glow */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#D9266E]/15 rounded-full blur-[110px] pointer-events-none z-0" />
 
       {/* Top Header Bar */}
       <div className="flex items-center justify-between z-10 pt-1">
         <div className="flex items-center space-x-2.5">
-          <div className="w-9 h-9 rounded-xl overflow-hidden p-0.5 flex items-center justify-center drop-shadow-[0_0_15px_rgba(229,184,73,0.4)]">
+          <div className="w-9 h-9 rounded-xl overflow-hidden p-0.5 flex items-center justify-center drop-shadow-[0_0_15px_rgba(217,38,110,0.4)]">
             <img src="/icon.svg" alt="Locket Logo" className="w-full h-full object-contain" />
           </div>
           <span className="text-white text-lg font-black tracking-tight">
-            Locket<span className="text-[#E5B849]">Gold</span>
+            Locket<span className="text-[#D9266E]">Web</span>
           </span>
         </div>
 
@@ -61,8 +61,8 @@ export default function LoginPage() {
           className="text-[11px] font-bold text-zinc-300 bg-zinc-900/90 hover:bg-zinc-800 px-3 py-1 rounded-full border border-zinc-800/80 flex items-center space-x-1.5 transition-all active:scale-95 shadow-sm"
           title="Xem thông tin phiên bản"
         >
-          <span>v2.5 Gold Edition</span>
-          <Info className="w-3.5 h-3.5 text-[#E5B849]" />
+          <span>v2.5 • Rose Edition</span>
+          <Info className="w-3.5 h-3.5 text-[#D9266E]" />
         </button>
       </div>
 
@@ -76,11 +76,11 @@ export default function LoginPage() {
           className="relative"
         >
           {/* Outer Glowing Locket Photo Card Preview */}
-          <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-[2.8rem] bg-gradient-to-tr from-[#E5B849] via-[#F59E0B] to-[#D4AF37] p-1 shadow-[0_0_45px_rgba(229,184,73,0.45)] relative flex items-center justify-center">
-            <div className="w-full h-full bg-[#120f0a] rounded-[2.5rem] p-2 flex flex-col items-center justify-between border border-[#E5B849]/30 relative overflow-hidden">
+          <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-[2.8rem] bg-gradient-to-tr from-[#D9266E] via-[#BE185D] to-[#9F1239] p-1 shadow-[0_0_45px_rgba(217,38,110,0.45)] relative flex items-center justify-center">
+            <div className="w-full h-full bg-[#180a14] rounded-[2.5rem] p-2 flex flex-col items-center justify-between border border-[#D9266E]/30 relative overflow-hidden">
               {/* Top Mini Tag */}
               <div className="flex items-center space-x-1 bg-black/60 backdrop-blur-md border border-white/15 px-2 py-0.5 rounded-full z-10">
-                <div className="w-2 h-2 rounded-full bg-[#E5B849] animate-ping" />
+                <div className="w-2 h-2 rounded-full bg-[#D9266E] animate-ping" />
                 <span className="text-[9px] text-white font-bold">Locket Live</span>
               </div>
 
@@ -91,7 +91,7 @@ export default function LoginPage() {
 
               {/* Floating Heart Reaction Badge */}
               <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-md border border-white/20 p-1 rounded-full text-xs shadow-md">
-                ✨
+                💖
               </div>
             </div>
           </div>
@@ -101,7 +101,7 @@ export default function LoginPage() {
         <div className="space-y-2">
           <h1 className="text-white text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight">
             Khoảnh khắc tức thời <br />
-            cùng <span className="text-[#E5B849]">Bạn bè</span>
+            cùng <span className="text-[#D9266E]">Bạn bè</span>
           </h1>
           <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed max-w-xs mx-auto">
             Chụp & chia sẻ khoảnh khắc trực tiếp lên màn hình của bạn bè 100% tự nhiên.

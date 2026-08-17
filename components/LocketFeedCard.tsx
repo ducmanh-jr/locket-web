@@ -446,13 +446,13 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                   {!moment.music && (
                     <button
                       onClick={toggleVideoMute}
-                      className="absolute bottom-3.5 right-3.5 bg-black/70 backdrop-blur-md border border-[#E5B849]/50 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-1.5 z-20 shadow-xl active:scale-95 transition-all no-card-click"
+                      className="absolute bottom-3.5 right-3.5 bg-black/70 backdrop-blur-md border border-[#D9266E]/50 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-1.5 z-20 shadow-xl active:scale-95 transition-all no-card-click"
                       title="Bật/Tắt âm thanh video"
                     >
                       {!isMuted ? (
                         <>
-                          <Volume2 className="w-3.5 h-3.5 text-[#E5B849] animate-pulse" />
-                          <span className="font-bold text-xs text-[#E5B849]">Bật 🎙️</span>
+                          <Volume2 className="w-3.5 h-3.5 text-[#D9266E] animate-pulse" />
+                          <span className="font-bold text-xs text-[#D9266E]">Bật 🎙️</span>
                         </>
                       ) : (
                         <>
@@ -506,11 +506,11 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               {moment.music && (
                 <button
                   onClick={toggleAudio}
-                  className="absolute top-3.5 left-3.5 bg-black/65 backdrop-blur-md border border-[#E5B849]/40 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-2 z-20 shadow-lg active:scale-95 transition-all max-w-[70%] no-card-click"
+                  className="absolute top-3.5 left-3.5 bg-black/65 backdrop-blur-md border border-[#D9266E]/40 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-2 z-20 shadow-lg active:scale-95 transition-all max-w-[70%] no-card-click"
                   title="Bật/Tắt nhạc"
                 >
                   <div
-                    className={`w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-[#E5B849] ${
+                    className={`w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-[#D9266E] ${
                       isPlayingAudio ? 'animate-spin' : ''
                     }`}
                   >
@@ -520,7 +520,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                     {moment.music.title} • {moment.music.artist}
                   </span>
                   {isPlayingAudio ? (
-                    <Volume2 className="w-3.5 h-3.5 text-[#E5B849] flex-shrink-0 animate-pulse" />
+                    <Volume2 className="w-3.5 h-3.5 text-[#D9266E] flex-shrink-0 animate-pulse" />
                   ) : (
                     <VolumeX className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
                   )}
@@ -576,7 +576,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                     className="w-full h-full rounded-full"
                     style={{
                       padding: '1.5px',
-                      background: 'linear-gradient(135deg, #E5B849, #F59E0B)',
+                      background: 'linear-gradient(135deg, #D9266E, #BE185D)',
                     }}
                   >
                     <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
@@ -597,8 +597,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                 className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0"
                 style={{
                   padding: '1.5px',
-                  background: 'linear-gradient(135deg, #E5B849, #F59E0B)',
-                  boxShadow: '0 0 8px rgba(229, 184, 73, 0.5)',
+                  background: 'linear-gradient(135deg, #D9266E, #BE185D)',
+                  boxShadow: '0 0 8px rgba(217, 38, 110, 0.5)',
                 }}
               >
                 <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
@@ -676,9 +676,9 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={handleDownload}
-                className="w-full p-3.5 bg-[#251f18] hover:bg-[#332b20] rounded-2xl text-white text-xs font-semibold flex items-center space-x-3 transition-colors border border-white/5"
+                className="w-full p-3.5 bg-[#25121f] hover:bg-[#33182b] rounded-2xl text-white text-xs font-semibold flex items-center space-x-3 transition-colors border border-white/5"
               >
-                <Download className="w-4 h-4 text-[#E5B849]" />
+                <Download className="w-4 h-4 text-[#D9266E]" />
                 <span>Tải ảnh về máy</span>
               </motion.button>
 

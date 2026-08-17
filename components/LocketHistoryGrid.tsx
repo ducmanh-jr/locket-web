@@ -18,21 +18,21 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
   onOpenCamera,
 }) => {
   return (
-    <div className="w-full h-full bg-[#0a080d]/90 backdrop-blur-2xl text-white flex flex-col justify-between p-4 pt-3 pb-24 overflow-y-auto custom-scrollbar select-none">
+    <div className="w-full h-full bg-[#0c060a]/90 backdrop-blur-2xl text-white flex flex-col justify-between p-4 pt-3 pb-24 overflow-y-auto custom-scrollbar select-none">
       {/* Top Header Bar */}
       <div className="flex items-center justify-between pb-3 border-b border-white/10 flex-shrink-0">
         <div className="flex items-center space-x-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-          <Grid className="w-4 h-4 text-[#E5B849]" />
+          <Grid className="w-4 h-4 text-[#D9266E]" />
           <h1 className="text-white text-xs font-black tracking-wider uppercase flex items-center gap-1.5">
             Lịch sử khoảnh khắc
-            <span className="text-[10px] bg-[#E5B849] text-black px-2 py-0.5 rounded-full font-bold">
+            <span className="text-[10px] bg-[#D9266E] text-white px-2 py-0.5 rounded-full font-bold">
               {moments.length}
             </span>
           </h1>
         </div>
 
         <span className="text-zinc-400 text-[11px] font-semibold flex items-center gap-1">
-          <Sparkles className="w-3 h-3 text-[#E5B849]" />
+          <Sparkles className="w-3 h-3 text-[#D9266E]" />
           Chạm ảnh để mở
         </span>
       </div>
@@ -75,7 +75,7 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
                   }}
                   whileTap={{ scale: 0.92 }}
                   onClick={() => onSelectMoment(moment)}
-                  className="relative aspect-square rounded-2xl overflow-hidden bg-[#16121a] border border-white/10 cursor-pointer group transform-gpu shadow-lg hover:border-[#E5B849]/50 transition-colors"
+                  className="relative aspect-square rounded-2xl overflow-hidden bg-[#180b15] border border-white/10 cursor-pointer group transform-gpu shadow-lg hover:border-[#D9266E]/50 transition-colors"
                 >
                   {isVideo && !moment.thumbnail_url ? (
                     <video
@@ -110,7 +110,7 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
                   {/* Video Indicator Badge */}
                   {isVideo && (
                     <div className="absolute top-1.5 right-1.5 bg-black/70 backdrop-blur-sm text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center space-x-0.5 border border-white/15">
-                      <Video className="w-3 h-3 text-[#E5B849]" />
+                      <Video className="w-3 h-3 text-[#D9266E]" />
                     </div>
                   )}
                 </motion.div>

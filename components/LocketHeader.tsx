@@ -70,12 +70,12 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
           onClick={() => setShowFilterModal(true)}
           className="flex items-center space-x-2 backdrop-blur-xl text-white font-extrabold px-4 py-1.5 rounded-full shadow-lg cursor-pointer border border-white/10"
           style={{
-            background: 'rgba(25, 20, 15, 0.75)',
+            background: 'rgba(20, 10, 18, 0.78)',
             boxShadow: '0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
           }}
           title="Bấm để xem danh sách bạn bè"
         >
-          <Users className="w-4 h-4 text-[#E5B849] stroke-[2.4]" />
+          <Users className="w-4 h-4 text-[#D9266E] stroke-[2.4]" />
           <span className="text-xs font-black text-white tracking-tight truncate max-w-[140px]">{pillLabel}</span>
           <ChevronDown className="w-3.5 h-3.5 text-zinc-400 stroke-[2.2]" />
         </motion.button>
@@ -92,7 +92,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
                 👑
               </span>
               <div className="w-10 h-10 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-amber-300 to-yellow-500 shadow-[0_0_12px_rgba(255,215,0,0.5)]">
-                <div className="w-full h-full rounded-full p-[1.5px] bg-gradient-to-tr from-[#E5B849] to-[#F59E0B]">
+                <div className="w-full h-full rounded-full p-[1.5px] bg-gradient-to-tr from-[#D9266E] to-[#BE185D]">
                   <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
                     <img
                       src={avatarSrc}
@@ -107,7 +107,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
               </div>
             </>
           ) : (
-            <div className="w-9 h-9 rounded-full border-2 border-[#E5B849] p-0.5 bg-zinc-900 shadow-md">
+            <div className="w-9 h-9 rounded-full border-2 border-[#D9266E] p-0.5 bg-zinc-900 shadow-md">
               <div className="w-full h-full rounded-full overflow-hidden">
                 <img
                   src={avatarSrc}
@@ -140,12 +140,12 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
               exit={{ y: 140, scale: 0.90, opacity: 0 }}
               transition={springSheet}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm bg-[#14100c]/95 backdrop-blur-2xl border border-white/10 rounded-t-3xl sm:rounded-3xl p-5 text-left space-y-4 shadow-[0_-12px_50px_rgba(0,0,0,0.6)] max-h-[80vh] flex flex-col"
+              className="w-full max-w-sm bg-[#150a12]/95 backdrop-blur-2xl border border-white/10 rounded-t-3xl sm:rounded-3xl p-5 text-left space-y-4 shadow-[0_-12px_50px_rgba(0,0,0,0.6)] max-h-[80vh] flex flex-col"
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
                 <div className="flex items-center space-x-2">
-                  <Users className="w-4 h-4 text-[#E5B849]" />
+                  <Users className="w-4 h-4 text-[#D9266E]" />
                   <h3 className="text-white text-sm font-extrabold">Xem khoảnh khắc từ</h3>
                 </div>
                 <button
@@ -165,12 +165,12 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
                     setShowFilterModal(false);
                   }}
                   className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all active:scale-98 border ${selectedFilterId === 'all'
-                      ? 'bg-[#E5B849]/20 border-[#E5B849] text-white'
-                      : 'bg-[#1c1712] border-zinc-800 text-zinc-300 hover:bg-[#251f18]'
+                      ? 'bg-[#D9266E]/20 border-[#D9266E] text-white'
+                      : 'bg-[#1c0d17] border-zinc-800 text-zinc-300 hover:bg-[#25121f]'
                     }`}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-9 h-9 rounded-full bg-[#E5B849] text-black flex items-center justify-center flex-shrink-0 font-black">
+                    <div className="w-9 h-9 rounded-full bg-[#D9266E] text-white flex items-center justify-center flex-shrink-0 font-black">
                       <Users className="w-5 h-5 stroke-[2.2]" />
                     </div>
                     <div className="text-left">
@@ -179,7 +179,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
                     </div>
                   </div>
                   {selectedFilterId === 'all' && (
-                    <Check className="w-4 h-4 text-[#E5B849] stroke-[3]" />
+                    <Check className="w-4 h-4 text-[#D9266E] stroke-[3]" />
                   )}
                 </button>
 
@@ -201,8 +201,8 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
                           setShowFilterModal(false);
                         }}
                         className={`w-full p-3 rounded-2xl flex items-center justify-between transition-all active:scale-98 border ${isSelected
-                            ? 'bg-[#E5B849]/20 border-[#E5B849] text-white'
-                            : 'bg-[#1c1712] border-zinc-800 text-zinc-300 hover:bg-[#251f18]'
+                            ? 'bg-[#D9266E]/20 border-[#D9266E] text-white'
+                            : 'bg-[#1c0d17] border-zinc-800 text-zinc-300 hover:bg-[#25121f]'
                           }`}
                       >
                         <div className="flex items-center space-x-3">
@@ -221,7 +221,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
                           </div>
                         </div>
                         {isSelected && (
-                          <Check className="w-4 h-4 text-[#E5B849] stroke-[3]" />
+                          <Check className="w-4 h-4 text-[#D9266E] stroke-[3]" />
                         )}
                       </button>
                     );
