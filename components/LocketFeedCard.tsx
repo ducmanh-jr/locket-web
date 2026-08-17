@@ -392,32 +392,20 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               key={moment.id}
               initial={{
                 opacity: 0,
-                y: direction === 'up' ? 90 : -90,
-                rotateX: direction === 'up' ? 12 : -12,
-                scale: 0.90,
-                filter: 'blur(8px)',
+                scale: 1.04,
               }}
               animate={{
                 opacity: 1,
-                y: 0,
-                rotateX: 0,
                 scale: 1,
-                filter: 'blur(0px)',
               }}
               exit={{
                 opacity: 0,
-                y: direction === 'up' ? -90 : 90,
-                rotateX: direction === 'up' ? -12 : 12,
-                scale: 0.90,
-                filter: 'blur(8px)',
+                scale: 0.96,
               }}
               transition={{
-                type: 'spring',
-                stiffness: 280,
-                damping: 24,
-                mass: 0.9,
+                duration: 0.35,
+                ease: [0.4, 0, 0.2, 1],
               }}
-              style={{ perspective: 1000 }}
               className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.2rem] transform-gpu will-change-[transform,opacity]"
             >
               {isVideo && !hasVideoError ? (
