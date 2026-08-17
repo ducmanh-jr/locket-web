@@ -10,8 +10,6 @@ import {
   X,
   Sparkles,
   Music,
-  VolumeX,
-  Mic,
   ImagePlus,
 } from 'lucide-react';
 import { MusicTrack } from '@/lib/types';
@@ -433,7 +431,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
               autoPlay
               loop
               playsInline
-              muted={audioOption !== 'original'}
+              muted={true}
               controls={false}
               preload="auto"
               onCanPlay={() => setIsVideoReady(true)}
@@ -441,46 +439,38 @@ export const CameraView: React.FC<CameraViewProps> = ({
               className="w-full h-full object-cover rounded-[2.8rem]"
             />
 
-            {/* Audio Mode Selector Pill Bar */}
-            <div className="absolute top-4 left-3 right-3 flex items-center justify-center space-x-1 bg-black/75 backdrop-blur-md p-1.5 rounded-full border border-white/15 shadow-xl z-20">
-              <button
-                onClick={() => { killGlobalAudio(); setAudioOption('mute'); }}
-                className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
-                  audioOption === 'mute'
-                    ? 'bg-[#D9266E] text-white shadow-[0_0_10px_rgba(217,38,110,0.6)]'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                <VolumeX className="w-3.5 h-3.5" />
-                <span>Im lặng</span>
-              </button>
-
-              <button
-                onClick={() => { killGlobalAudio(); setAudioOption('original'); }}
-                className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
-                  audioOption === 'original'
-                    ? 'bg-[#D9266E] text-white shadow-[0_0_10px_rgba(217,38,110,0.6)]'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                <Mic className="w-3.5 h-3.5" />
-                <span>Âm gốc</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setAudioOption('music');
-                  setShowMusicPicker(true);
-                }}
-                className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
-                  audioOption === 'music'
-                    ? 'bg-[#D9266E] text-white shadow-[0_0_10px_rgba(217,38,110,0.6)]'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                <Music className="w-3.5 h-3.5" />
-                <span>Thêm nhạc</span>
-              </button>
+            {/* Clean Music Selector Pill Button at top of video preview */}
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center justify-center z-20">
+              {selectedMusic ? (
+                <div className="flex items-center space-x-2 bg-black/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-[#D9266E]/60 shadow-xl">
+                  <Music className="w-3.5 h-3.5 text-[#D9266E] animate-spin" />
+                  <span className="text-white text-xs font-bold truncate max-w-[140px]">
+                    {selectedMusic.title}
+                  </span>
+                  <button
+                    onClick={() => {
+                      killGlobalAudio();
+                      setSelectedMusic(null);
+                      setAudioOption('mute');
+                    }}
+                    className="w-4 h-4 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white text-[10px] ml-1"
+                    title="Xóa nhạc"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    setAudioOption('music');
+                    setShowMusicPicker(true);
+                  }}
+                  className="flex items-center space-x-2 bg-black/75 backdrop-blur-md hover:bg-black/90 px-4 py-1.5 rounded-full border border-white/20 shadow-xl active:scale-95 transition-all text-white font-bold text-xs"
+                >
+                  <Music className="w-3.5 h-3.5 text-[#D9266E]" />
+                  <span>Thêm nhạc 🎵</span>
+                </button>
+              )}
             </div>
 
             <div className="absolute bottom-2 left-2 right-2 flex justify-center z-20">
