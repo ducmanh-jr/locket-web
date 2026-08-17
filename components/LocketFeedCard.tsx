@@ -429,7 +429,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                     autoPlay
                     loop
                     playsInline
-                    muted={moment.music ? true : isMuted}
+                    muted={true}
                     controls={false}
                     preload="auto"
                     onLoadedData={() => {
@@ -443,25 +443,6 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                     }}
                     className="w-full h-full object-cover rounded-[2.2rem] select-none pointer-events-none"
                   />
-                  {!moment.music && (
-                    <button
-                      onClick={toggleVideoMute}
-                      className="absolute bottom-3.5 right-3.5 bg-black/70 backdrop-blur-md border border-[#D9266E]/50 text-white text-xs px-3 py-1.5 rounded-full flex items-center space-x-1.5 z-20 shadow-xl active:scale-95 transition-all no-card-click"
-                      title="Bật/Tắt âm thanh video"
-                    >
-                      {!isMuted ? (
-                        <>
-                          <Volume2 className="w-3.5 h-3.5 text-[#D9266E] animate-pulse" />
-                          <span className="font-bold text-xs text-[#D9266E]">Bật 🎙️</span>
-                        </>
-                      ) : (
-                        <>
-                          <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
-                          <span className="font-semibold text-xs text-zinc-300">Tắt 🔇</span>
-                        </>
-                      )}
-                    </button>
-                  )}
                 </div>
               ) : (
                 <img
