@@ -204,9 +204,33 @@ export const CameraView: React.FC<CameraViewProps> = ({
     }
   };
 
+  const [posterSnapshot, setPosterSnapshot] = useState<string | null>(null);
+  const [isVideoReady, setIsVideoReady] = useState<boolean>(false);
+
   const stopRecording = async () => {
     if (!isRecording && !recorderRef.current) return;
     setIsRecording(false);
+
+    // Capture instant snapshot of current video stream frame to eliminate any black screen flash!
+    if (videoRef.current) {
+      try {
+        const canvas = document.createElement('canvas');
+        const size = 720;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          if (facingMode === 'user') {
+            ctx.translate(size, 0);
+            ctx.scale(-1, 1);
+          }
+          ctx.drawImage(videoRef.current, 0, 0, size, size);
+          setPosterSnapshot(canvas.toDataURL('image/jpeg', 0.88));
+        }
+      } catch (e) {}
+    }
 
     if (pressTimerRef.current) {
       clearTimeout(pressTimerRef.current);
@@ -223,6 +247,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
       try {
         const media = await recorderRef.current.stop();
         recorderRef.current = null;
+        setIsVideoReady(false);
         setCapturedMedia(media);
         setAudioOption('mute');
       } catch (e) {
@@ -285,6 +310,8 @@ export const CameraView: React.FC<CameraViewProps> = ({
   const handleRetake = () => {
     killGlobalAudio();
     setCapturedMedia(null);
+    setPosterSnapshot(null);
+    setIsVideoReady(false);
     setCaption('');
     setSelectedMusic(null);
     setAudioOption('original');
@@ -312,49 +339,51 @@ export const CameraView: React.FC<CameraViewProps> = ({
   };
 
   return (
-    <div className="absolute inset-0 z-50 bg-locket-purple flex flex-col justify-between items-center p-4 selection:bg-[#FF2A85] selection:text-white">
+    <div className="absolute inset-0 z-50 bg-[#0b050d] flex flex-col justify-between items-center p-4 selection:bg-[#FF2A85] selection:text-white">
       {/* Top Header Bar */}
       <div className="w-full max-w-sm flex items-center justify-between z-10 pt-2">
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-[#1c0f18] text-zinc-400 flex items-center justify-center border border-zinc-800 hover:text-white transition-colors"
+          className="w-10 h-10 rounded-full bg-[#180d19]/80 backdrop-blur-md text-zinc-400 flex items-center justify-center border border-white/10 hover:text-white transition-all active:scale-95"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <span className="text-xs font-bold uppercase tracking-wider text-[#FF2A85] flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5" />
-          {isRecording ? 'Đang quay video (max 5s)...' : 'Chụp khoảnh khắc Locket'}
-        </span>
+        <div className="bg-[#180d19]/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 flex items-center space-x-2">
+          <Sparkles className="w-3.5 h-3.5 text-[#FF2A85]" />
+          <span className="text-[11px] font-bold uppercase tracking-wider text-white/90">
+            {isRecording ? 'Đang quay (max 5s)...' : 'Khoảnh khắc Locket'}
+          </span>
+        </div>
 
         <div className="w-10" />
       </div>
 
       {/* Main Viewfinder Box */}
-      <div className="relative w-full max-w-sm aspect-square my-auto rounded-[2.8rem] overflow-hidden bg-black/30 shadow-2xl flex items-center justify-center">
-        {/* Video Recording Progress Border (Runs around outer viewfinder box clockwise - Exact Image 2!) */}
+      <div className="relative w-full max-w-sm aspect-square my-auto rounded-[2.8rem] overflow-hidden bg-black/40 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex items-center justify-center border border-white/10">
+        {/* Ultra-Thin Refined Recording Progress Border (1.8px) */}
         {isRecording && (
           <svg className="absolute inset-0 w-full h-full pointer-events-none z-30" viewBox="0 0 100 100" preserveAspectRatio="none">
             <rect
-              x="1.5"
-              y="1.5"
-              width="97"
-              height="97"
+              x="1"
+              y="1"
+              width="98"
+              height="98"
               rx="12"
               ry="12"
               fill="none"
               stroke="#FF2A85"
-              strokeWidth="3.5"
+              strokeWidth="1.8"
               strokeLinecap="round"
               strokeDasharray={370}
               strokeDashoffset={370 - (370 * recordingProgress) / 100}
               className="transition-all duration-75 ease-linear"
-              style={{ filter: 'drop-shadow(0 0 8px #FF2A85)' }}
+              style={{ filter: 'drop-shadow(0 0 6px rgba(255, 42, 133, 0.8))' }}
             />
           </svg>
         )}
         {cameraError ? (
-          <div className="p-6 text-center text-red-400 text-xs">
+          <div className="p-6 text-center text-red-400 text-xs font-semibold">
             {cameraError}
           </div>
         ) : !capturedMedia ? (
@@ -374,19 +403,30 @@ export const CameraView: React.FC<CameraViewProps> = ({
               }`}
             />
             {!isRecording && (
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm text-white/80 text-[10px] px-2.5 py-1 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md border border-white/10 text-white/80 text-[10px] font-semibold px-3 py-1 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
                 Nhấn đúp để đổi cam 🔄
               </div>
             )}
             {isRecording && (
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#FF2A85] text-white font-bold text-xs px-3.5 py-1 rounded-full flex items-center space-x-2 animate-pulse shadow-lg">
-                <div className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
-                <span>Quay video: {(recordingProgress * 0.05).toFixed(1)}s / 5s</span>
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#FF2A85] text-white font-extrabold text-xs px-4 py-1.5 rounded-full flex items-center space-x-2 animate-pulse shadow-[0_0_15px_rgba(255,42,133,0.6)]">
+                <div className="w-2 h-2 rounded-full bg-white animate-ping" />
+                <span>{(recordingProgress * 0.05).toFixed(1)}s / 5s</span>
               </div>
             )}
           </div>
         ) : capturedMedia.type === 'video' ? (
           <div className="relative w-full h-full bg-black">
+            {/* Zero-Black-Screen Snapshot Poster Layer */}
+            {posterSnapshot && (
+              <img
+                src={posterSnapshot}
+                alt=""
+                className={`absolute inset-0 w-full h-full object-cover rounded-[2.8rem] z-10 pointer-events-none transition-opacity duration-300 ${
+                  isVideoReady ? 'opacity-0' : 'opacity-100'
+                }`}
+              />
+            )}
+
             <video
               ref={previewVideoRef}
               src={capturedMedia.dataUrl}
@@ -396,32 +436,35 @@ export const CameraView: React.FC<CameraViewProps> = ({
               muted={audioOption !== 'original'}
               controls={false}
               preload="auto"
-              onCanPlay={(e) => e.currentTarget.play().catch(() => {})}
+              onCanPlay={() => setIsVideoReady(true)}
+              onPlaying={() => setIsVideoReady(true)}
               className="w-full h-full object-cover rounded-[2.8rem]"
             />
-            <div className="absolute top-4 left-3 right-3 flex items-center justify-center space-x-1.5 bg-black/80 backdrop-blur-md p-1.5 rounded-full border border-[#FF2A85]/30 shadow-xl z-20">
+
+            {/* Audio Mode Selector Pill Bar */}
+            <div className="absolute top-4 left-3 right-3 flex items-center justify-center space-x-1 bg-black/75 backdrop-blur-md p-1.5 rounded-full border border-white/15 shadow-xl z-20">
               <button
                 onClick={() => { killGlobalAudio(); setAudioOption('mute'); }}
-                className={`flex-1 py-1 px-2.5 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
+                className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
                   audioOption === 'mute'
-                    ? 'bg-[#FF2A85] text-white shadow-md'
+                    ? 'bg-[#FF2A85] text-white shadow-[0_0_10px_rgba(255,42,133,0.5)]'
                     : 'text-zinc-400 hover:text-white'
                 }`}
               >
                 <VolumeX className="w-3.5 h-3.5" />
-                <span>Im lặng 🔇</span>
+                <span>Im lặng</span>
               </button>
 
               <button
                 onClick={() => { killGlobalAudio(); setAudioOption('original'); }}
-                className={`flex-1 py-1 px-2.5 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
+                className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
                   audioOption === 'original'
-                    ? 'bg-[#FF2A85] text-white shadow-md'
+                    ? 'bg-[#FF2A85] text-white shadow-[0_0_10px_rgba(255,42,133,0.5)]'
                     : 'text-zinc-400 hover:text-white'
                 }`}
               >
                 <Mic className="w-3.5 h-3.5" />
-                <span>Âm gốc 🎙️</span>
+                <span>Âm gốc</span>
               </button>
 
               <button
@@ -429,14 +472,14 @@ export const CameraView: React.FC<CameraViewProps> = ({
                   setAudioOption('music');
                   setShowMusicPicker(true);
                 }}
-                className={`flex-1 py-1 px-2.5 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
+                className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
                   audioOption === 'music'
-                    ? 'bg-[#FF2A85] text-white shadow-md'
+                    ? 'bg-[#FF2A85] text-white shadow-[0_0_10px_rgba(255,42,133,0.5)]'
                     : 'text-zinc-400 hover:text-white'
                 }`}
               >
                 <Music className="w-3.5 h-3.5" />
-                <span>Thêm nhạc 🎵</span>
+                <span>Thêm nhạc</span>
               </button>
             </div>
 
@@ -458,7 +501,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
         )}
       </div>
 
-      {/* Bottom Controls (Gallery Icon on Left + Center Neon Pink Shutter + Flip Cam on Right) */}
+      {/* Bottom Controls */}
       <div className="w-full max-w-sm pb-6 z-10">
         {!capturedMedia ? (
           <div className="flex flex-col items-center justify-center space-y-2">
@@ -471,17 +514,17 @@ export const CameraView: React.FC<CameraViewProps> = ({
             />
 
             <div className="w-full flex items-center justify-around px-4">
-              {/* Left: Gallery Upload Icon (Simple - Exact Screenshot) */}
+              {/* Left: Gallery Icon */}
               <button
                 onClick={() => galleryInputRef.current?.click()}
                 disabled={isRecording}
-                className="w-12 h-12 flex items-center justify-center text-white/70 hover:text-white active:scale-90 transition-all disabled:opacity-30"
+                className="w-12 h-12 flex items-center justify-center text-white/70 hover:text-white active:scale-90 transition-all disabled:opacity-30 rounded-full hover:bg-white/5 border border-transparent hover:border-white/10"
                 title="Tải ảnh/video từ thư viện 🖼️"
               >
-                <ImagePlus className="w-7 h-7" />
+                <ImagePlus className="w-6 h-6" />
               </button>
 
-              {/* Center: Large Neon Pink Shutter Ring + 360° Progress Bar (Exact Screenshot) */}
+              {/* Center: Sleek Minimalist Shutter Button + Ultra-Thin Progress Ring */}
               <div className="relative w-20 h-20 flex items-center justify-center">
                 {isRecording && (
                   <svg
@@ -491,18 +534,19 @@ export const CameraView: React.FC<CameraViewProps> = ({
                     <circle
                       cx="40" cy="40" r="36"
                       stroke="rgba(255,255,255,0.15)"
-                      strokeWidth="5"
+                      strokeWidth="2"
                       fill="transparent"
                     />
                     <circle
                       cx="40" cy="40" r="36"
                       stroke="#FF2A85"
-                      strokeWidth="5"
+                      strokeWidth="2.2"
                       fill="transparent"
                       strokeLinecap="round"
                       strokeDasharray={226}
                       strokeDashoffset={226 - (226 * recordingProgress) / 100}
                       className="transition-all duration-75 ease-linear"
+                      style={{ filter: 'drop-shadow(0 0 4px #FF2A85)' }}
                     />
                   </svg>
                 )}
@@ -512,8 +556,8 @@ export const CameraView: React.FC<CameraViewProps> = ({
                   onMouseUp={handleShutterUp}
                   onTouchStart={handleShutterDown}
                   onTouchEnd={handleShutterUp}
-                  className={`w-20 h-20 rounded-full border-4 border-[#FF2A85] p-1.5 flex items-center justify-center transition-all active:scale-90 shadow-[0_0_20px_rgba(255,42,133,0.5)] ${
-                    isRecording ? 'scale-105 shadow-[0_0_30px_rgba(255,42,133,0.8)]' : ''
+                  className={`w-20 h-20 rounded-full border-2 border-white/80 p-1.5 flex items-center justify-center transition-all active:scale-90 shadow-[0_0_20px_rgba(255,42,133,0.4)] ${
+                    isRecording ? 'scale-105 border-[#FF2A85] shadow-[0_0_25px_rgba(255,42,133,0.7)]' : ''
                   }`}
                   title="Nhấn để chụp ảnh • Nhấn giữ để quay video (max 5s)"
                 >
@@ -524,21 +568,21 @@ export const CameraView: React.FC<CameraViewProps> = ({
                       borderRadius: '30%',
                       transform: 'scale(0.72)',
                     } : {
-                      background: 'rgba(255,255,255,0.3)',
+                      background: 'rgba(255,255,255,0.4)',
                       borderRadius: '9999px',
                     }}
                   />
                 </button>
               </div>
 
-              {/* Right: Flip Camera Icon (Simple - Exact Screenshot) */}
+              {/* Right: Flip Camera Icon */}
               <button
                 onClick={triggerCameraFlip}
                 disabled={isRecording}
-                className="w-12 h-12 flex items-center justify-center text-white/70 hover:text-white active:scale-90 transition-all disabled:opacity-30"
+                className="w-12 h-12 flex items-center justify-center text-white/70 hover:text-white active:scale-90 transition-all disabled:opacity-30 rounded-full hover:bg-white/5 border border-transparent hover:border-white/10"
                 title="Đổi camera trước/sau 🔄"
               >
-                <RotateCcw className="w-7 h-7" />
+                <RotateCcw className="w-6 h-6" />
               </button>
             </div>
 
@@ -557,7 +601,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
                 className="flex-1 py-3.5 bg-[#18181C] hover:bg-[#262626] border border-zinc-800 text-white font-bold text-xs rounded-full flex items-center justify-center space-x-2 shadow-md transition-all active:scale-95"
               >
                 <RotateCcw className="w-4 h-4 text-zinc-400" />
-                <span>Quay/Chụp lại</span>
+                <span>Chụp/Quay lại</span>
               </button>
 
               <button
