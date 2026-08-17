@@ -1,4 +1,4 @@
-const CACHE_NAME = 'locket-web-v8-reset';
+const CACHE_NAME = 'locket-web-v9-no-cache';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -8,16 +8,13 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(keys.map((key) => caches.delete(key)));
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Network-first strategy for page navigation: Always get live deployment from Vercel
+// Force no caching for any fetch request
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-
-  if (event.request.mode === 'navigate') {
+  if (event.request.method === 'GET') {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))
     );
