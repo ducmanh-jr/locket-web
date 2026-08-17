@@ -35,6 +35,7 @@ export default function HomePage() {
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [showChatSheet, setShowChatSheet] = useState<boolean>(false);
   const [lastReaction, setLastReaction] = useState<{ emoji: string; timestamp: number } | null>(null);
+  const [isEntranceActive, setIsEntranceActive] = useState<boolean>(true);
 
   const currentUser = userProfile || {
     id: 'user-me',
@@ -66,6 +67,13 @@ export default function HomePage() {
         }
       }).catch(() => {});
     }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsEntranceActive(false);
+    }, 750);
+    return () => clearTimeout(timer);
   }, []);
 
   if (authLoading) {
@@ -205,14 +213,7 @@ export default function HomePage() {
     setCurrentView('feed');
   };
 
-  const [isEntranceActive, setIsEntranceActive] = useState<boolean>(true);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsEntranceActive(false);
-    }, 750);
-    return () => clearTimeout(timer);
-  }, []);
 
   return (
     <div className="h-full flex flex-col justify-between bg-[#0c060a] selection:bg-[#D9266E] selection:text-white overflow-hidden relative">
