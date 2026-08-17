@@ -35,7 +35,6 @@ export default function HomePage() {
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [showChatSheet, setShowChatSheet] = useState<boolean>(false);
   const [lastReaction, setLastReaction] = useState<{ emoji: string; timestamp: number } | null>(null);
-  const [isEntranceActive, setIsEntranceActive] = useState<boolean>(true);
 
   const currentUser = userProfile || {
     id: 'user-me',
@@ -67,13 +66,6 @@ export default function HomePage() {
         }
       }).catch(() => {});
     }
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsEntranceActive(false);
-    }, 750);
-    return () => clearTimeout(timer);
   }, []);
 
   if (authLoading) {
@@ -217,42 +209,7 @@ export default function HomePage() {
 
   return (
     <div className="h-full flex flex-col justify-between bg-[#0c060a] selection:bg-[#D9266E] selection:text-white overflow-hidden relative">
-      {/* Sleek Minimalist Entrance Splash Load Screen */}
-      <AnimatePresence>
-        {isEntranceActive && (
-          <motion.div
-            key="entrance-splash"
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.05 }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute inset-0 z-50 bg-[#0c060a] flex flex-col items-center justify-center pointer-events-none select-none"
-          >
-            {/* Dark Rose Shutter Icon with Ambient Soft Glow */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
-              className="relative flex flex-col items-center"
-            >
-              <div className="absolute inset-0 rounded-full bg-[#D9266E]/20 blur-[50px] transform-gpu" />
-              <div className="w-20 h-20 rounded-full border-2 border-[#D9266E] p-1.5 flex items-center justify-center shadow-[0_0_30px_rgba(217,38,110,0.5)] z-10 mb-4">
-                <div className="w-full h-full rounded-full bg-[#D9266E] flex items-center justify-center animate-pulse">
-                  <div className="w-7 h-7 rounded-full bg-white shadow-md" />
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-1.5 z-10">
-                <span className="text-white text-lg font-black tracking-wider uppercase">
-                  Locket<span className="text-[#D9266E]">Web</span>
-                </span>
-              </div>
-              <span className="text-zinc-500 text-[11px] font-semibold tracking-wide mt-1 z-10">
-                Khoảnh khắc Velvet Tối Giản ✨
-              </span>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Shared Room Header */}
 
       {/* Shared Room Header */}
       <LocketHeader
