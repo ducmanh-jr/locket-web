@@ -163,16 +163,19 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const localMoments = readLocalMoments().filter((m) => !deletedSet.has(m.id));
       
       // Auto-purge any stale local moment that has been deleted from Cloud DB
-      localMoments.forEach((lm) => {
-        const createdAt = new Date(lm.created_at || 0).getTime();
-        const isOlder = Date.now() - createdAt > 600000; // 10 minutes
-        const isLocalBlob = lm.media_url?.startsWith('blob:');
-        if (!cloudIds.has(lm.id) && isOlder && !isLocalBlob) {
-          removeLocalMoment(lm.id);
-          addDeletedMomentId(lm.id);
-          deletedSet.add(lm.id);
-        }
-      });
+      // CRITICAL GUARD: Only purge if cloud actually returned data to avoid wiping everything on network errors
+      if (sanitized.length > 0) {
+        localMoments.forEach((lm) => {
+          const createdAt = new Date(lm.created_at || 0).getTime();
+          const isOlder = Date.now() - createdAt > 600000; // 10 minutes
+          const isLocalBlob = lm.media_url?.startsWith('blob:');
+          if (!cloudIds.has(lm.id) && isOlder && !isLocalBlob) {
+            removeLocalMoment(lm.id);
+            addDeletedMomentId(lm.id);
+            deletedSet.add(lm.id);
+          }
+        });
+      }
 
       const validLocal = localMoments.filter(
         (lm) => !deletedSet.has(lm.id) && (cloudIds.has(lm.id) || lm.media_url?.startsWith('blob:') || lm.media_url?.startsWith('data:'))
