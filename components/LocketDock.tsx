@@ -1,7 +1,5 @@
-"use client";
-
 import React from 'react';
-import { Grid3x3, MessageCircle } from 'lucide-react';
+import { Grid3x3, MessageCircle, Home } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface LocketDockProps {
@@ -52,18 +50,17 @@ export const LocketDock: React.FC<LocketDockProps> = ({
           <Grid3x3 className="w-5 h-5 stroke-[2]" />
         </motion.button>
 
-        {/* Center: Gold Circle Button with Breathing Warm Gold Glow Pulse */}
+        {/* Center: Static Gold Circle Button with Home Icon */}
         <motion.button
-          whileTap={{ scale: 0.88 }}
+          whileTap={{ scale: 0.90 }}
           onClick={() => {
             triggerHaptic();
             onOpenCamera();
           }}
-          className="relative w-12 h-12 rounded-full bg-gradient-to-tr from-[#E5B849] via-[#F59E0B] to-[#D4AF37] text-black flex items-center justify-center shadow-[0_0_22px_rgba(229,184,73,0.7)] cursor-pointer group"
+          className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#E5B849] via-[#F59E0B] to-[#D4AF37] text-black flex items-center justify-center shadow-[0_4px_16px_rgba(229,184,73,0.4)] cursor-pointer hover:brightness-105 transition-all"
           title="Chụp khoảnh khắc mới"
         >
-          <div className="absolute inset-0 rounded-full bg-[#E5B849] animate-ping opacity-30 pointer-events-none" />
-          <div className="w-6 h-6 rounded-full bg-white shadow-lg transition-transform group-hover:scale-105" />
+          <Home className="w-6 h-6 text-black fill-black/20 stroke-[2.2]" />
         </motion.button>
 
         {/* Right: MessageCircle with badge */}
