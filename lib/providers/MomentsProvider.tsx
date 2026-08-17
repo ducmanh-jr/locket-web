@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { Moment, MusicTrack } from '@/lib/types';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { useAuth } from './AuthProvider';
-import { addDeletedMomentId, getDeletedMomentIds, getStoredDemoMoments } from '@/lib/demoStore';
+import { addDeletedMomentId, clearDeletedMomentIds, getDeletedMomentIds, getStoredDemoMoments } from '@/lib/demoStore';
 import {
   fetchGlobalCloudMoments,
   fetchGlobalCloudProfiles,
@@ -145,12 +145,16 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
     );
   }, [currentUser]);
 
+  // Clear stale deleted IDs cache on mount to restore any accidentally hidden moments
+  useEffect(() => {
+    clearDeletedMomentIds();
+  }, []);
+
   // Pure Shared Room Fetch: All accounts fetch from the EXACT same DB source
   const loadMoments = useCallback(async () => {
     try {
-      const deletedSet = new Set(getDeletedMomentIds());
       const cloudMoments = await fetchGlobalCloudMoments();
-      const sanitized = sanitizeMoments(cloudMoments).filter((m) => !deletedSet.has(m.id));
+      const sanitized = sanitizeMoments(cloudMoments);
       const cloudIds = new Set(sanitized.map((m) => m.id));
 
       // Auto-save Cloud public URLs to localStorage so uploader's cache is updated with working HTTPS URLs
@@ -160,7 +164,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
       });
 
-      const localMoments = readLocalMoments().filter((m) => !deletedSet.has(m.id));
+      const localMoments = readLocalMoments();
 
       // AUTO-SYNC: Push any local moments not yet on the server up to global cloud so ALL accounts receive them
       localMoments.forEach((lm) => {
@@ -172,7 +176,6 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setMoments((prevMoments) => {
         const now = Date.now();
         const pendingOptimistic = prevMoments.filter((m) => {
-          if (deletedSet.has(m.id)) return false;
           const createdAtTime = new Date(m.created_at || 0).getTime();
           const isRecent = now - createdAtTime < 180000;
           const existsInCloud = cloudIds.has(m.id);
@@ -196,7 +199,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
         });
 
         const sorted = sortMoments(merged) as Moment[];
-        return sorted.filter((m, i, self) => !deletedSet.has(m.id) && i === self.findIndex((x) => x.id === m.id));
+        return sorted.filter((m, i, self) => i === self.findIndex((x) => x.id === m.id));
       });
     } catch (e) {
       console.error('Error fetching room moments:', e);
