@@ -471,25 +471,32 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                 />
               )}
 
-              {/* Floating Emoji Particles */}
+              {/* Floating 3D Emoji Particle Burst */}
               {floatingEmojis.map((item) => (
                 <motion.div
                   key={item.id}
                   initial={{
                     opacity: 1,
-                    y: 150,
-                    scale: 0.5,
+                    y: 120,
+                    scale: 0.3,
                     x: item.x,
                     rotate: item.rotation,
+                    filter: 'blur(0px)',
                   }}
                   animate={{
-                    opacity: 0,
-                    y: -110,
-                    scale: [0.5, 1.4, 1.8],
-                    rotate: item.rotation * 2,
+                    opacity: [1, 1, 0.8, 0],
+                    y: [-20, -80, -160],
+                    scale: [0.3, 1.6, 2.0],
+                    rotate: [item.rotation, item.rotation * 1.5, item.rotation * 3],
+                    filter: ['blur(0px)', 'blur(0px)', 'blur(2px)'],
                   }}
-                  transition={{ duration: 1.25, ease: [0.22, 1, 0.36, 1] }}
-                  className="absolute bottom-10 left-1/2 text-4xl pointer-events-none z-30 drop-shadow-lg"
+                  transition={{
+                    duration: 1.3,
+                    ease: [0.22, 1, 0.36, 1],
+                    times: [0, 0.4, 1],
+                  }}
+                  className="absolute bottom-10 left-1/2 text-4xl pointer-events-none z-30"
+                  style={{ textShadow: '0 4px 12px rgba(0,0,0,0.4)' }}
                 >
                   {item.emoji}
                 </motion.div>
@@ -532,12 +539,17 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                 <MoreVertical className="w-4 h-4" />
               </button>
 
-              {/* Caption Pill Overlay at Bottom Inside Photo (Exact Screenshot) */}
+              {/* Caption Pill Overlay — Refined Glassmorphism */}
               {moment.caption && (
                 <div className="absolute bottom-3 left-4 right-4 flex justify-center pointer-events-none z-20">
-                  <div className="bg-black/60 backdrop-blur-md border border-white/10 text-white text-xs font-semibold px-4 py-1.5 rounded-full shadow-lg max-w-[85%] text-center truncate">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ delay: 0.15, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                    className="bg-black/55 backdrop-blur-xl border border-white/15 text-white text-xs font-semibold px-5 py-2 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.5)] max-w-[85%] text-center truncate"
+                  >
                     {moment.caption}
-                  </div>
+                  </motion.div>
                 </div>
               )}
             </motion.div>
@@ -609,84 +621,88 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         </div>
       </div>
 
-      {/* Message Input Bar + Emoji Reactions at Bottom (Exact Screenshot) */}
-      <div className="w-full px-3 pb-2.5 pointer-events-auto flex-shrink-0">
+      {/* Message Input Bar + Emoji Reactions — Premium Glassmorphism */}
+      <div className="w-full px-3 pb-2.5 pointer-events-auto flex-shrink-0 z-10">
         <div
-          className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-full"
+          className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-full backdrop-blur-2xl"
           style={{
-            background: 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.12)',
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.10)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)',
           }}
         >
-          {/* Text input placeholder */}
-          <span className="flex-1 text-white/40 text-sm select-none">Gửi tin nhắn...</span>
-          {/* Emoji reaction buttons */}
-          <div className="flex items-center space-x-3 flex-shrink-0">
+          <span className="flex-1 text-white/35 text-sm select-none font-medium">Gửi tin nhắn...</span>
+          <div className="flex items-center space-x-2.5 flex-shrink-0">
             {['❤️', '😂', '💕', '😊'].map((emoji) => (
-              <button
+              <motion.button
                 key={emoji}
+                whileTap={{ scale: 1.35 }}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDoubleTap();
                 }}
-                className="text-xl active:scale-125 transition-transform"
+                className="text-xl transition-transform hover:scale-110"
               >
                 {emoji}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Options Modal Sheet */}
+      {/* Options Modal Sheet — Spring Physics */}
       <AnimatePresence>
         {showOptionsModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             onClick={() => setShowOptionsModal(false)}
-            className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="absolute inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-end sm:items-center justify-center p-0 sm:p-4"
           >
             <motion.div
-              initial={{ y: 80, scale: 0.95 }}
-              animate={{ y: 0, scale: 1 }}
-              exit={{ y: 80, scale: 0.95 }}
-              transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
+              initial={{ y: 100, scale: 0.92, opacity: 0 }}
+              animate={{ y: 0, scale: 1, opacity: 1 }}
+              exit={{ y: 100, scale: 0.92, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 28, mass: 0.8 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-xs bg-[#1a0b16] border border-[#FF2A85]/30 rounded-t-3xl sm:rounded-3xl p-4 text-left space-y-2"
+              className="w-full max-w-xs bg-[#160a12]/95 backdrop-blur-2xl border border-white/10 rounded-t-3xl sm:rounded-3xl p-5 text-left space-y-2.5 shadow-[0_-10px_40px_rgba(0,0,0,0.6)]"
             >
-              <h4 className="text-white text-xs font-bold text-center pb-2 border-b border-zinc-800">
+              <h4 className="text-white text-xs font-extrabold text-center pb-2.5 border-b border-zinc-800/80">
                 Tùy chọn Khoảnh khắc
               </h4>
 
-              <button
+              <motion.button
+                whileTap={{ scale: 0.97 }}
                 onClick={handleDownload}
-                className="w-full p-3 bg-[#261221] hover:bg-[#34182d] rounded-2xl text-white text-xs font-semibold flex items-center space-x-3 transition-all active:scale-98"
+                className="w-full p-3.5 bg-[#261221] hover:bg-[#34182d] rounded-2xl text-white text-xs font-semibold flex items-center space-x-3 transition-colors border border-white/5"
               >
                 <Download className="w-4 h-4 text-[#FF2A85]" />
                 <span>Tải ảnh về máy</span>
-              </button>
+              </motion.button>
 
               {canDeleteMoment && onDeleteMoment && (
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => {
                     onDeleteMoment(moment.id);
                     setShowOptionsModal(false);
                   }}
-                  className="w-full p-3 bg-red-500/10 hover:bg-red-500/20 rounded-2xl text-red-400 text-xs font-semibold flex items-center space-x-3 transition-all active:scale-98 border border-red-500/20"
+                  className="w-full p-3.5 bg-red-500/10 hover:bg-red-500/20 rounded-2xl text-red-400 text-xs font-semibold flex items-center space-x-3 transition-colors border border-red-500/20"
                 >
                   <Trash2 className="w-4 h-4 text-red-400" />
                   <span>{isAdmin && !isMyMoment ? 'Xóa khoảnh khắc này (Quyền Admin 👑)' : 'Xóa khoảnh khắc này'}</span>
-                </button>
+                </motion.button>
               )}
 
-              <button
+              <motion.button
+                whileTap={{ scale: 0.97 }}
                 onClick={() => setShowOptionsModal(false)}
-                className="w-full py-2.5 bg-zinc-800 text-zinc-400 text-xs font-bold rounded-2xl text-center active:scale-98"
+                className="w-full py-3 bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-400 text-xs font-bold rounded-2xl text-center transition-colors"
               >
                 Đóng
-              </button>
+              </motion.button>
             </motion.div>
           </motion.div>
         )}
