@@ -206,15 +206,25 @@ export async function fetchGlobalCloudProfiles(): Promise<CloudProfile[]> {
   try {
     const res = await fetch('/api/sync', { cache: 'no-store' });
     if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data.profiles)) {
-        return data.profiles;
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        if (Array.isArray(data.profiles)) {
+          return data.profiles;
+        }
       }
     }
-    return [];
-  } catch (e) {
-    return [];
+  } catch (e) {}
+
+  // Fallback: Query Supabase directly
+  if (isSupabaseConfigured()) {
+    try {
+      const { data: profs } = await supabase.from('profiles').select('*').limit(100);
+      if (profs && profs.length > 0) return profs as CloudProfile[];
+    } catch (e) {}
   }
+
+  return [];
 }
 
 export async function blobToDataUrl(url: string): Promise<string> {
@@ -314,18 +324,61 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
 }
 
 export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
+  // 1. Primary: Try the API route
   try {
     const res = await fetch('/api/sync', { cache: 'no-store' });
     if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data.moments)) {
-        return sanitizeMoments(data.moments);
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        if (Array.isArray(data.moments) && data.moments.length > 0) {
+          console.log('[CloudSync] API route returned', data.moments.length, 'moments');
+          return sanitizeMoments(data.moments);
+        }
+      } else {
+        console.warn('[CloudSync] API route returned non-JSON (possible Vercel protection). Falling back to direct Supabase.');
       }
+    } else {
+      console.warn('[CloudSync] API route failed with status', res.status, '. Falling back to direct Supabase.');
     }
-    return [];
-  } catch (e) {
-    return [];
+  } catch (apiErr) {
+    console.warn('[CloudSync] API route fetch error:', apiErr, '. Falling back to direct Supabase.');
   }
+
+  // 2. Fallback: Query Supabase directly from browser (bypasses Vercel Deployment Protection)
+  if (isSupabaseConfigured()) {
+    try {
+      const { data: dbProfiles } = await supabase.from('profiles').select('*').limit(100);
+      const profilesMap = new Map((dbProfiles || []).map((p: any) => [p.id, p]));
+
+      const { data: rawMoments } = await supabase
+        .from('moments')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (rawMoments && rawMoments.length > 0) {
+        const enriched = rawMoments.map((m: any) => {
+          const senderProfile = profilesMap.get(m.sender_id);
+          return {
+            ...m,
+            sender: senderProfile || {
+              id: m.sender_id || 'unknown',
+              username: m.sender_id ? `user_${m.sender_id.substring(0, 6)}` : 'locket_user',
+              display_name: 'Thành viên Locket',
+              avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${m.sender_id || 'locket'}`,
+            },
+          };
+        });
+        console.log('[CloudSync] Direct Supabase fallback returned', enriched.length, 'moments');
+        return sanitizeMoments(enriched);
+      }
+    } catch (dbErr) {
+      console.error('[CloudSync] Direct Supabase fallback also failed:', dbErr);
+    }
+  }
+
+  return [];
 }
 
 export async function deleteMomentFromGlobalCloud(momentId: string): Promise<boolean> {

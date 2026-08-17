@@ -55,12 +55,11 @@ const LOCAL_MOMENTS_KEY = 'locket_local_moments_v1';
 function readLocalMoments(): Moment[] {
   if (typeof window === 'undefined') return [];
   try {
-    const deletedSet = new Set(getDeletedMomentIds());
     const stored = localStorage.getItem(LOCAL_MOMENTS_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed)) {
-        return sanitizeMoments(parsed.filter((m) => m && m.id && !deletedSet.has(m.id)));
+        return sanitizeMoments(parsed.filter((m) => m && m.id));
       }
     }
   } catch (e) {}
