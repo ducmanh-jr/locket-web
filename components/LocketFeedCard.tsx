@@ -271,16 +271,19 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   };
 
   const handleDoubleTap = () => {
-    const newId = Date.now();
-    const randomX = Math.floor(Math.random() * 80) - 40;
-    const randomRot = Math.floor(Math.random() * 30) - 15;
-    setFloatingEmojis((prev) => [
-      ...prev,
-      { id: newId, emoji: '💖', x: randomX, rotation: randomRot },
-    ]);
+    const now = Date.now();
+    const emojisPool = ['💖', '✨', '🔥', '🥰', '💕', '⭐', '❤️'];
+    const burst = Array.from({ length: 6 }).map((_, i) => ({
+      id: now + i + Math.random(),
+      emoji: emojisPool[Math.floor(Math.random() * emojisPool.length)],
+      x: Math.floor(Math.random() * 160) - 80,
+      rotation: Math.floor(Math.random() * 60) - 30,
+    }));
+
+    setFloatingEmojis((prev) => [...prev, ...burst]);
     setTimeout(() => {
-      setFloatingEmojis((prev) => prev.filter((item) => item.id !== newId));
-    }, 1300);
+      setFloatingEmojis((prev) => prev.filter((item) => !burst.some((b) => b.id === item.id)));
+    }, 1350);
   };
 
   const handleDownload = async () => {
@@ -357,39 +360,64 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
       }`}
     >
+      {/* Mesmerizing Ambient Glowing Aura Backdrop */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center z-0">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={moment.id + '_aura'}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 0.55, scale: 1.25 }}
+            exit={{ opacity: 0, scale: 1.4 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="w-[380px] h-[380px] rounded-full blur-[90px] transform-gpu will-change-transform"
+            style={{
+              backgroundImage: `url(${moment.thumbnail_url || moment.media_url})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          />
+        </AnimatePresence>
+      </div>
+
       {/* Centered Photo & Sender Section */}
-      <div className="w-full flex flex-col items-center my-auto">
+      <div className="w-full flex flex-col items-center my-auto z-10">
         {/* 1:1 Square Photo Card Container */}
         <div
           onClick={handleCardClick}
           onDoubleClick={handleDoubleTap}
-          className="w-full aspect-square bg-black/20 flex-shrink-0 relative overflow-hidden rounded-[2.2rem] cursor-pointer"
+          className="w-full aspect-square bg-black/30 backdrop-blur-sm flex-shrink-0 relative overflow-hidden rounded-[2.2rem] cursor-pointer border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)]"
         >
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={moment.id}
               initial={{
                 opacity: 0,
-                y: direction === 'up' ? 70 : -70,
-                scale: 0.94,
-                filter: 'blur(4px)',
+                y: direction === 'up' ? 90 : -90,
+                rotateX: direction === 'up' ? 12 : -12,
+                scale: 0.90,
+                filter: 'blur(8px)',
               }}
               animate={{
                 opacity: 1,
                 y: 0,
+                rotateX: 0,
                 scale: 1,
                 filter: 'blur(0px)',
               }}
               exit={{
                 opacity: 0,
-                y: direction === 'up' ? -70 : 70,
-                scale: 0.94,
-                filter: 'blur(4px)',
+                y: direction === 'up' ? -90 : 90,
+                rotateX: direction === 'up' ? -12 : 12,
+                scale: 0.90,
+                filter: 'blur(8px)',
               }}
               transition={{
-                duration: 0.28,
-                ease: [0.32, 0.72, 0, 1],
+                type: 'spring',
+                stiffness: 280,
+                damping: 24,
+                mass: 0.9,
               }}
+              style={{ perspective: 1000 }}
               className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.2rem] transform-gpu will-change-[transform,opacity]"
             >
               {isVideo && !hasVideoError ? (
