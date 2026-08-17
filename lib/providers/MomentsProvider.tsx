@@ -164,14 +164,10 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       // AUTO-SYNC: Push any local moments not yet on the server up to global cloud so ALL accounts receive them
       localMoments.forEach((lm) => {
-        if (!cloudIds.has(lm.id) && (lm.media_url?.startsWith('data:') || lm.media_url?.startsWith('http'))) {
+        if (!cloudIds.has(lm.id) && lm.media_url && !lm.media_url.startsWith('blob:')) {
           pushMomentToGlobalCloud(lm).catch(() => {});
         }
       });
-
-      const validLocal = localMoments.filter(
-        (lm) => !deletedSet.has(lm.id) && (cloudIds.has(lm.id) || lm.media_url?.startsWith('blob:') || lm.media_url?.startsWith('data:') || lm.media_url?.startsWith('http'))
-      );
 
       setMoments((prevMoments) => {
         const now = Date.now();
@@ -183,9 +179,9 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
           return isRecent && !existsInCloud;
         });
 
-        // PREFER CLOUD MOMENTS (sanitized) OVER LOCAL CACHE (validLocal)!
-        // This guarantees that all accounts receive the EXACT same shared room dataset
-        const merged = [...sanitized, ...pendingOptimistic, ...validLocal].map((m) => {
+        // STRICT MODE: Render ONLY Cloud Shared Room moments + active optimistic uploads.
+        // No local-only isolated moments allowed per account or device!
+        const merged = [...sanitized, ...pendingOptimistic].map((m) => {
           const isMyMoment = m.sender_id === currentUser.id || m.sender?.id === currentUser.id;
           if (isMyMoment && currentUser.avatar_url) {
             return {
