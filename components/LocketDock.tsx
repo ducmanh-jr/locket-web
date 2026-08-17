@@ -62,7 +62,7 @@ export const LocketDock: React.FC<LocketDockProps> = ({
           className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#D9266E] via-[#BE185D] to-[#9F1239] text-white flex items-center justify-center shadow-[0_4px_18px_rgba(217,38,110,0.5)] cursor-pointer hover:brightness-105 transition-all"
           title="Chụp khoảnh khắc mới"
         >
-          <Home className="w-6 h-6 text-white fill-white/20 stroke-[2.2]" />
+          <Home className="w-6 h-6 text-white fill-white stroke-[2.2]" />
         </motion.button>
 
         {/* Right: MessageCircle with badge */}
