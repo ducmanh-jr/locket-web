@@ -48,6 +48,13 @@ export function getDeletedMomentIds(): string[] {
   }
 }
 
+export function clearDeletedMomentIds(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(DELETED_CACHE_KEY);
+  } catch (e) {}
+}
+
 export function addDeletedMomentId(momentId: string): void {
   if (typeof window === 'undefined' || !momentId) return;
   try {
