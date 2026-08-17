@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { Grid3x3, MessageCircle, Home } from 'lucide-react';
 import { motion } from 'framer-motion';
