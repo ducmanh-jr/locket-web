@@ -2,10 +2,15 @@ import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 
 function isVideoMoment(moment: any): boolean {
+  if (!moment) return false;
+  const mediaUrl = String(moment?.media_url || '').toLowerCase();
   return (
     moment?.media_type === 'video' ||
     String(moment?.id || '').includes('video') ||
-    String(moment?.media_url || '').startsWith('data:video/')
+    mediaUrl.startsWith('data:video/') ||
+    mediaUrl.endsWith('.mp4') ||
+    mediaUrl.endsWith('.webm') ||
+    mediaUrl.endsWith('.mov')
   );
 }
 
@@ -14,20 +19,11 @@ function hasRenderableMedia(moment: any): boolean {
   if (!moment?.id || !mediaUrl) return false;
   if (mediaUrl.startsWith('blob:')) return false;
 
-  if (isVideoMoment(moment)) {
-    return (
-      mediaUrl.startsWith('https://') ||
-      mediaUrl.startsWith('http://') ||
-      mediaUrl.startsWith('/') ||
-      mediaUrl.startsWith('data:video/')
-    );
-  }
-
   return (
     mediaUrl.startsWith('https://') ||
     mediaUrl.startsWith('http://') ||
     mediaUrl.startsWith('/') ||
-    mediaUrl.startsWith('data:image/')
+    mediaUrl.startsWith('data:')
   );
 }
 

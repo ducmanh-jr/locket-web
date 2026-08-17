@@ -59,6 +59,28 @@ export async function uploadMediaToPublicUrl(mediaUrl: string, fallbackName: str
 
     if (!fileToUpload) return null;
 
+    // 1. Direct Supabase Storage upload from Browser Client (High Reliability)
+    if (isSupabaseConfigured()) {
+      try {
+        const mime = fileToUpload.type || 'video/mp4';
+        const ext = mime.includes('webm') ? 'webm' : mime.includes('mp4') ? 'mp4' : mime.includes('png') ? 'png' : 'jpg';
+        const fileName = `${fallbackName}_${Date.now()}.${ext}`;
+        const { data: storageData, error: storageErr } = await supabase.storage
+          .from('moments')
+          .upload(fileName, fileToUpload, { contentType: mime, upsert: true });
+
+        if (!storageErr && storageData?.path) {
+          const { data: publicUrlData } = supabase.storage
+            .from('moments')
+            .getPublicUrl(storageData.path);
+          if (publicUrlData?.publicUrl) {
+            return publicUrlData.publicUrl;
+          }
+        }
+      } catch (sbErr) {}
+    }
+
+    // 2. Server API Route Upload Fallback
     const formData = new FormData();
     formData.append('file', fileToUpload);
     const res = await fetch('/api/upload', {
@@ -68,7 +90,13 @@ export async function uploadMediaToPublicUrl(mediaUrl: string, fallbackName: str
 
     if (!res.ok) return null;
     const data = await res.json();
-    if (typeof data.url === 'string' && (data.url.startsWith('http://') || data.url.startsWith('https://') || data.url.startsWith('/'))) {
+    if (
+      typeof data.url === 'string' &&
+      (data.url.startsWith('http://') ||
+        data.url.startsWith('https://') ||
+        data.url.startsWith('/') ||
+        data.url.startsWith('data:'))
+    ) {
       return data.url;
     }
     return null;
@@ -85,6 +113,26 @@ export async function uploadBlobToPublicUrl(blob: Blob, fallbackName: string): P
     const ext = mime.includes('webm') ? 'webm' : mime.includes('mp4') ? 'mp4' : mime.includes('png') ? 'png' : 'jpg';
     const file = new File([blob], `${fallbackName}.${ext}`, { type: mime });
 
+    // 1. Direct Supabase Storage upload from Browser Client (High Reliability)
+    if (isSupabaseConfigured()) {
+      try {
+        const fileName = `${fallbackName}_${Date.now()}.${ext}`;
+        const { data: storageData, error: storageErr } = await supabase.storage
+          .from('moments')
+          .upload(fileName, file, { contentType: mime, upsert: true });
+
+        if (!storageErr && storageData?.path) {
+          const { data: publicUrlData } = supabase.storage
+            .from('moments')
+            .getPublicUrl(storageData.path);
+          if (publicUrlData?.publicUrl) {
+            return publicUrlData.publicUrl;
+          }
+        }
+      } catch (sbErr) {}
+    }
+
+    // 2. Server API Route Upload Fallback
     const formData = new FormData();
     formData.append('file', file);
     const res = await fetch('/api/upload', {
@@ -94,7 +142,13 @@ export async function uploadBlobToPublicUrl(blob: Blob, fallbackName: string): P
 
     if (!res.ok) return null;
     const data = await res.json();
-    if (typeof data.url === 'string' && (data.url.startsWith('http://') || data.url.startsWith('https://') || data.url.startsWith('/'))) {
+    if (
+      typeof data.url === 'string' &&
+      (data.url.startsWith('http://') ||
+        data.url.startsWith('https://') ||
+        data.url.startsWith('/') ||
+        data.url.startsWith('data:'))
+    ) {
       return data.url;
     }
     return null;

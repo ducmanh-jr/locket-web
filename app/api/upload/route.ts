@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 const ALLOWED_MIME_TYPES = [
   'image/jpeg',
   'image/jpg',
@@ -10,6 +10,8 @@ const ALLOWED_MIME_TYPES = [
   'video/mp4',
   'video/webm',
   'video/quicktime',
+  'video/x-matroska',
+  'video/3gpp',
 ];
 
 function getUploadFileName(file: File): string {
@@ -18,11 +20,13 @@ function getUploadFileName(file: File): string {
     ? 'webm'
     : mime.includes('mp4')
       ? 'mp4'
-      : mime.includes('png')
-        ? 'png'
-        : mime.includes('webp')
-          ? 'webp'
-          : 'jpg';
+      : mime.includes('quicktime') || mime.includes('mov')
+        ? 'mov'
+        : mime.includes('png')
+          ? 'png'
+          : mime.includes('webp')
+            ? 'webp'
+            : 'jpg';
 
   const randomId = Math.random().toString(36).substring(2, 9);
   return `moment_${Date.now()}_${randomId}.${ext}`;
@@ -39,7 +43,7 @@ export async function POST(request: Request) {
 
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: 'Kích thước file vượt quá giới hạn 10MB' },
+        { error: 'Kích thước file vượt quá giới hạn 25MB' },
         { status: 400 }
       );
     }

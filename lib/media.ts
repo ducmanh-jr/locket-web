@@ -33,10 +33,15 @@ export function sortMoments(moments: Moment[] | any[]): Moment[] | any[] {
 }
 
 export function isVideoMoment(moment: Moment): boolean {
+  if (!moment) return false;
+  const mediaUrl = (moment.media_url || '').toLowerCase();
   return (
     moment.media_type === 'video' ||
-    moment.id.includes('video') ||
-    moment.media_url.startsWith('data:video/')
+    (moment.id || '').includes('video') ||
+    mediaUrl.startsWith('data:video/') ||
+    mediaUrl.endsWith('.mp4') ||
+    mediaUrl.endsWith('.webm') ||
+    mediaUrl.endsWith('.mov')
   );
 }
 

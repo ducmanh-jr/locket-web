@@ -12,6 +12,7 @@ import {
   deleteMomentFromGlobalCloud,
   compressImageForCloudSync,
   uploadBlobToPublicUrl,
+  uploadMediaToPublicUrl,
 } from '@/lib/cloudSync';
 import { CapturedMedia, captureVideoThumbnail } from '@/lib/camera';
 import { sanitizeMoments, sortMoments } from '@/lib/media';
@@ -66,13 +67,29 @@ function readLocalMoments(): Moment[] {
   return [];
 }
 
+function sanitizeMomentForLocalStorage(m: Moment): Moment {
+  // Strip huge base64 video payloads (>50KB) to prevent QuotaExceededError in localStorage
+  if (m.media_url && m.media_url.startsWith('data:video/') && m.media_url.length > 50000) {
+    return {
+      ...m,
+      media_url: m.thumbnail_url || '',
+    };
+  }
+  return m;
+}
+
 function saveLocalMoment(moment: Moment): void {
   if (typeof window === 'undefined') return;
   try {
     const existing = readLocalMoments();
-    const updated = [moment, ...existing.filter((m) => m.id !== moment.id)].slice(0, 50);
+    const cleanCurrent = sanitizeMomentForLocalStorage(moment);
+    const updated = [cleanCurrent, ...existing.filter((m) => m.id !== moment.id)]
+      .slice(0, 40)
+      .map(sanitizeMomentForLocalStorage);
     localStorage.setItem(LOCAL_MOMENTS_KEY, JSON.stringify(updated));
-  } catch (e) {}
+  } catch (e) {
+    console.warn('[MomentsProvider] localStorage save skipped or quota exceeded:', e);
+  }
 }
 
 function removeLocalMoment(momentId: string): void {
@@ -131,10 +148,10 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       const localMoments = readLocalMoments().filter((m) => !deletedSet.has(m.id));
       
-      // Auto-purge any stale local moment that has been deleted from Cloud DB
+      // Auto-purge any stale local moment that has been deleted from Cloud DB (only after 10 minutes)
       localMoments.forEach((lm) => {
         const createdAt = new Date(lm.created_at || 0).getTime();
-        const isOlder = Date.now() - createdAt > 120000; // 2 minutes
+        const isOlder = Date.now() - createdAt > 600000; // 10 minutes
         const isLocalBlob = lm.media_url?.startsWith('blob:');
         if (!cloudIds.has(lm.id) && isOlder && !isLocalBlob) {
           removeLocalMoment(lm.id);
@@ -143,7 +160,9 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
       });
 
-      const validLocal = localMoments.filter((lm) => !deletedSet.has(lm.id) && (cloudIds.has(lm.id) || lm.media_url?.startsWith('blob:')));
+      const validLocal = localMoments.filter(
+        (lm) => !deletedSet.has(lm.id) && (cloudIds.has(lm.id) || lm.media_url?.startsWith('blob:') || lm.media_url?.startsWith('data:'))
+      );
 
       setMoments((prevMoments) => {
         const now = Date.now();
@@ -329,14 +348,19 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
           }
         } else if (media.type === 'video') {
           try {
-            const [uploadedVideoUrl, thumb] = await Promise.all([
-              uploadBlobToPublicUrl(media.blob, `video_${newMomentId}`),
-              captureVideoThumbnail(media.dataUrl || ''),
-            ]);
+            let uploadedVideoUrl: string | null = null;
+            if (media.blob && media.blob.size > 0) {
+              uploadedVideoUrl = await uploadBlobToPublicUrl(media.blob, `video_${newMomentId}`);
+            }
+            if (!uploadedVideoUrl && media.dataUrl) {
+              uploadedVideoUrl = await uploadMediaToPublicUrl(media.dataUrl, `video_${newMomentId}`);
+            }
+            const thumb = await captureVideoThumbnail(media.dataUrl || '');
+
             if (uploadedVideoUrl) {
               finalMediaUrl = uploadedVideoUrl;
             } else {
-              console.error('[MomentsProvider] Video blob upload returned null for', newMomentId);
+              console.warn('[MomentsProvider] Video blob upload fallback to local URL for', newMomentId);
             }
             if (thumb) thumbnailUrl = thumb;
           } catch (e) {
@@ -356,11 +380,20 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
           prev.map((m) => (m.id === newMomentId ? finalMoment : m))
         );
 
+        // Broadcast updated final moment to all open browser tabs
+        try {
+          if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+            const tabChannel = new BroadcastChannel('locket_tab_sync');
+            tabChannel.postMessage({ type: 'NEW_MOMENT', moment: finalMoment });
+            tabChannel.close();
+          }
+        } catch (e) {}
+
         // Save to Supabase Cloud DB (with retry)
         let pushOk = await pushMomentToGlobalCloud(finalMoment);
         if (!pushOk) {
           console.warn('[MomentsProvider] First push failed for', newMomentId, '- retrying in 3s...');
-          await new Promise(r => setTimeout(r, 3000));
+          await new Promise((r) => setTimeout(r, 3000));
           pushOk = await pushMomentToGlobalCloud(finalMoment);
           if (!pushOk) {
             console.error('[MomentsProvider] CRITICAL: Moment', newMomentId, 'could NOT be saved to cloud DB after retry!');

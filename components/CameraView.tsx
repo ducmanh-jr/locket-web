@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { MusicTrack } from '@/lib/types';
 import { MusicPickerModal } from './MusicPickerModal';
+import { LocketVideoTrimmerModal } from './LocketVideoTrimmerModal';
 import { killGlobalAudio } from '@/lib/audioPlayer';
 
 interface CameraViewProps {
@@ -49,6 +50,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [selectedMusic, setSelectedMusic] = useState<MusicTrack | null>(null);
   const [showMusicPicker, setShowMusicPicker] = useState<boolean>(false);
+  const [trimmerTarget, setTrimmerTarget] = useState<{ src: string; file: File } | null>(null);
 
   // Gallery Upload
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -60,13 +62,19 @@ export const CameraView: React.FC<CameraViewProps> = ({
     const reader = new FileReader();
     reader.onload = (ev) => {
       const dataUrl = ev.target?.result as string;
-      const media: CapturedMedia = {
-        dataUrl,
-        type: isVideoFile ? 'video' : 'photo',
-        blob: file,
-      };
-      setCapturedMedia(media);
-      setAudioOption('mute');
+
+      if (isVideoFile) {
+        // Open 5-second interactive video trimmer modal
+        setTrimmerTarget({ src: dataUrl, file });
+      } else {
+        const media: CapturedMedia = {
+          dataUrl,
+          type: 'photo',
+          blob: file,
+        };
+        setCapturedMedia(media);
+        setAudioOption('mute');
+      }
     };
     reader.readAsDataURL(file);
     e.target.value = '';
@@ -579,6 +587,19 @@ export const CameraView: React.FC<CameraViewProps> = ({
             setAudioOption('music');
           }}
           onClose={() => setShowMusicPicker(false)}
+        />
+      )}
+
+      {trimmerTarget && (
+        <LocketVideoTrimmerModal
+          videoSrc={trimmerTarget.src}
+          videoFile={trimmerTarget.file}
+          onConfirmTrim={(trimmedMedia) => {
+            setCapturedMedia(trimmedMedia);
+            setAudioOption('original');
+            setTrimmerTarget(null);
+          }}
+          onClose={() => setTrimmerTarget(null)}
         />
       )}
     </div>

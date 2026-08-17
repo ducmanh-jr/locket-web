@@ -43,6 +43,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   const [showOptionsModal, setShowOptionsModal] = useState<boolean>(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(true);
+  const [hasVideoError, setHasVideoError] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const currentMomentIdRef = useRef<string>(moment.id);
 
@@ -57,6 +58,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
 
   useEffect(() => {
     setIsMuted(true);
+    setHasVideoError(false);
     if (videoRef.current) {
       videoRef.current.play().catch(() => {});
     }
@@ -283,12 +285,24 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
 
   const handleDownload = async () => {
     try {
+      const isVideoMedia =
+        moment.media_type === 'video' ||
+        moment.id?.includes('video') ||
+        moment.media_url?.startsWith('data:video/') ||
+        moment.media_url?.endsWith('.mp4') ||
+        moment.media_url?.endsWith('.webm');
+      const ext = isVideoMedia
+        ? moment.media_url?.includes('.webm') || moment.media_url?.includes('video/webm')
+          ? 'webm'
+          : 'mp4'
+        : 'jpg';
+
       const response = await fetch(moment.media_url);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `locket-${moment.id}.jpg`;
+      a.download = `locket-${moment.id}.${ext}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -378,7 +392,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               }}
               className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.2rem] transform-gpu will-change-[transform,opacity]"
             >
-              {isVideo ? (
+              {isVideo && !hasVideoError ? (
                 <div className="relative w-full h-full">
                   <video
                     ref={videoRef}
@@ -394,6 +408,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                       if (videoRef.current) {
                         videoRef.current.play().catch(() => {});
                       }
+                    }}
+                    onError={() => {
+                      console.warn('[LocketFeedCard] Video playback error for moment', moment.id, '- switching to poster thumbnail fallback');
+                      setHasVideoError(true);
                     }}
                     className="w-full h-full object-cover rounded-[2.2rem] select-none pointer-events-none"
                   />
