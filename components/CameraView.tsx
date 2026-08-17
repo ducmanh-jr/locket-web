@@ -339,20 +339,20 @@ export const CameraView: React.FC<CameraViewProps> = ({
   };
 
   return (
-    <div className="absolute inset-0 z-50 bg-[#0b050d] flex flex-col justify-between items-center p-4 selection:bg-[#FF2A85] selection:text-white">
+    <div className="absolute inset-0 z-50 bg-[#09080c] flex flex-col justify-between items-center p-4 selection:bg-[#E5B849] selection:text-black">
       {/* Top Header Bar */}
       <div className="w-full max-w-sm flex items-center justify-between z-10 pt-2">
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-[#180d19]/80 backdrop-blur-md text-zinc-400 flex items-center justify-center border border-white/10 hover:text-white transition-all active:scale-95"
+          className="w-10 h-10 rounded-full bg-[#17141f]/80 backdrop-blur-md text-zinc-400 flex items-center justify-center border border-white/10 hover:text-white transition-all active:scale-95"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="bg-[#180d19]/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 flex items-center space-x-2">
-          <Sparkles className="w-3.5 h-3.5 text-[#FF2A85]" />
+        <div className="bg-[#17141f]/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 flex items-center space-x-2">
+          <Sparkles className="w-3.5 h-3.5 text-[#E5B849]" />
           <span className="text-[11px] font-bold uppercase tracking-wider text-white/90">
-            {isRecording ? 'Đang quay (max 5s)...' : 'Khoảnh khắc Locket'}
+            {isRecording ? 'Đang quay (max 5s)...' : 'Khoảnh khắc Locket Gold'}
           </span>
         </div>
 
@@ -361,7 +361,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
 
       {/* Main Viewfinder Box */}
       <div className="relative w-full max-w-sm aspect-square my-auto rounded-[2.8rem] overflow-hidden bg-black/40 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex items-center justify-center border border-white/10">
-        {/* Ultra-Thin Refined Recording Progress Border (1.8px) */}
+        {/* Ultra-Thin Refined Gold Recording Progress Border (1.8px) */}
         {isRecording && (
           <svg className="absolute inset-0 w-full h-full pointer-events-none z-30" viewBox="0 0 100 100" preserveAspectRatio="none">
             <rect
@@ -372,13 +372,13 @@ export const CameraView: React.FC<CameraViewProps> = ({
               rx="12"
               ry="12"
               fill="none"
-              stroke="#FF2A85"
+              stroke="#E5B849"
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeDasharray={370}
               strokeDashoffset={370 - (370 * recordingProgress) / 100}
               className="transition-all duration-75 ease-linear"
-              style={{ filter: 'drop-shadow(0 0 6px rgba(255, 42, 133, 0.8))' }}
+              style={{ filter: 'drop-shadow(0 0 6px rgba(229, 184, 73, 0.85))' }}
             />
           </svg>
         )}
@@ -408,8 +408,8 @@ export const CameraView: React.FC<CameraViewProps> = ({
               </div>
             )}
             {isRecording && (
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#FF2A85] text-white font-extrabold text-xs px-4 py-1.5 rounded-full flex items-center space-x-2 animate-pulse shadow-[0_0_15px_rgba(255,42,133,0.6)]">
-                <div className="w-2 h-2 rounded-full bg-white animate-ping" />
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#E5B849] text-black font-extrabold text-xs px-4 py-1.5 rounded-full flex items-center space-x-2 animate-pulse shadow-[0_0_15px_rgba(229,184,73,0.7)]">
+                <div className="w-2 h-2 rounded-full bg-black animate-ping" />
                 <span>{(recordingProgress * 0.05).toFixed(1)}s / 5s</span>
               </div>
             )}
@@ -447,7 +447,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
                 onClick={() => { killGlobalAudio(); setAudioOption('mute'); }}
                 className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
                   audioOption === 'mute'
-                    ? 'bg-[#FF2A85] text-white shadow-[0_0_10px_rgba(255,42,133,0.5)]'
+                    ? 'bg-[#E5B849] text-black shadow-[0_0_10px_rgba(229,184,73,0.6)]'
                     : 'text-zinc-400 hover:text-white'
                 }`}
               >
@@ -459,7 +459,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
                 onClick={() => { killGlobalAudio(); setAudioOption('original'); }}
                 className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
                   audioOption === 'original'
-                    ? 'bg-[#FF2A85] text-white shadow-[0_0_10px_rgba(255,42,133,0.5)]'
+                    ? 'bg-[#E5B849] text-black shadow-[0_0_10px_rgba(229,184,73,0.6)]'
                     : 'text-zinc-400 hover:text-white'
                 }`}
               >
@@ -474,7 +474,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
                 }}
                 className={`flex-1 py-1.5 px-2 rounded-full text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
                   audioOption === 'music'
-                    ? 'bg-[#FF2A85] text-white shadow-[0_0_10px_rgba(255,42,133,0.5)]'
+                    ? 'bg-[#E5B849] text-black shadow-[0_0_10px_rgba(229,184,73,0.6)]'
                     : 'text-zinc-400 hover:text-white'
                 }`}
               >
@@ -524,7 +524,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
                 <ImagePlus className="w-6 h-6" />
               </button>
 
-              {/* Center: Sleek Minimalist Shutter Button + Ultra-Thin Progress Ring */}
+              {/* Center: Sleek Minimalist Gold Shutter Button + Ultra-Thin Progress Ring */}
               <div className="relative w-20 h-20 flex items-center justify-center">
                 {isRecording && (
                   <svg
@@ -539,14 +539,14 @@ export const CameraView: React.FC<CameraViewProps> = ({
                     />
                     <circle
                       cx="40" cy="40" r="36"
-                      stroke="#FF2A85"
+                      stroke="#E5B849"
                       strokeWidth="2.2"
                       fill="transparent"
                       strokeLinecap="round"
                       strokeDasharray={226}
                       strokeDashoffset={226 - (226 * recordingProgress) / 100}
                       className="transition-all duration-75 ease-linear"
-                      style={{ filter: 'drop-shadow(0 0 4px #FF2A85)' }}
+                      style={{ filter: 'drop-shadow(0 0 5px #E5B849)' }}
                     />
                   </svg>
                 )}
@@ -556,15 +556,15 @@ export const CameraView: React.FC<CameraViewProps> = ({
                   onMouseUp={handleShutterUp}
                   onTouchStart={handleShutterDown}
                   onTouchEnd={handleShutterUp}
-                  className={`w-20 h-20 rounded-full border-2 border-white/80 p-1.5 flex items-center justify-center transition-all active:scale-90 shadow-[0_0_20px_rgba(255,42,133,0.4)] ${
-                    isRecording ? 'scale-105 border-[#FF2A85] shadow-[0_0_25px_rgba(255,42,133,0.7)]' : ''
+                  className={`w-20 h-20 rounded-full border-2 border-white/80 p-1.5 flex items-center justify-center transition-all active:scale-90 shadow-[0_0_20px_rgba(229,184,73,0.4)] ${
+                    isRecording ? 'scale-105 border-[#E5B849] shadow-[0_0_25px_rgba(229,184,73,0.7)]' : ''
                   }`}
                   title="Nhấn để chụp ảnh • Nhấn giữ để quay video (max 5s)"
                 >
                   <div
                     className="w-full h-full transition-all duration-200"
                     style={isRecording ? {
-                      background: '#FF2A85',
+                      background: '#E5B849',
                       borderRadius: '30%',
                       transform: 'scale(0.72)',
                     } : {
@@ -607,13 +607,13 @@ export const CameraView: React.FC<CameraViewProps> = ({
               <button
                 onClick={handleSend}
                 disabled={isSending}
-                className="flex-1 py-3.5 bg-[#FF2A85] text-white font-extrabold text-xs rounded-full flex items-center justify-center space-x-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(255,42,133,0.6)]"
+                className="flex-1 py-3.5 bg-gradient-to-r from-[#E5B849] via-[#F59E0B] to-[#D4AF37] text-black font-extrabold text-xs rounded-full flex items-center justify-center space-x-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_22px_rgba(229,184,73,0.6)]"
               >
                 {isSending ? (
-                  <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  <div className="w-4 h-4 rounded-full border-2 border-black border-t-transparent animate-spin" />
                 ) : (
                   <>
-                    <Send className="w-4 h-4 fill-white" />
+                    <Send className="w-4 h-4 fill-black" />
                     <span>Gửi khoảnh khắc 🚀</span>
                   </>
                 )}

@@ -206,7 +206,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="h-full flex flex-col justify-between bg-locket-purple selection:bg-[#FF2A85] selection:text-white overflow-hidden relative">
+    <div className="h-full flex flex-col justify-between bg-locket-purple selection:bg-[#E5B849] selection:text-black overflow-hidden relative">
       {/* Shared Room Header */}
       <LocketHeader
         currentUser={currentUser}
@@ -253,7 +253,7 @@ export default function HomePage() {
 
               {momentsLoading ? (
                 <div className="w-[310px] h-[310px] my-auto rounded-[2.8rem] bg-black/30 flex items-center justify-center animate-pulse">
-                  <div className="w-10 h-10 rounded-full border-4 border-[#FF2A85] border-t-transparent animate-spin" />
+                  <div className="w-10 h-10 rounded-full border-4 border-[#E5B849] border-t-transparent animate-spin" />
                 </div>
               ) : roomMoments.length > 0 && currentMoment ? (
                 <LocketFeedCard
@@ -270,7 +270,7 @@ export default function HomePage() {
                 />
               ) : (
                 <div className="w-[310px] h-[310px] my-auto rounded-[2.8rem] bg-black/30 p-8 flex flex-col items-center justify-center text-center">
-                  <div className="w-14 h-14 rounded-full bg-[#FF2A85]/20 text-[#FF2A85] flex items-center justify-center mb-3 border border-[#FF2A85]/40">
+                  <div className="w-14 h-14 rounded-full bg-[#E5B849]/20 text-[#E5B849] flex items-center justify-center mb-3 border border-[#E5B849]/40">
                     <Camera className="w-7 h-7" />
                   </div>
                   <h3 className="text-white font-bold text-sm mb-1">Chưa có khoảnh khắc nào trong phòng</h3>
@@ -279,7 +279,7 @@ export default function HomePage() {
                   </p>
                   <button
                     onClick={() => setShowCamera(true)}
-                    className="py-2.5 px-5 bg-[#FF2A85] text-white font-bold text-xs rounded-xl shadow-[0_0_20px_rgba(255,42,133,0.5)] active:scale-95 transition-transform"
+                    className="py-2.5 px-5 bg-gradient-to-r from-[#E5B849] via-[#F59E0B] to-[#D4AF37] text-black font-bold text-xs rounded-xl shadow-[0_0_20px_rgba(229,184,73,0.5)] active:scale-95 transition-transform"
                   >
                     Chụp ảnh ngay 📸
                   </button>

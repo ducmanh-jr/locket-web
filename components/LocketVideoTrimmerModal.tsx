@@ -290,32 +290,32 @@ export const LocketVideoTrimmerModal: React.FC<LocketVideoTrimmerModalProps> = (
   const sliderLeftPct = duration > 0 ? (startTime / duration) * 100 : 0;
 
   return (
-    <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-xl flex flex-col justify-between items-center p-4 selection:bg-[#FF2A85] selection:text-white">
+    <div className="absolute inset-0 z-50 bg-[#09080c]/95 backdrop-blur-xl flex flex-col justify-between items-center p-4 selection:bg-[#E5B849] selection:text-black">
       {/* Header Bar */}
       <div className="w-full max-w-sm flex items-center justify-between z-10 pt-2">
         <button
           onClick={onClose}
           disabled={isExporting}
-          className="w-10 h-10 rounded-full bg-[#1c0f18] text-zinc-400 flex items-center justify-center border border-zinc-800 hover:text-white transition-colors"
+          className="w-10 h-10 rounded-full bg-[#17141f] text-zinc-400 flex items-center justify-center border border-zinc-800 hover:text-white transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <span className="text-xs font-bold uppercase tracking-wider text-[#FF2A85] flex items-center gap-1.5">
-          <Scissors className="w-4 h-4 animate-bounce" />
+        <span className="text-xs font-bold uppercase tracking-wider text-[#E5B849] flex items-center gap-1.5">
+          <Scissors className="w-4 h-4 animate-bounce text-[#E5B849]" />
           <span>Chọn đoạn 5s phát thử</span>
         </span>
 
         <button
           onClick={() => setIsMuted((prev) => !prev)}
-          className="w-10 h-10 rounded-full bg-[#1c0f18] text-zinc-300 flex items-center justify-center border border-zinc-800 hover:text-white"
+          className="w-10 h-10 rounded-full bg-[#17141f] text-zinc-300 flex items-center justify-center border border-zinc-800 hover:text-white"
         >
-          {isMuted ? <VolumeX className="w-4 h-4 text-zinc-500" /> : <Volume2 className="w-4 h-4 text-[#FF2A85]" />}
+          {isMuted ? <VolumeX className="w-4 h-4 text-zinc-500" /> : <Volume2 className="w-4 h-4 text-[#E5B849]" />}
         </button>
       </div>
 
       {/* Main Live Loop Video Preview (Exact 1:1 HD Square) */}
-      <div className="relative w-full max-w-sm aspect-square my-auto rounded-[2.8rem] overflow-hidden bg-black shadow-2xl flex items-center justify-center border border-[#FF2A85]/30">
+      <div className="relative w-full max-w-sm aspect-square my-auto rounded-[2.8rem] overflow-hidden bg-black shadow-2xl flex items-center justify-center border border-[#E5B849]/30">
         <video
           ref={videoRef}
           src={videoSrc}
@@ -329,8 +329,8 @@ export const LocketVideoTrimmerModal: React.FC<LocketVideoTrimmerModalProps> = (
         />
 
         {/* Live Loop Time Overlay */}
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/75 backdrop-blur-md text-white font-extrabold text-xs px-4 py-1.5 rounded-full flex items-center space-x-2 border border-[#FF2A85]/50 shadow-lg z-20">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#FF2A85] animate-ping" />
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/75 backdrop-blur-md text-white font-extrabold text-xs px-4 py-1.5 rounded-full flex items-center space-x-2 border border-[#E5B849]/50 shadow-lg z-20">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#E5B849] animate-ping" />
           <span>
             {formatTime(startTime)} - {formatTime(Math.min(duration, startTime + CLIP_DURATION))}
           </span>
@@ -339,7 +339,7 @@ export const LocketVideoTrimmerModal: React.FC<LocketVideoTrimmerModalProps> = (
         {/* Exporting Spinner */}
         {isExporting && (
           <div className="absolute inset-0 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center space-y-3 z-30">
-            <div className="w-12 h-12 rounded-full border-4 border-[#FF2A85] border-t-transparent animate-spin" />
+            <div className="w-12 h-12 rounded-full border-4 border-[#E5B849] border-t-transparent animate-spin" />
             <span className="text-white text-xs font-bold">Đang cắt đoạn 5s HD... {exportProgress}%</span>
           </div>
         )}
@@ -378,22 +378,22 @@ export const LocketVideoTrimmerModal: React.FC<LocketVideoTrimmerModalProps> = (
 
           {/* Draggable 5-Second Highlight Window */}
           <div
-            className="absolute top-0 bottom-0 border-2 border-[#FF2A85] bg-[#FF2A85]/25 rounded-xl shadow-[0_0_15px_rgba(255,42,133,0.6)] flex items-center justify-between transition-all duration-75"
+            className="absolute top-0 bottom-0 border-2 border-[#E5B849] bg-[#E5B849]/25 rounded-xl shadow-[0_0_15px_rgba(229,184,73,0.6)] flex items-center justify-between transition-all duration-75"
             style={{
               left: `${sliderLeftPct}%`,
               width: `${Math.max(15, sliderWidthPct)}%`,
             }}
           >
             {/* Left Handle */}
-            <div className="w-2.5 h-8 bg-[#FF2A85] rounded-r-md ml-0.5 flex items-center justify-center">
-              <div className="w-0.5 h-3 bg-white rounded-full" />
+            <div className="w-2.5 h-8 bg-[#E5B849] rounded-r-md ml-0.5 flex items-center justify-center">
+              <div className="w-0.5 h-3 bg-black rounded-full" />
             </div>
 
-            <span className="text-[10px] font-black text-white drop-shadow-md">5s</span>
+            <span className="text-[10px] font-black text-black drop-shadow-md">5s</span>
 
             {/* Right Handle */}
-            <div className="w-2.5 h-8 bg-[#FF2A85] rounded-l-md mr-0.5 flex items-center justify-center">
-              <div className="w-0.5 h-3 bg-white rounded-full" />
+            <div className="w-2.5 h-8 bg-[#E5B849] rounded-l-md mr-0.5 flex items-center justify-center">
+              <div className="w-0.5 h-3 bg-black rounded-full" />
             </div>
           </div>
         </div>
@@ -412,10 +412,10 @@ export const LocketVideoTrimmerModal: React.FC<LocketVideoTrimmerModalProps> = (
           <button
             onClick={handleConfirmTrim}
             disabled={isExporting}
-            className="flex-1 py-3.5 bg-[#FF2A85] text-white font-extrabold text-xs rounded-full flex items-center justify-center space-x-2 transition-all active:scale-95 disabled:opacity-50 shadow-[0_0_20px_rgba(255,42,133,0.6)]"
+            className="flex-1 py-3.5 bg-gradient-to-r from-[#E5B849] via-[#F59E0B] to-[#D4AF37] text-black font-extrabold text-xs rounded-full flex items-center justify-center space-x-2 transition-all active:scale-95 disabled:opacity-50 shadow-[0_0_22px_rgba(229,184,73,0.6)]"
           >
             {isExporting ? (
-              <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+              <div className="w-4 h-4 rounded-full border-2 border-black border-t-transparent animate-spin" />
             ) : (
               <>
                 <Scissors className="w-4 h-4" />
