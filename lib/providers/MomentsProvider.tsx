@@ -68,12 +68,19 @@ function readLocalMoments(): Moment[] {
 }
 
 function sanitizeMomentForLocalStorage(m: Moment): Moment {
-  // Strip huge base64 video payloads (>50KB) to prevent QuotaExceededError in localStorage
+  if (!m || !m.id) return m;
+  // Always preserve public HTTP/HTTPS URLs intact
+  if (m.media_url?.startsWith('http://') || m.media_url?.startsWith('https://')) {
+    return m;
+  }
+  // Strip huge base64 video payloads (>50KB) ONLY IF we have a valid fallback thumbnail_url
   if (m.media_url && m.media_url.startsWith('data:video/') && m.media_url.length > 50000) {
-    return {
-      ...m,
-      media_url: m.thumbnail_url || '',
-    };
+    if (m.thumbnail_url && m.thumbnail_url.length > 0) {
+      return {
+        ...m,
+        media_url: m.thumbnail_url,
+      };
+    }
   }
   return m;
 }
@@ -146,9 +153,16 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const sanitized = sanitizeMoments(cloudMoments).filter((m) => !deletedSet.has(m.id));
       const cloudIds = new Set(sanitized.map((m) => m.id));
 
+      // Auto-save Cloud public URLs to localStorage so uploader's cache is updated with working HTTPS URLs
+      sanitized.forEach((cloudM) => {
+        if (cloudM.media_url?.startsWith('http://') || cloudM.media_url?.startsWith('https://')) {
+          saveLocalMoment(cloudM);
+        }
+      });
+
       const localMoments = readLocalMoments().filter((m) => !deletedSet.has(m.id));
       
-      // Auto-purge any stale local moment that has been deleted from Cloud DB (only after 10 minutes)
+      // Auto-purge any stale local moment that has been deleted from Cloud DB
       localMoments.forEach((lm) => {
         const createdAt = new Date(lm.created_at || 0).getTime();
         const isOlder = Date.now() - createdAt > 600000; // 10 minutes
@@ -174,7 +188,9 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
           return isRecent && !existsInCloud;
         });
 
-        const merged = [...pendingOptimistic, ...validLocal, ...sanitized].map((m) => {
+        // PREFER CLOUD MOMENTS (sanitized) OVER LOCAL CACHE (validLocal)!
+        // This guarantees that uploader always gets the public Supabase HTTPS URL over expired local blob/data URLs
+        const merged = [...sanitized, ...pendingOptimistic, ...validLocal].map((m) => {
           const isMyMoment = m.sender_id === currentUser.id || m.sender?.id === currentUser.id;
           if (isMyMoment && currentUser.avatar_url) {
             return {
@@ -296,7 +312,14 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
       audioOption?: 'mute' | 'original' | 'music'
     ) => {
       const newMomentId = `m-${media.type}-v10-${Date.now()}`;
-      const localMediaUrl = media.dataUrl;
+      let localMediaUrl = media.dataUrl;
+      let initialThumbUrl: string | undefined = undefined;
+
+      if (media.type === 'video') {
+        try {
+          initialThumbUrl = await captureVideoThumbnail(localMediaUrl || '');
+        } catch (e) {}
+      }
 
       // 1. Construct Optimistic Local Moment (Instant 0ms UI response)
       const optimisticMoment: Moment = {
@@ -304,6 +327,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
         sender_id: currentUser.id,
         sender: currentUser,
         media_url: localMediaUrl,
+        thumbnail_url: initialThumbUrl,
         media_type: media.type,
         audio_option: audioOption || (media.type === 'video' ? 'original' : undefined),
         caption: caption,
@@ -329,7 +353,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // 4. Background Stream Upload & Cloud Sync
       (async () => {
         let finalMediaUrl = localMediaUrl;
-        let thumbnailUrl: string | undefined = undefined;
+        let thumbnailUrl: string | undefined = initialThumbUrl;
 
         if (media.type === 'photo') {
           try {
@@ -355,14 +379,15 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
             if (!uploadedVideoUrl && media.dataUrl) {
               uploadedVideoUrl = await uploadMediaToPublicUrl(media.dataUrl, `video_${newMomentId}`);
             }
-            const thumb = await captureVideoThumbnail(media.dataUrl || '');
+            if (!thumbnailUrl && media.dataUrl) {
+              thumbnailUrl = await captureVideoThumbnail(media.dataUrl || '');
+            }
 
             if (uploadedVideoUrl) {
               finalMediaUrl = uploadedVideoUrl;
             } else {
               console.warn('[MomentsProvider] Video blob upload fallback to local URL for', newMomentId);
             }
-            if (thumb) thumbnailUrl = thumb;
           } catch (e) {
             console.error('[MomentsProvider] Video upload error:', e);
           }

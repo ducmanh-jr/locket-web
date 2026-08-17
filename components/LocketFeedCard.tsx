@@ -465,7 +465,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                 </div>
               ) : (
                 <img
-                  src={moment.media_url || moment.thumbnail_url}
+                  src={moment.thumbnail_url || moment.media_url}
                   alt={moment.caption || 'Khoảnh khắc Locket'}
                   className="w-full h-full object-cover rounded-[2.2rem] select-none pointer-events-none"
                 />
