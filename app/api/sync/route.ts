@@ -73,6 +73,59 @@ export async function GET() {
             .limit(200);
           if (rawMoments) dbMoments = rawMoments;
         }
+
+        // Auto-Recovery Fallback: If DB table moments is empty, auto-recover photos/videos from Storage bucket
+        if (!dbMoments || dbMoments.length === 0) {
+          const { data: storageFiles } = await supabase.storage
+            .from('moments')
+            .list('', { limit: 1000 });
+
+          if (storageFiles && storageFiles.length > 0) {
+            for (const item of storageFiles) {
+              if (!item.name || item.name.startsWith('.')) continue;
+              const { data: publicUrlData } = supabase.storage
+                .from('moments')
+                .getPublicUrl(item.name);
+
+              if (publicUrlData?.publicUrl) {
+                const isVid =
+                  item.name.endsWith('.mp4') ||
+                  item.name.endsWith('.webm') ||
+                  item.name.includes('video');
+
+                const recoveredM = {
+                  id: `storage-${item.name.replace(/[^a-zA-Z0-9]/g, '-')}`,
+                  sender_id: 'user-dm',
+                  sender: {
+                    id: 'user-dm',
+                    username: 'manh_locket',
+                    display_name: 'Đức Mạnh',
+                    avatar_url:
+                      '/user-photos/1785829393992_567716528849713056_g276929852367586455_e887fb48d4d113fc528e29488435b6f7.jpg',
+                  },
+                  media_url: publicUrlData.publicUrl,
+                  thumbnail_url: isVid ? publicUrlData.publicUrl : undefined,
+                  media_type: isVid ? 'video' : 'photo',
+                  caption: 'Khoảnh khắc Locket ✨',
+                  created_at: item.created_at || new Date().toISOString(),
+                };
+                dbMoments.push(recoveredM);
+
+                // Auto insert back into DB table so it's persisted permanently
+                try {
+                  await supabase.from('moments').upsert({
+                    id: recoveredM.id,
+                    sender_id: recoveredM.sender_id,
+                    media_url: recoveredM.media_url,
+                    media_type: recoveredM.media_type,
+                    caption: recoveredM.caption,
+                    created_at: recoveredM.created_at,
+                  });
+                } catch (e) {}
+              }
+            }
+          }
+        }
       } catch (err) {}
     }
 
@@ -107,7 +160,6 @@ export async function GET() {
       }
     );
   } catch (e: any) {
-    // If any error, fallback to globalSharedMoments
     const sanitized = sanitizeMoments(globalSharedMoments);
     return NextResponse.json(
       { profiles: globalSharedProfiles, moments: sanitized },
@@ -122,7 +174,6 @@ export async function POST(request: Request) {
     const { action, profile, moment, moment_id } = body;
 
     if (action === 'push_profile' && profile?.id) {
-      // Store in memory
       globalSharedProfiles = [profile, ...globalSharedProfiles.filter((p) => p.id !== profile.id)];
 
       if (isSupabaseConfigured()) {
@@ -148,7 +199,6 @@ export async function POST(request: Request) {
 
       const senderId = moment.sender_id || moment.sender?.id;
 
-      // Store in global in-memory server room so all accounts receive it
       const cleanMoment = {
         ...moment,
         media_type: moment.media_type || (isVideoMoment(moment) ? 'video' : 'photo'),
