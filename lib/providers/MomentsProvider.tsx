@@ -470,21 +470,12 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
     [currentUser, userProfile]
   );
 
-  const FAKE_USER_IDS = new Set(['user-dm', 'user-system32', 'user-admin']);
-  const FAKE_USERNAMES = new Set(['dm', 'system32', 'admin']);
-
   const [allProfiles, setAllProfiles] = useState<any[]>([]);
 
   useEffect(() => {
     fetchGlobalCloudProfiles().then((profs) => {
       if (profs && Array.isArray(profs) && profs.length > 0) {
-        const clean = profs.filter(
-          (p) =>
-            p &&
-            !FAKE_USER_IDS.has(p.id) &&
-            !FAKE_USERNAMES.has(p.username?.toLowerCase())
-        );
-        setAllProfiles(clean);
+        setAllProfiles(profs.filter((p) => p && p.id));
       }
     });
   }, []);
@@ -494,12 +485,12 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
       { id: 'all', name: 'Tất cả bạn bè', count: moments.length },
     ];
     
-    // Key senders strictly by unique account ID (different gmail/user = different account)
+    // Key senders strictly by unique account ID
     const sendersMap = new Map<string, { id: string; name: string; avatar_url?: string; count: number }>();
     
     // First, populate registered profiles in the room
     allProfiles.forEach((p) => {
-      if (p?.id && !FAKE_USER_IDS.has(p.id) && !FAKE_USERNAMES.has(p.username?.toLowerCase())) {
+      if (p?.id) {
         sendersMap.set(p.id, {
           id: p.id,
           name: p.display_name || p.username || 'Thành viên Locket',
@@ -550,12 +541,16 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const filteredMoments = useMemo(() => {
     if (selectedFriendFilter === 'all') return moments;
 
-    return moments.filter(
+    const filtered = moments.filter(
       (m) =>
         m.sender_id === selectedFriendFilter ||
         m.sender?.id === selectedFriendFilter ||
         m.sender?.username === selectedFriendFilter
     );
+
+    // SAFEGUARD: If a friend filter yields 0 moments, fallback to all room moments so no user/admin gets stuck on empty screen
+    if (filtered.length === 0) return moments;
+    return filtered;
   }, [moments, selectedFriendFilter]);
 
   return (
