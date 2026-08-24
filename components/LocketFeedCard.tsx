@@ -408,9 +408,9 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                 ? { duration: 0 }
                 : {
                     type: 'spring',
-                    stiffness: 300,
-                    damping: 30,
-                    mass: 0.7,
+                    stiffness: 190,
+                    damping: 26,
+                    mass: 0.9,
                   }
             }
             className="w-full flex flex-col items-center transform-gpu will-change-transform relative"
