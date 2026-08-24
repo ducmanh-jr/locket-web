@@ -424,12 +424,25 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             }
             className="w-full flex flex-col items-center transform-gpu will-change-[transform,opacity] relative"
           >
-            {/* Previous Card Live Preview during Drag Down — 100vh distance matching real Locket */}
+            {/* Previous Card Live Preview during Drag Down — 100vh distance */}
             {dragYOffset > 5 && hasPrev && (prevMoment || prevMomentUrl) && (
               <div className="w-full flex flex-col items-center absolute bottom-[calc(100vh)] left-0 right-0 pointer-events-none opacity-90">
-                {/* Sender Info Preview Above Photo */}
+                <div className="w-full aspect-square bg-black/40 backdrop-blur-sm flex-shrink-0 relative overflow-hidden rounded-[2.2rem] border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
+                  <img
+                    src={prevMoment?.thumbnail_url || prevMoment?.media_url || prevMomentUrl}
+                    alt=""
+                    className="w-full h-full object-cover rounded-[2.2rem]"
+                  />
+                  {prevMoment?.caption && (
+                    <div className="absolute bottom-3 left-4 right-4 flex justify-center">
+                      <div className="bg-black/55 backdrop-blur-xl border border-white/15 text-white text-xs font-semibold px-5 py-2 rounded-full truncate">
+                        {prevMoment.caption}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 {prevMoment?.sender && (
-                  <div className="w-full flex justify-center mb-2.5">
+                  <div className="w-full flex justify-center mt-2.5">
                     <div className="flex items-center space-x-2">
                       <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 border border-[#D9266E]">
                         <img
@@ -445,29 +458,28 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Next Card Live Preview during Drag Up — 100vh distance */}
+            {dragYOffset < -5 && hasNext && (nextMoment || nextMomentUrl) && (
+              <div className="w-full flex flex-col items-center absolute top-[calc(100vh)] left-0 right-0 pointer-events-none opacity-90">
                 <div className="w-full aspect-square bg-black/40 backdrop-blur-sm flex-shrink-0 relative overflow-hidden rounded-[2.2rem] border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
                   <img
-                    src={prevMoment?.thumbnail_url || prevMoment?.media_url || prevMomentUrl}
+                    src={nextMoment?.thumbnail_url || nextMoment?.media_url || nextMomentUrl}
                     alt=""
                     className="w-full h-full object-cover rounded-[2.2rem]"
                   />
-                  {prevMoment?.caption && (
+                  {nextMoment?.caption && (
                     <div className="absolute bottom-3 left-4 right-4 flex justify-center">
                       <div className="bg-black/55 backdrop-blur-xl border border-white/15 text-white text-xs font-semibold px-5 py-2 rounded-full truncate">
-                        {prevMoment.caption}
+                        {nextMoment.caption}
                       </div>
                     </div>
                   )}
                 </div>
-              </div>
-            )}
-
-            {/* Next Card Live Preview during Drag Up — 100vh distance matching real Locket */}
-            {dragYOffset < -5 && hasNext && (nextMoment || nextMomentUrl) && (
-              <div className="w-full flex flex-col items-center absolute top-[calc(100vh)] left-0 right-0 pointer-events-none opacity-90">
-                {/* Sender Info Preview Above Photo */}
                 {nextMoment?.sender && (
-                  <div className="w-full flex justify-center mb-2.5">
+                  <div className="w-full flex justify-center mt-2.5">
                     <div className="flex items-center space-x-2">
                       <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 border border-[#D9266E]">
                         <img
@@ -483,86 +495,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                     </div>
                   </div>
                 )}
-                <div className="w-full aspect-square bg-black/40 backdrop-blur-sm flex-shrink-0 relative overflow-hidden rounded-[2.2rem] border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
-                  <img
-                    src={nextMoment?.thumbnail_url || nextMoment?.media_url || nextMomentUrl}
-                    alt=""
-                    className="w-full h-full object-cover rounded-[2.2rem]"
-                  />
-                  {nextMoment?.caption && (
-                    <div className="absolute bottom-3 left-4 right-4 flex justify-center">
-                      <div className="bg-black/55 backdrop-blur-xl border border-white/15 text-white text-xs font-semibold px-5 py-2 rounded-full truncate">
-                        {nextMoment.caption}
-                      </div>
-                    </div>
-                  )}
-                </div>
               </div>
             )}
-
-            {/* Sender Avatar, Name & Time — ABOVE photo (Exact Real Locket Layout) */}
-            <div className="w-full flex justify-center mb-2.5 pointer-events-none z-10">
-              <div className="flex items-center space-x-2">
-                {(sender.isAdmin || sender.email === 'nguyenducmanh.ovaltine@gmail.com') ? (
-                  <div className="relative flex-shrink-0">
-                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] z-10 drop-shadow-[0_0_4px_rgba(255,215,0,0.9)] select-none">
-                      👑
-                    </span>
-                    <div
-                      className="w-8 h-8 rounded-full"
-                      style={{
-                        padding: '1.5px',
-                        background: 'linear-gradient(135deg, #f5c842, #e6a817, #f5d442)',
-                        boxShadow: '0 0 10px rgba(255,215,0,0.5)',
-                      }}
-                    >
-                      <div
-                        className="w-full h-full rounded-full"
-                        style={{
-                          padding: '1.5px',
-                          background: 'linear-gradient(135deg, #D9266E, #BE185D)',
-                        }}
-                      >
-                        <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
-                          <img
-                            src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`}
-                            alt={sender.display_name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`;
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0"
-                    style={{
-                      padding: '1.5px',
-                      background: 'linear-gradient(135deg, #D9266E, #BE185D)',
-                      boxShadow: '0 0 8px rgba(217, 38, 110, 0.5)',
-                    }}
-                  >
-                    <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
-                      <img
-                        src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`}
-                        alt={sender.display_name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`;
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-                <span className="text-white text-sm font-bold truncate max-w-[160px]">
-                  {sender.display_name}
-                </span>
-                <span className="text-white/50 text-xs font-medium">{formatLocketTime(moment.created_at)}</span>
-              </div>
-            </div>
 
             {/* 1:1 Square Photo Card Container */}
             <div
@@ -684,6 +618,70 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                   </motion.div>
                 </div>
               )}
+              </div>
+            </div>
+
+            {/* Sender Avatar, Name & Time — BELOW photo */}
+            <div className="w-full flex justify-center mt-2.5 pointer-events-none z-10">
+              <div className="flex items-center space-x-2">
+                {(sender.isAdmin || sender.email === 'nguyenducmanh.ovaltine@gmail.com') ? (
+                  <div className="relative flex-shrink-0">
+                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] z-10 drop-shadow-[0_0_4px_rgba(255,215,0,0.9)] select-none">
+                      👑
+                    </span>
+                    <div
+                      className="w-8 h-8 rounded-full"
+                      style={{
+                        padding: '1.5px',
+                        background: 'linear-gradient(135deg, #f5c842, #e6a817, #f5d442)',
+                        boxShadow: '0 0 10px rgba(255,215,0,0.5)',
+                      }}
+                    >
+                      <div
+                        className="w-full h-full rounded-full"
+                        style={{
+                          padding: '1.5px',
+                          background: 'linear-gradient(135deg, #D9266E, #BE185D)',
+                        }}
+                      >
+                        <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
+                          <img
+                            src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`}
+                            alt={sender.display_name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`;
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0"
+                    style={{
+                      padding: '1.5px',
+                      background: 'linear-gradient(135deg, #D9266E, #BE185D)',
+                      boxShadow: '0 0 8px rgba(217, 38, 110, 0.5)',
+                    }}
+                  >
+                    <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
+                      <img
+                        src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`}
+                        alt={sender.display_name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`;
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+                <span className="text-white text-sm font-bold truncate max-w-[160px]">
+                  {sender.display_name}
+                </span>
+                <span className="text-white/50 text-xs font-medium">{formatLocketTime(moment.created_at)}</span>
               </div>
             </div>
           </motion.div>
