@@ -52,23 +52,19 @@ export const LocketDock: React.FC<LocketDockProps> = ({
           <Grid3x3 className="w-5 h-5 stroke-[2]" />
         </motion.button>
 
-        {/* Center: Solid Dark Pink Button with Large Solid White House Icon */}
+        {/* Center: Official Locket Camera Shutter Ring Button */}
         <motion.button
-          whileTap={{ scale: 0.90 }}
+          whileTap={{ scale: 0.88 }}
+          whileHover={{ scale: 1.05 }}
           onClick={() => {
             triggerHaptic();
             onOpenCamera();
           }}
-          className="w-12 h-12 rounded-full bg-[#C2185B] text-white flex items-center justify-center cursor-pointer transition-all flex-shrink-0"
+          className="w-[50px] h-[50px] rounded-full border-[3.5px] border-white p-[3.5px] flex items-center justify-center cursor-pointer transition-all flex-shrink-0 bg-transparent"
           title="Chụp khoảnh khắc mới"
         >
-          <svg
-            className="w-7 h-7 text-white"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-          >
-            <path d="M11.235 2.686a1.2 1.2 0 0 1 1.53 0l8.1 6.75a1.2 1.2 0 0 1 .435.924V19.5a2.25 2.25 0 0 1-2.25 2.25H4.95A2.25 2.25 0 0 1 2.7 19.5V10.36a1.2 1.2 0 0 1 .435-.924l8.1-6.75z" />
-          </svg>
+          {/* Inner Solid White Shutter Circle */}
+          <div className="w-full h-full rounded-full bg-white transition-all shadow-sm" />
         </motion.button>
 
         {/* Right: MessageCircle with badge */}
