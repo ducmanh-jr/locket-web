@@ -386,9 +386,9 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div
             key={moment.id}
-            initial={{ y: direction === 'down' ? '-100%' : '100%', scale: 1, opacity: 1 }}
+            initial={{ y: direction === 'down' ? '-100vh' : '100vh', scale: 1, opacity: 1 }}
             animate={{ y: dragYOffset, scale: 1, opacity: 1 }}
-            exit={{ y: direction === 'down' ? '100%' : '-100%', scale: 1, opacity: 1 }}
+            exit={{ y: direction === 'down' ? '100vh' : '-100vh', scale: 1, opacity: 1 }}
             transition={
               dragYOffset !== 0
                 ? { type: 'just' }
@@ -401,9 +401,9 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             }
             className="w-full flex flex-col items-center transform-gpu will-change-transform relative"
           >
-            {/* Previous Card Crisp Continuous Filmstrip Tape during Drag Down */}
+            {/* Previous Card (Screen 1 Center) during Drag Down — 100vh Spacing & 100% Sharp */}
             {dragYOffset > 2 && hasPrev && (prevMoment || prevMomentUrl) && (
-              <div className="w-full flex flex-col items-center absolute bottom-[calc(100%+28px)] left-0 right-0 pointer-events-none opacity-100 scale-100">
+              <div className="w-full flex flex-col items-center absolute bottom-[calc(100vh)] left-0 right-0 pointer-events-none opacity-100 scale-100">
                 <div className="w-full aspect-square bg-black/40 flex-shrink-0 relative overflow-hidden rounded-[2.2rem] border border-white/12 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
                   <img
                     src={prevMoment?.thumbnail_url || prevMoment?.media_url || prevMomentUrl}
@@ -438,9 +438,9 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               </div>
             )}
 
-            {/* Next Card Crisp Continuous Filmstrip Tape during Drag Up */}
+            {/* Next Card (Screen 2 Center) during Drag Up — 100vh Spacing & 100% Sharp */}
             {dragYOffset < -2 && hasNext && (nextMoment || nextMomentUrl) && (
-              <div className="w-full flex flex-col items-center absolute top-[calc(100%+28px)] left-0 right-0 pointer-events-none opacity-100 scale-100">
+              <div className="w-full flex flex-col items-center absolute top-[calc(100vh)] left-0 right-0 pointer-events-none opacity-100 scale-100">
                 <div className="w-full aspect-square bg-black/40 flex-shrink-0 relative overflow-hidden rounded-[2.2rem] border border-white/12 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
                   <img
                     src={nextMoment?.thumbnail_url || nextMoment?.media_url || nextMomentUrl}
