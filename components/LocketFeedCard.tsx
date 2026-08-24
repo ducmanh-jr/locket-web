@@ -395,38 +395,24 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* Centered Photo & Sender Section — Full Card Vertical Slide */}
+      {/* Centered Photo & Sender Section — Full Card Continuous Fluid Vertical Stream */}
       <div className="w-full flex flex-col items-center my-auto z-10">
-        <AnimatePresence mode="sync" initial={false}>
-          <motion.div
-            key={moment.id}
-            initial={{
-              y: direction === 'down' ? '-100vh' : '100vh',
-              opacity: 0,
-              scale: 0.92,
-            }}
-            animate={{
-              y: dragYOffset,
-              opacity: 1,
-              scale: 1,
-            }}
-            exit={{
-              y: direction === 'down' ? '100vh' : '-100vh',
-              opacity: 0,
-              scale: 0.92,
-            }}
-            transition={
-              dragYOffset !== 0
-                ? { type: 'just' }
-                : {
-                    type: 'spring',
-                    stiffness: 170,
-                    damping: 24,
-                    mass: 0.95,
-                  }
-            }
-            className="w-full flex flex-col items-center transform-gpu will-change-[transform,opacity] relative"
-          >
+        <motion.div
+          animate={{
+            y: dragYOffset,
+          }}
+          transition={
+            dragYOffset !== 0
+              ? { type: 'just' }
+              : {
+                  type: 'spring',
+                  stiffness: 180,
+                  damping: 24,
+                  mass: 0.95,
+                }
+          }
+          className="w-full flex flex-col items-center transform-gpu will-change-transform relative"
+        >
             {/* Previous Card Live Preview during Drag Down — 100vh distance */}
             {dragYOffset > 5 && hasPrev && (prevMoment || prevMomentUrl) && (
               <div className="w-full flex flex-col items-center absolute bottom-[calc(100vh)] left-0 right-0 pointer-events-none opacity-90">
@@ -688,7 +674,6 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               </div>
             </div>
           </motion.div>
-        </AnimatePresence>
       </div>
 
       {/* Message Input Bar + Emoji Reactions — Premium Glassmorphism */}
