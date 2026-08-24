@@ -18,7 +18,7 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
   onOpenCamera,
 }) => {
   return (
-    <div className="w-full h-full bg-[#0c060a]/90 backdrop-blur-2xl text-white flex flex-col justify-between p-4 pt-3 pb-24 overflow-y-auto custom-scrollbar select-none">
+    <div className="w-full h-full bg-[#3D1F3D]/90 backdrop-blur-2xl text-white flex flex-col justify-between p-4 pt-3 pb-24 overflow-y-auto custom-scrollbar select-none">
       {/* Top Header Bar */}
       <div className="flex items-center justify-between pb-3 border-b border-white/10 flex-shrink-0">
         <div className="flex items-center space-x-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">

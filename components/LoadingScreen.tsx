@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 
 export const LoadingScreen: React.FC<{ message?: string }> = ({ message = "Đang tải khoảnh khắc..." }) => {
   return (
-    <div className="w-full h-full min-h-full flex flex-col items-center justify-center bg-[#0c0710] text-white select-none relative overflow-hidden p-6">
+    <div className="w-full h-full min-h-full flex flex-col items-center justify-center bg-[#3D1F3D] text-white select-none relative overflow-hidden p-6">
       {/* Background Ambient Deep Violet Glow */}
       <motion.div
         animate={{

@@ -376,24 +376,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
       }`}
     >
-      {/* Mesmerizing Ambient Glowing Aura Backdrop */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center z-0">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={moment.id + '_aura'}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 0.55, scale: 1.25 }}
-            exit={{ opacity: 0, scale: 1.4 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="w-[380px] h-[380px] rounded-full blur-[90px] transform-gpu will-change-transform"
-            style={{
-              backgroundImage: `url(${moment.thumbnail_url || moment.media_url})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          />
-        </AnimatePresence>
-      </div>
+
 
       {/* Centered Photo & Sender Section — Seamless Parallel Slide */}
       <div className="w-full flex flex-col items-center my-auto z-10 overflow-hidden">

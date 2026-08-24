@@ -337,7 +337,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
   };
 
   return (
-    <div className="absolute inset-0 z-50 bg-[#0c060a] flex flex-col justify-between items-center p-4 selection:bg-[#D9266E] selection:text-white">
+    <div className="absolute inset-0 z-50 bg-[#3D1F3D] flex flex-col justify-between items-center p-4 selection:bg-[#D9266E] selection:text-white">
       {/* Top Header Bar */}
       <div className="w-full max-w-sm flex items-center justify-between z-10 pt-2">
         <button
