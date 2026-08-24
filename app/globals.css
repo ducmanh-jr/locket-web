@@ -14,7 +14,7 @@
     overscroll-behavior: none;
     overscroll-behavior-y: none;
     touch-action: manipulation;
-    background-color: #10091D;
+    background-color: #000000;
     color: #f4f4f5;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-tap-highlight-color: transparent;
@@ -40,7 +40,7 @@
 
 /* Background utility */
 .bg-locket-purple {
-  background: #10091D;
+  background: linear-gradient(180deg, #180e2d 0%, #10091D 50%, #0b0515 100%);
 }
 
 /* Custom sleek scrollbar */
