@@ -376,110 +376,51 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   return (
     <div
       onWheel={handleWheel}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onMouseDown={handleMouseDown}
-      style={{ touchAction: 'none', overscrollBehavior: 'none' }}
-      className={`w-full h-full flex flex-col justify-between items-center select-none relative pt-14 pb-20 ${
-        isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
-      }`}
+      className="w-full h-full flex flex-col justify-between items-center select-none relative pt-14 pb-20"
     >
 
 
-      {/* Centered Photo & Sender Section — Seamless Parallel Slide */}
+      {/* Centered Photo & Sender Section — GPU Hardware Accelerated Physics Slide */}
       <div className="w-full flex flex-col items-center my-auto z-10 overflow-visible">
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div
             key={moment.id}
-            initial={{ y: direction === 'down' ? '-100vh' : '100vh', scale: 1, opacity: 1 }}
-            animate={{ y: dragYOffset, scale: 1, opacity: 1 }}
-            exit={{ y: direction === 'down' ? '100vh' : '-100vh', scale: 1, opacity: 1 }}
-            transition={
-              dragYOffset !== 0
-                ? { type: 'just' }
-                : {
-                    type: 'spring',
-                    stiffness: 240,
-                    damping: 28,
-                    mass: 0.8,
-                  }
-            }
-            className="w-full flex flex-col items-center transform-gpu will-change-transform relative"
-          >
-            {/* Previous Card (Screen 1 Center) during Drag Down — 100vh Spacing & 100% Sharp */}
-            {dragYOffset > 2 && hasPrev && (prevMoment || prevMomentUrl) && (
-              <div className="w-full flex flex-col items-center absolute bottom-[calc(100vh)] left-0 right-0 pointer-events-none opacity-100 scale-100">
-                <div className="w-full aspect-square bg-black/40 flex-shrink-0 relative overflow-hidden rounded-[2.2rem] border border-white/12 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
-                  <img
-                    src={prevMoment?.thumbnail_url || prevMoment?.media_url || prevMomentUrl}
-                    alt=""
-                    className="w-full h-full object-cover rounded-[2.2rem]"
-                  />
-                  {prevMoment?.caption && (
-                    <div className="absolute bottom-3 left-4 right-4 flex justify-center">
-                      <div className="bg-black/55 backdrop-blur-xl border border-white/15 text-white text-xs font-semibold px-5 py-2 rounded-full truncate">
-                        {prevMoment.caption}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {prevMoment?.sender && (
-                  <div className="w-full flex justify-center mt-3">
-                    <div className="bg-black/40 backdrop-blur-xl px-4 py-1.5 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.4)] flex items-center space-x-2.5">
-                      <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 border border-[#D9266E]">
-                        <img
-                          src={prevMoment.sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${prevMoment.sender.username || 'user'}`}
-                          alt=""
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <span className="text-white text-sm font-bold truncate">
-                        {prevMoment.sender.display_name}
-                      </span>
-                      <span className="text-white/50 text-xs font-medium">{formatLocketTime(prevMoment.created_at)}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={0.75}
+            onDragStart={() => {
+              isDraggingRef.current = true;
+              onDragChange?.(true);
+            }}
+            onDragEnd={(_e, info) => {
+              isDraggingRef.current = false;
+              onDragChange?.(false);
 
-            {/* Next Card (Screen 2 Center) during Drag Up — 100vh Spacing & 100% Sharp */}
-            {dragYOffset < -2 && hasNext && (nextMoment || nextMomentUrl) && (
-              <div className="w-full flex flex-col items-center absolute top-[calc(100vh)] left-0 right-0 pointer-events-none opacity-100 scale-100">
-                <div className="w-full aspect-square bg-black/40 flex-shrink-0 relative overflow-hidden rounded-[2.2rem] border border-white/12 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
-                  <img
-                    src={nextMoment?.thumbnail_url || nextMoment?.media_url || nextMomentUrl}
-                    alt=""
-                    className="w-full h-full object-cover rounded-[2.2rem]"
-                  />
-                  {nextMoment?.caption && (
-                    <div className="absolute bottom-3 left-4 right-4 flex justify-center">
-                      <div className="bg-black/55 backdrop-blur-xl border border-white/15 text-white text-xs font-semibold px-5 py-2 rounded-full truncate">
-                        {nextMoment.caption}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {nextMoment?.sender && (
-                  <div className="w-full flex justify-center mt-3">
-                    <div className="bg-black/40 backdrop-blur-xl px-4 py-1.5 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.4)] flex items-center space-x-2.5">
-                      <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 border border-[#D9266E]">
-                        <img
-                          src={nextMoment.sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${nextMoment.sender.username || 'user'}`}
-                          alt=""
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <span className="text-white text-sm font-bold truncate">
-                        {nextMoment.sender.display_name}
-                      </span>
-                      <span className="text-white/50 text-xs font-medium">{formatLocketTime(nextMoment.created_at)}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+              const offset = info.offset.y;
+              const velocity = info.velocity.y;
+
+              // Flick up or drag up past threshold -> Next Moment
+              if ((offset < -75 || velocity < -300) && hasNext && onNext) {
+                setDirection('up');
+                onNext();
+              }
+              // Flick down or drag down past threshold -> Prev Moment
+              else if ((offset > 75 || velocity > 300) && hasPrev && onPrev) {
+                setDirection('down');
+                onPrev();
+              }
+            }}
+            initial={{ y: direction === 'down' ? '-100%' : '100%', opacity: 1, scale: 1 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: direction === 'down' ? '100%' : '-100%', opacity: 1, scale: 1 }}
+            transition={{
+              type: 'spring',
+              stiffness: 320,
+              damping: 30,
+              mass: 0.75,
+            }}
+            className="w-full flex flex-col items-center transform-gpu will-change-transform relative touch-pan-y cursor-grab active:cursor-grabbing"
+          >
 
             {/* 1:1 Square Photo Card Container */}
             <div
