@@ -380,12 +380,12 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       </div>
 
       {/* Centered Photo & Sender Section — Full Card Vertical Slide */}
-      <div className="w-full flex flex-col items-center my-auto z-10 overflow-hidden">
+      <div className="w-full flex flex-col items-center my-auto z-10">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={moment.id}
             initial={{
-              y: direction === 'down' ? '-100%' : '100%',
+              y: direction === 'down' ? '-100vh' : '100vh',
               opacity: 0,
               scale: 0.92,
             }}
@@ -395,7 +395,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               scale: 1,
             }}
             exit={{
-              y: direction === 'down' ? '100%' : '-100%',
+              y: direction === 'down' ? '100vh' : '-100vh',
               opacity: 0,
               scale: 0.92,
             }}
