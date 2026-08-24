@@ -6,36 +6,34 @@ export async function GET(request: Request) {
   const chart = searchParams.get('chart') || '';
   const limit = Math.min(Number(searchParams.get('limit')) || 100, 200);
 
-  // If chart=trending or term is empty, fetch Real-Time Daily Apple Music Top Songs Chart for Vietnam (V-Pop Focus)
+  // If chart=trending or term is empty, fetch Gentle & Chill V-Pop Songs
   if (chart === 'trending' || !term.trim()) {
     try {
-      const chartUrl = `https://itunes.apple.com/vn/rss/topsongs/limit=${limit}/json`;
-      const res = await fetch(chartUrl, {
+      // Query iTunes for top V-Pop Lofi Chill Acoustic tracks
+      const chillTerms = ['vpop lofi chill', 'nhac nhe nhang acoustic viet', 'vpop hot chill lofi'];
+      const randomTerm = chillTerms[Math.floor(Math.random() * chillTerms.length)];
+
+      const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(
+        randomTerm
+      )}&country=VN&media=music&entity=song&limit=${limit}`;
+
+      const res = await fetch(itunesUrl, {
         headers: { Accept: 'application/json' },
         next: { revalidate: 1800 },
       });
 
       if (res.ok) {
         const data = await res.json();
-        const entries = data?.feed?.entry || [];
-
-        const results = entries.map((entry: any, index: number) => {
-          const trackId = entry?.id?.attributes?.['im:id'] || `trending-${index}`;
-          const title = entry?.['im:name']?.label || 'Unknown Track';
-          const artist = entry?.['im:artist']?.label || 'Unknown Artist';
-          const cover_url = entry?.['im:image']?.[2]?.label || entry?.['im:image']?.[0]?.label;
-          const preview_url = entry?.link?.[1]?.attributes?.href || entry?.link?.[0]?.attributes?.href;
-
-          return {
-            trackId,
-            trackName: title,
-            artistName: artist,
-            artworkUrl100: cover_url,
-            previewUrl: preview_url,
-            isTrending: true,
-            rank: index + 1,
-          };
-        }).filter((item: any) => item.previewUrl || item.artworkUrl100);
+        const results = (data?.results || [])
+          .filter((item: any) => item.previewUrl)
+          .map((item: any, index: number) => ({
+            trackId: item.trackId,
+            trackName: item.trackName,
+            artistName: item.artistName,
+            artworkUrl100: item.artworkUrl100 || item.artworkUrl60,
+            previewUrl: item.previewUrl,
+            isChill: true,
+          }));
 
         if (results.length > 0) {
           return NextResponse.json({ results }, {
@@ -46,13 +44,13 @@ export async function GET(request: Request) {
         }
       }
     } catch (err) {
-      console.warn('Chart fetch failed, falling back to V-Pop search:', err);
+      console.warn('Chill chart fetch failed:', err);
     }
   }
 
-  // Live iTunes Search focused on Vietnam / V-Pop
+  // Live iTunes Search focused on V-Pop / Chill
   try {
-    const searchTerm = term.trim() || 'vpop nhac viet hot trending';
+    const searchTerm = term.trim() || 'vpop lofi chill nhe nhang';
     const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(
       searchTerm
     )}&country=VN&media=music&entity=song&limit=${limit}`;
