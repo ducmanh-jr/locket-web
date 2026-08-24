@@ -148,14 +148,37 @@ export const CameraView: React.FC<CameraViewProps> = ({
     };
   }, [facingMode, capturedMedia]);
 
+  const [flipSnapshot, setFlipSnapshot] = useState<string | null>(null);
   const isFlippingRef = useRef<boolean>(false);
 
   const toggleFacingMode = () => {
     if (isFlippingRef.current) return;
     isFlippingRef.current = true;
+
+    // Capture instant snapshot of current video stream frame to eliminate any black screen flash during camera flip!
+    if (videoRef.current) {
+      try {
+        const canvas = document.createElement('canvas');
+        const size = 720;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          if (facingMode === 'user') {
+            ctx.translate(size, 0);
+            ctx.scale(-1, 1);
+          }
+          ctx.drawImage(videoRef.current, 0, 0, size, size);
+          setFlipSnapshot(canvas.toDataURL('image/jpeg', 0.85));
+        }
+      } catch (e) {}
+    }
+
     setTimeout(() => {
       isFlippingRef.current = false;
-    }, 700);
+    }, 600);
 
     setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
   };
@@ -388,21 +411,37 @@ export const CameraView: React.FC<CameraViewProps> = ({
           <div
             onClick={handleViewfinderTap}
             onTouchEnd={handleTouchEndViewfinder}
-            className="relative w-full h-full cursor-pointer group select-none"
+            className="relative w-full h-full cursor-pointer select-none"
             title="Chạm đúp để đổi camera trước/sau 🔄"
           >
+            {/* Zero-Black-Screen Camera Flip Snapshot Overlay */}
+            {flipSnapshot && (
+              <div className="absolute inset-0 z-20 pointer-events-none rounded-[2.8rem] overflow-hidden">
+                <img
+                  src={flipSnapshot}
+                  alt=""
+                  className="w-full h-full object-cover filter brightness-95"
+                />
+              </div>
+            )}
+
             <video
               ref={videoRef}
               autoPlay
               playsInline
               muted
+              onLoadedData={() => setFlipSnapshot(null)}
+              onCanPlay={() => setFlipSnapshot(null)}
               className={`w-full h-full object-cover ${
                 facingMode === 'user' ? 'scale-x-[-1]' : ''
               }`}
             />
+
+            {/* Subtle Translucent Note Pill at Very Bottom of Camera Frame */}
             {!isRecording && (
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md border border-white/10 text-white/80 text-[10px] font-semibold px-3 py-1 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-                Nhấn đúp để đổi cam 🔄
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/35 backdrop-blur-md border border-white/12 text-white/85 text-[11px] font-medium px-3.5 py-1 rounded-full pointer-events-none flex items-center space-x-1.5 shadow-lg z-20">
+                <RotateCcw className="w-3.5 h-3.5 text-[#D9266E]" />
+                <span>Nhấn đúp để đổi góc cam</span>
               </div>
             )}
             {isRecording && (
