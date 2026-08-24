@@ -132,7 +132,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={() => setShowFilterModal(false)}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-end sm:items-center justify-center p-0 sm:p-4"
+            className="absolute inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-end justify-center p-0"
           >
             <motion.div
               initial={{ y: 140, scale: 0.90, opacity: 0 }}

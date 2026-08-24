@@ -286,11 +286,11 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+      className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center p-0 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md bg-[#1C1B20] border border-white/10 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-4 pt-3 pb-6 shadow-2xl flex flex-col max-h-[94vh] h-[92vh] text-white select-none relative overflow-hidden transition-transform"
+        className="w-full h-[96%] max-h-full bg-[#1C1B20] border-t border-white/12 rounded-t-[2.5rem] p-4 pt-3 pb-6 shadow-2xl flex flex-col text-white select-none relative overflow-hidden transition-transform"
         style={{ transform: `translateY(${dragY}px)` }}
         onClick={(e) => e.stopPropagation()}
       >
