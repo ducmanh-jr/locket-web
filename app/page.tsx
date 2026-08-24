@@ -8,6 +8,7 @@ import { LocketHistoryGrid } from '@/components/LocketHistoryGrid';
 import { CameraView } from '@/components/CameraView';
 import { LocketChatSheet } from '@/components/LocketChatSheet';
 import { SupabaseConfigNotice } from '@/components/SupabaseConfigNotice';
+import { LoadingScreen } from '@/components/LoadingScreen';
 import { useAuth } from '@/lib/providers/AuthProvider';
 import { useMoments } from '@/lib/providers/MomentsProvider';
 import { Camera } from 'lucide-react';
@@ -69,66 +70,7 @@ export default function HomePage() {
   }, []);
 
   if (authLoading) {
-    return (
-      <div className="w-full h-full min-h-full flex flex-col items-center justify-center bg-[#FFC2DC] text-white select-none relative overflow-hidden p-6">
-        {/* Ambient Glowing Orbs */}
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.4, 0.7, 0.4],
-          }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/35 rounded-full blur-[90px] pointer-events-none z-0"
-        />
-
-        {/* Center Animated Logo & Orbit Rings */}
-        <div className="relative z-10 flex flex-col items-center space-y-6">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0, y: 10 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="relative w-36 h-36 flex items-center justify-center"
-          >
-            {/* Spinning White Border Ring */}
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-0 rounded-full p-[3px] border-2 border-white/70 border-t-transparent shadow-[0_0_25px_rgba(255,255,255,0.7)]"
-            />
-
-            {/* Pulsing Inner Heartbeat Container */}
-            <motion.div
-              animate={{ scale: [1, 1.07, 1] }}
-              transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-              className="w-28 h-28 flex items-center justify-center relative z-10"
-            >
-              <img
-                src="/icon.svg"
-                alt="Locket Logo"
-                className="w-full h-full object-contain drop-shadow-[0_10px_25px_rgba(255,42,133,0.3)]"
-              />
-            </motion.div>
-          </motion.div>
-
-          {/* Title & Animated Status Text */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-center space-y-2"
-          >
-            <h2 className="text-xl font-black tracking-tight text-[#800A40]">
-              Locket<span className="text-white">Web</span>
-            </h2>
-
-            <div className="flex items-center justify-center space-x-2 text-[#9E1453] text-xs font-extrabold">
-              <div className="w-3.5 h-3.5 rounded-full border-2 border-[#800A40] border-t-transparent animate-spin" />
-              <span>Đang kết nối khoảnh khắc...</span>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Đang kết nối khoảnh khắc..." />;
   }
 
   if (!userProfile) {
