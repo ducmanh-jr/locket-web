@@ -572,14 +572,14 @@ export const CameraView: React.FC<CameraViewProps> = ({
             />
 
             <div className="w-full flex items-center justify-around px-4">
-              {/* Left: Gallery Icon */}
+              {/* Left: Gallery Icon — Glassmorphism */}
               <button
                 onClick={() => galleryInputRef.current?.click()}
                 disabled={isRecording}
-                className="w-12 h-12 flex items-center justify-center text-white/70 hover:text-white active:scale-90 transition-all disabled:opacity-30 rounded-full hover:bg-white/5 border border-transparent hover:border-white/10"
+                className="w-12 h-12 flex items-center justify-center text-white/80 hover:text-white active:scale-90 transition-all disabled:opacity-30 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 shadow-lg"
                 title="Tải ảnh/video từ thư viện 🖼️"
               >
-                <ImagePlus className="w-6 h-6" />
+                <ImagePlus className="w-5 h-5" />
               </button>
 
               {/* Center: Sleek Minimalist Dark Rose Shutter Button + Ultra-Thin Progress Ring */}
@@ -614,7 +614,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
                   onMouseUp={handleShutterUp}
                   onTouchStart={handleShutterDown}
                   onTouchEnd={handleShutterUp}
-                  className={`w-20 h-20 rounded-full border-2 border-white/80 p-1.5 flex items-center justify-center transition-all active:scale-90 shadow-[0_0_20px_rgba(217,38,110,0.4)] ${
+                  className={`w-20 h-20 rounded-full border-2 border-white/80 p-1.5 flex items-center justify-center transition-all active:scale-90 shadow-[0_0_20px_rgba(217,38,110,0.35)] ${
                     isRecording ? 'scale-105 border-[#D9266E] shadow-[0_0_25px_rgba(217,38,110,0.7)]' : ''
                   }`}
                   title="Nhấn để chụp ảnh • Nhấn giữ để quay video (max 5s)"
@@ -633,28 +633,32 @@ export const CameraView: React.FC<CameraViewProps> = ({
                 </button>
               </div>
 
-              {/* Right: Flip Camera Icon */}
+              {/* Right: Flip Camera Icon — Glassmorphism */}
               <button
                 onClick={triggerCameraFlip}
                 disabled={isRecording}
-                className="w-12 h-12 flex items-center justify-center text-white/70 hover:text-white active:scale-90 transition-all disabled:opacity-30 rounded-full hover:bg-white/5 border border-transparent hover:border-white/10"
+                className="w-12 h-12 flex items-center justify-center text-white/80 hover:text-white active:scale-90 transition-all disabled:opacity-30 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 shadow-lg"
                 title="Đổi camera trước/sau 🔄"
               >
-                <RotateCcw className="w-6 h-6" />
+                <RotateCcw className="w-5 h-5" />
               </button>
             </div>
 
             {!isRecording ? (
-              <div className="flex items-center justify-center space-x-2 text-[11px] font-medium text-zinc-400/90 pt-1.5">
-                <span>Chạm để chụp • Giữ quay (5s)</span>
-                <span className="text-zinc-600">•</span>
-                <span className="inline-flex items-center space-x-1.5 bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full text-zinc-300/80 text-[10.5px]">
-                  <RotateCcw className="w-3 h-3 text-[#D9266E]" />
-                  <span>Nhấn đúp đổi cam</span>
-                </span>
+              <div className="flex items-center justify-center pt-2.5">
+                <div className="inline-flex items-center space-x-2 bg-black/40 backdrop-blur-xl border border-white/10 px-3.5 py-1.5 rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.3)] text-[11px] font-medium text-white/70">
+                  <span>Chạm để chụp</span>
+                  <span className="text-white/20">•</span>
+                  <span>Giữ quay (5s)</span>
+                  <span className="text-white/20">•</span>
+                  <span className="inline-flex items-center space-x-1 text-[#D9266E] font-semibold">
+                    <RotateCcw className="w-3 h-3 animate-spin-slow" />
+                    <span>Nhấn đúp đổi cam</span>
+                  </span>
+                </div>
               </div>
             ) : (
-              <span className="text-[11px] font-semibold text-[#D9266E] text-center block pt-1.5 animate-pulse">
+              <span className="text-[11px] font-semibold text-[#D9266E] text-center block pt-2 animate-pulse">
                 ⏺ Đang quay… {(recordingProgress * 0.05).toFixed(1)}s / 5s
               </span>
             )}
