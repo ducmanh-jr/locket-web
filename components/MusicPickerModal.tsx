@@ -708,13 +708,13 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
                 })}
               </div>
 
-              {/* Dual-Handle Sliders: Điểm Đầu & Điểm Cuối */}
+              {/* Dual-Handle Sliders: Điểm Bắt Đầu & Điểm Kết Thúc */}
               <div className="space-y-4 px-1">
-                {/* Điểm Đầu Slider */}
-                <div className="space-y-1">
+                {/* Điểm Bắt Đầu Slider */}
+                <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-semibold">
-                    <span className="text-zinc-400">🟢 Điểm Bắt Đầu (Start):</span>
-                    <span className="text-white font-bold">{formatTime(trimStart)}</span>
+                    <span className="text-zinc-400">Thời gian bắt đầu:</span>
+                    <span className="text-[#D9266E] font-bold">{formatTime(trimStart)}</span>
                   </div>
                   <input
                     type="range"
@@ -725,15 +725,19 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
                     onChange={(e) => {
                       const val = Number(e.target.value);
                       setTrimStart(val);
+                      if (selectedTrack?.preview_url) {
+                        setPlayingTrackId(selectedTrack.id);
+                        playGlobalAudio(selectedTrack.preview_url, () => setPlayingTrackId(null), val);
+                      }
                     }}
                     className="w-full accent-[#D9266E] h-2 bg-zinc-800 rounded-lg cursor-pointer"
                   />
                 </div>
 
-                {/* Điểm Cuối Slider */}
-                <div className="space-y-1">
+                {/* Điểm Kết Thúc Slider */}
+                <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-semibold">
-                    <span className="text-zinc-400">🔴 Điểm Kết Thúc (End):</span>
+                    <span className="text-zinc-400">Thời gian kết thúc:</span>
                     <span className="text-white font-bold">{formatTime(trimEnd)}</span>
                   </div>
                   <input
@@ -746,7 +750,7 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
                       const val = Number(e.target.value);
                       setTrimEnd(val);
                     }}
-                    className="w-full accent-[#F43F5E] h-2 bg-zinc-800 rounded-lg cursor-pointer"
+                    className="w-full accent-[#D9266E] h-2 bg-zinc-800 rounded-lg cursor-pointer"
                   />
                 </div>
               </div>
