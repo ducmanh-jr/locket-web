@@ -163,7 +163,14 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
   const [selectedTrack, setSelectedTrack] = useState<ExtendedTrack | null>(null);
   const [expandedTrackId, setExpandedTrackId] = useState<string | null>(null);
   const [showTrimmer, setShowTrimmer] = useState<boolean>(false);
-  const [trimOffset, setTrimOffset] = useState<number>(0);
+  const [trimStart, setTrimStart] = useState<number>(10);
+  const [trimEnd, setTrimEnd] = useState<number>(40);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
 
   // Sheet gesture drag state
   const [dragY, setDragY] = useState<number>(0);
@@ -312,10 +319,7 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
   const handleConfirmSelect = (track: ExtendedTrack) => {
     killGlobalAudio();
     setPlayingTrackId(null);
-    onSelectMusic({
-      ...track,
-      title: trimOffset > 0 ? `${track.title} (${trimOffset}s)` : track.title,
-    });
+    onSelectMusic(track);
     onClose();
   };
 
@@ -637,63 +641,130 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
           </div>
         )}
 
-        {/* INTERACTIVE MUSIC SEGMENT TRIMMER OVERLAY (Nút Cắt Nhạc ✂) */}
+        {/* REFINED DUAL-HANDLE MUSIC SEGMENT TRIMMER OVERLAY (Điểm Đầu & Điểm Cuối) */}
         {showTrimmer && selectedTrack && (
-          <div className="absolute inset-0 z-50 bg-[#141318] p-5 flex flex-col justify-between animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between mb-4">
+          <div className="absolute inset-0 z-50 bg-[#121116] p-5 flex flex-col justify-between animate-in zoom-in-95 duration-200 select-none">
+            {/* Top Bar */}
+            <div className="flex items-center justify-between flex-shrink-0 mb-2">
               <button
                 onClick={() => setShowTrimmer(false)}
-                className="p-1.5 rounded-full hover:bg-white/10 text-white"
+                className="p-2 rounded-full hover:bg-white/10 text-zinc-300 hover:text-white transition-colors"
+                title="Đóng"
               >
-                <X className="w-6 h-6" />
+                <ArrowLeft className="w-5 h-5" />
               </button>
-              <h3 className="text-white text-base font-bold">Cắt đoạn nhạc ✂</h3>
-              <div className="w-6" />
+              <h3 className="text-white text-base font-bold tracking-tight">Cắt đoạn nhạc ✂</h3>
+              <button
+                onClick={() => {
+                  setShowTrimmer(false);
+                  handleConfirmSelect({
+                    ...selectedTrack,
+                    title: `${selectedTrack.title} (${formatTime(trimStart)}-${formatTime(trimEnd)})`,
+                  });
+                }}
+                className="p-2 rounded-full bg-[#D9266E] text-white hover:bg-[#be185d] transition-transform active:scale-95"
+                title="Lưu"
+              >
+                <Check className="w-4 h-4 stroke-[3]" />
+              </button>
             </div>
 
-            {/* Track Info */}
-            <div className="flex flex-col items-center space-y-3 my-auto text-center">
+            {/* Track Info Card */}
+            <div className="flex items-center space-x-3 bg-white/5 border border-white/10 p-3 rounded-2xl flex-shrink-0">
               <img
                 src={selectedTrack.cover_url}
                 alt=""
-                className="w-24 h-24 rounded-2xl shadow-xl object-cover border border-white/10"
+                className="w-14 h-14 rounded-xl object-cover shadow-md border border-white/10 flex-shrink-0"
               />
-              <div>
-                <h4 className="text-white font-bold text-base">{selectedTrack.title}</h4>
-                <p className="text-zinc-400 text-xs mt-0.5">{selectedTrack.artist}</p>
-              </div>
-
-              {/* Segment Waveform Slider Selector */}
-              <div className="w-full max-w-xs space-y-2 pt-4">
-                <div className="flex items-center justify-between text-xs text-zinc-400 font-medium">
-                  <span>Đoạn 30s chọn:</span>
-                  <span className="text-white font-bold">{trimOffset}s - {trimOffset + 30}s</span>
+              <div className="truncate flex-1">
+                <h4 className="text-white font-bold text-sm truncate">{selectedTrack.title}</h4>
+                <p className="text-zinc-400 text-xs truncate mt-0.5">{selectedTrack.artist}</p>
+                <div className="mt-1 flex items-center space-x-1.5 text-[11px] text-[#D9266E] font-semibold">
+                  <span>{formatTime(trimStart)}</span>
+                  <span>➜</span>
+                  <span>{formatTime(trimEnd)}</span>
+                  <span className="text-zinc-500">({Math.max(1, trimEnd - trimStart)}s)</span>
                 </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={60}
-                  step={5}
-                  value={trimOffset}
-                  onChange={(e) => setTrimOffset(Number(e.target.value))}
-                  className="w-full accent-[#D9266E] h-2 bg-zinc-800 rounded-lg cursor-pointer"
-                />
-                <p className="text-[11px] text-zinc-500">Kéo để chọn đoạn điệp khúc phát trong khoảnh khắc Locket</p>
               </div>
             </div>
 
-            {/* Bottom Apply Action */}
+            {/* Visual Waveform Bar Representation */}
+            <div className="my-auto py-4 space-y-5">
+              <div className="relative w-full h-20 bg-black/40 border border-white/10 rounded-2xl p-3 flex items-center justify-between overflow-hidden">
+                {/* Simulated Waveform Bars */}
+                {Array.from({ length: 40 }).map((_, i) => {
+                  const percent = (i / 40) * 100;
+                  const inRange = percent >= (trimStart / 90) * 100 && percent <= (trimEnd / 90) * 100;
+                  const height = Math.sin(i * 0.7) * 35 + 45;
+                  return (
+                    <div
+                      key={i}
+                      className={`w-1 rounded-full transition-all duration-150 ${
+                        inRange ? 'bg-gradient-to-t from-[#D9266E] to-[#F43F5E] shadow-sm' : 'bg-zinc-700/50'
+                      }`}
+                      style={{ height: `${height}%` }}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Dual-Handle Sliders: Điểm Đầu & Điểm Cuối */}
+              <div className="space-y-4 px-1">
+                {/* Điểm Đầu Slider */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-zinc-400">🟢 Điểm Bắt Đầu (Start):</span>
+                    <span className="text-white font-bold">{formatTime(trimStart)}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={Math.max(0, trimEnd - 3)}
+                    step={1}
+                    value={trimStart}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setTrimStart(val);
+                    }}
+                    className="w-full accent-[#D9266E] h-2 bg-zinc-800 rounded-lg cursor-pointer"
+                  />
+                </div>
+
+                {/* Điểm Cuối Slider */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-zinc-400">🔴 Điểm Kết Thúc (End):</span>
+                    <span className="text-white font-bold">{formatTime(trimEnd)}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={trimStart + 3}
+                    max={90}
+                    step={1}
+                    value={trimEnd}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setTrimEnd(val);
+                    }}
+                    className="w-full accent-[#F43F5E] h-2 bg-zinc-800 rounded-lg cursor-pointer"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Apply Action Button */}
             <button
               onClick={() => {
                 setShowTrimmer(false);
                 handleConfirmSelect({
                   ...selectedTrack,
-                  title: `${selectedTrack.title} (${trimOffset}s)`,
+                  title: `${selectedTrack.title} (${formatTime(trimStart)}-${formatTime(trimEnd)})`,
                 });
               }}
-              className="w-full py-3 bg-[#D9266E] text-white font-bold rounded-full shadow-lg hover:bg-[#be185d] active:scale-95 transition-all text-center"
+              className="w-full py-3.5 bg-gradient-to-r from-[#D9266E] to-[#E11D48] text-white font-bold rounded-full shadow-[0_8px_25px_rgba(217,38,110,0.4)] hover:opacity-95 active:scale-95 transition-all text-center flex items-center justify-center space-x-2"
             >
-              Áp dụng đoạn cắt này
+              <Check className="w-5 h-5 stroke-[2.5]" />
+              <span>Áp dụng đoạn cắt ({Math.max(1, trimEnd - trimStart)} giây)</span>
             </button>
           </div>
         )}
