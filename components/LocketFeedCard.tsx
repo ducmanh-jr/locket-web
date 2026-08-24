@@ -379,41 +379,42 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* Centered Photo & Sender Section */}
-      <div className="w-full flex flex-col items-center my-auto z-10">
-        {/* 1:1 Square Photo Card Container */}
-        <div
-          onClick={handleCardClick}
-          onDoubleClick={handleDoubleTap}
-          className="w-full aspect-square bg-black/30 backdrop-blur-sm flex-shrink-0 relative overflow-hidden rounded-[2.2rem] cursor-pointer border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)]"
-        >
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={moment.id}
-              initial={{
-                y: direction === 'down' ? '-100%' : '100%',
-                opacity: 0,
-                scale: 0.92,
-              }}
-              animate={{
-                y: 0,
-                opacity: 1,
-                scale: 1,
-              }}
-              exit={{
-                y: direction === 'down' ? '100%' : '-100%',
-                opacity: 0,
-                scale: 0.92,
-              }}
-              transition={{
-                type: 'spring',
-                stiffness: 320,
-                damping: 28,
-                mass: 0.85,
-              }}
-              className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.2rem] transform-gpu will-change-[transform,opacity]"
+      {/* Centered Photo & Sender Section — Full Card Vertical Slide */}
+      <div className="w-full flex flex-col items-center my-auto z-10 overflow-hidden">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={moment.id}
+            initial={{
+              y: direction === 'down' ? '-100%' : '100%',
+              opacity: 0,
+              scale: 0.92,
+            }}
+            animate={{
+              y: 0,
+              opacity: 1,
+              scale: 1,
+            }}
+            exit={{
+              y: direction === 'down' ? '100%' : '-100%',
+              opacity: 0,
+              scale: 0.92,
+            }}
+            transition={{
+              type: 'spring',
+              stiffness: 320,
+              damping: 28,
+              mass: 0.85,
+            }}
+            className="w-full flex flex-col items-center transform-gpu will-change-[transform,opacity]"
+          >
+            {/* 1:1 Square Photo Card Container */}
+            <div
+              onClick={handleCardClick}
+              onDoubleClick={handleDoubleTap}
+              className="w-full aspect-square bg-black/30 backdrop-blur-sm flex-shrink-0 relative overflow-hidden rounded-[2.2rem] cursor-pointer border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)]"
             >
-              {isVideo && !hasVideoError ? (
+              <div className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.2rem]">
+                {isVideo && !hasVideoError ? (
                 <div className="relative w-full h-full">
                   <video
                     ref={videoRef}
@@ -526,31 +527,52 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                   </motion.div>
                 </div>
               )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+              </div>
+            </div>
 
-        {/* Sender Avatar, Name & Time — right below photo */}
-        <div className="w-full flex justify-center mt-2.5 pointer-events-none">
-          <div className="flex items-center space-x-2">
-            {(sender.isAdmin || sender.email === 'nguyenducmanh.ovaltine@gmail.com') ? (
-              <div className="relative flex-shrink-0">
-                <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] z-10 drop-shadow-[0_0_4px_rgba(255,215,0,0.9)] select-none">
-                  👑
-                </span>
-                <div
-                  className="w-8 h-8 rounded-full"
-                  style={{
-                    padding: '1.5px',
-                    background: 'linear-gradient(135deg, #f5c842, #e6a817, #f5d442)',
-                    boxShadow: '0 0 10px rgba(255,215,0,0.5)',
-                  }}
-                >
+            {/* Sender Avatar, Name & Time — right below photo */}
+            <div className="w-full flex justify-center mt-2.5 pointer-events-none">
+              <div className="flex items-center space-x-2">
+                {(sender.isAdmin || sender.email === 'nguyenducmanh.ovaltine@gmail.com') ? (
+                  <div className="relative flex-shrink-0">
+                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] z-10 drop-shadow-[0_0_4px_rgba(255,215,0,0.9)] select-none">
+                      👑
+                    </span>
+                    <div
+                      className="w-8 h-8 rounded-full"
+                      style={{
+                        padding: '1.5px',
+                        background: 'linear-gradient(135deg, #f5c842, #e6a817, #f5d442)',
+                        boxShadow: '0 0 10px rgba(255,215,0,0.5)',
+                      }}
+                    >
+                      <div
+                        className="w-full h-full rounded-full"
+                        style={{
+                          padding: '1.5px',
+                          background: 'linear-gradient(135deg, #D9266E, #BE185D)',
+                        }}
+                      >
+                        <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
+                          <img
+                            src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`}
+                            alt={sender.display_name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`;
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
                   <div
-                    className="w-full h-full rounded-full"
+                    className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0"
                     style={{
                       padding: '1.5px',
                       background: 'linear-gradient(135deg, #D9266E, #BE185D)',
+                      boxShadow: '0 0 8px rgba(217, 38, 110, 0.5)',
                     }}
                   >
                     <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
@@ -564,35 +586,15 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                       />
                     </div>
                   </div>
-                </div>
+                )}
+                <span className="text-white text-sm font-bold truncate max-w-[160px]">
+                  {sender.display_name}
+                </span>
+                <span className="text-white/50 text-xs font-medium">{formatLocketTime(moment.created_at)}</span>
               </div>
-            ) : (
-              <div
-                className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0"
-                style={{
-                  padding: '1.5px',
-                  background: 'linear-gradient(135deg, #D9266E, #BE185D)',
-                  boxShadow: '0 0 8px rgba(217, 38, 110, 0.5)',
-                }}
-              >
-                <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
-                  <img
-                    src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`}
-                    alt={sender.display_name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`;
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-            <span className="text-white text-sm font-bold truncate max-w-[160px]">
-              {sender.display_name}
-            </span>
-            <span className="text-white/50 text-xs font-medium">{formatLocketTime(moment.created_at)}</span>
-          </div>
-        </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Message Input Bar + Emoji Reactions — Premium Glassmorphism */}
