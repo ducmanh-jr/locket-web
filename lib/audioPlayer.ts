@@ -32,6 +32,7 @@ export function killGlobalAudio(): void {
 
 /**
  * Play audio from a URL starting at a specific timestamp offset. Automatically kills any previous audio first.
+ * Safely clamps/wraps timestamp offset so audio NEVER goes silent even for short 30s preview clips!
  * @param url         - The audio URL to play
  * @param onEnd       - Callback when playback finishes naturally
  * @param startTime   - Optional start time offset in seconds
@@ -47,10 +48,21 @@ export function playGlobalAudio(url: string, onEnd: () => void, startTime?: numb
   audio.volume = 0.85;
   audio.onended = () => onEnd();
 
-  audio.onloadedmetadata = () => {
-    if (startTime && startTime > 0 && startTime < (audio.duration || 120)) {
-      audio.currentTime = startTime;
+  const applySafeTime = () => {
+    if (startTime !== undefined && startTime >= 0) {
+      const dur = audio.duration && !isNaN(audio.duration) && audio.duration > 0 ? audio.duration : 30;
+      const safeTime = (startTime % dur);
+      const clampedTime = Math.min(safeTime, Math.max(0, dur - 1));
+      try {
+        audio.currentTime = clampedTime;
+      } catch (e) {
+        console.warn('Audio seek error:', e);
+      }
     }
+  };
+
+  audio.onloadedmetadata = () => {
+    applySafeTime();
   };
 
   audio.onerror = () => {
@@ -102,17 +114,15 @@ export function playGlobalAudio(url: string, onEnd: () => void, startTime?: numb
 
   _globalAudio = audio;
 
-  if (startTime && startTime > 0) {
-    try {
-      audio.currentTime = startTime;
-    } catch (e) {}
-  }
-
   const playPromise = audio.play();
   if (playPromise) {
-    playPromise.catch(() => {
-      if (audio.onerror) (audio.onerror as any)();
-    });
+    playPromise
+      .then(() => {
+        applySafeTime();
+      })
+      .catch(() => {
+        if (audio.onerror) (audio.onerror as any)();
+      });
   }
 }
 

@@ -163,8 +163,8 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
   const [selectedTrack, setSelectedTrack] = useState<ExtendedTrack | null>(null);
   const [expandedTrackId, setExpandedTrackId] = useState<string | null>(null);
   const [showTrimmer, setShowTrimmer] = useState<boolean>(false);
-  const [trimStart, setTrimStart] = useState<number>(10);
-  const [trimEnd, setTrimEnd] = useState<number>(40);
+  const [trimStart, setTrimStart] = useState<number>(0);
+  const [trimEnd, setTrimEnd] = useState<number>(25);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -694,7 +694,7 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
                 {/* Simulated Waveform Bars */}
                 {Array.from({ length: 40 }).map((_, i) => {
                   const percent = (i / 40) * 100;
-                  const inRange = percent >= (trimStart / 90) * 100 && percent <= (trimEnd / 90) * 100;
+                  const inRange = percent >= (trimStart / 30) * 100 && percent <= (trimEnd / 30) * 100;
                   const height = Math.sin(i * 0.7) * 35 + 45;
                   return (
                     <div
@@ -743,7 +743,7 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
                   <input
                     type="range"
                     min={trimStart + 3}
-                    max={90}
+                    max={30}
                     step={1}
                     value={trimEnd}
                     onChange={(e) => {
