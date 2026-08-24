@@ -437,13 +437,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
               }`}
             />
 
-            {/* Subtle Translucent Note Pill at Very Bottom of Camera Frame */}
-            {!isRecording && (
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/35 backdrop-blur-md border border-white/12 text-white/85 text-[11px] font-medium px-3.5 py-1 rounded-full pointer-events-none flex items-center space-x-1.5 shadow-lg z-20">
-                <RotateCcw className="w-3.5 h-3.5 text-[#D9266E]" />
-                <span>Nhấn đúp để đổi góc cam</span>
-              </div>
-            )}
+            {/* Clean Camera Stream View */}
             {isRecording && (
               <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#D9266E] text-white font-extrabold text-xs px-4 py-1.5 rounded-full flex items-center space-x-2 animate-pulse shadow-[0_0_15px_rgba(217,38,110,0.7)]">
                 <div className="w-2 h-2 rounded-full bg-white animate-ping" />
@@ -650,11 +644,20 @@ export const CameraView: React.FC<CameraViewProps> = ({
               </button>
             </div>
 
-            <span className="text-[11px] font-semibold text-zinc-400 text-center">
-              {isRecording
-                ? `⏺ Đang quay… ${(recordingProgress * 0.05).toFixed(1)}s / 5s`
-                : 'Chạm để chụp • Giữ để quay video (5s)'}
-            </span>
+            {!isRecording ? (
+              <div className="flex items-center justify-center space-x-2 text-[11px] font-medium text-zinc-400/90 pt-1.5">
+                <span>Chạm để chụp • Giữ quay (5s)</span>
+                <span className="text-zinc-600">•</span>
+                <span className="inline-flex items-center space-x-1.5 bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full text-zinc-300/80 text-[10.5px]">
+                  <RotateCcw className="w-3 h-3 text-[#D9266E]" />
+                  <span>Nhấn đúp đổi cam</span>
+                </span>
+              </div>
+            ) : (
+              <span className="text-[11px] font-semibold text-[#D9266E] text-center block pt-1.5 animate-pulse">
+                ⏺ Đang quay… {(recordingProgress * 0.05).toFixed(1)}s / 5s
+              </span>
+            )}
           </div>
         ) : (
           <div className="space-y-3 px-2">
