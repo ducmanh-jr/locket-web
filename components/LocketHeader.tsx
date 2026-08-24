@@ -50,9 +50,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
 
   return (
     <>
-      <div className={`absolute top-0 left-0 right-0 z-40 px-4 pt-3 sm:pt-4 pb-2 flex items-center justify-between bg-transparent pointer-events-none transition-opacity duration-200 ${
-        isDragging ? 'opacity-0' : 'opacity-100'
-      }`}>
+      <div className="absolute top-0 left-0 right-0 z-40 px-4 pt-3 sm:pt-4 pb-2 flex items-center justify-between bg-transparent pointer-events-none">
 
         {/* Left: Speaker / Announcement Icon Button (Exact Screenshot) */}
         <motion.button
