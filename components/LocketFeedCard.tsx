@@ -364,6 +364,9 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     }
   };
 
+  const liveScale = dragYOffset !== 0 ? Math.max(0.93, 1 - Math.abs(dragYOffset) / 3000) : 1;
+  const previewScale = dragYOffset !== 0 ? Math.min(1, 0.94 + Math.abs(dragYOffset) / 3000) : 0.94;
+
   return (
     <div
       onWheel={handleWheel}
@@ -378,34 +381,37 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     >
 
 
-      {/* Centered Photo & Sender Section — Seamless Parallel Slide */}
+      {/* Centered Photo & Sender Section — Seamless Parallel Slide with 3D Depth */}
       <div className="w-full flex flex-col items-center my-auto z-10 overflow-hidden">
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div
             key={moment.id}
-            initial={{ y: direction === 'down' ? '-100vh' : '100vh' }}
-            animate={{ y: dragYOffset }}
-            exit={{ y: direction === 'down' ? '100vh' : '-100vh' }}
+            initial={{ y: direction === 'down' ? '-100vh' : '100vh', scale: 0.93, opacity: 0.85 }}
+            animate={{ y: dragYOffset, scale: liveScale, opacity: 1 }}
+            exit={{ y: direction === 'down' ? '100vh' : '-100vh', scale: 0.93, opacity: 0.85 }}
             transition={
               dragYOffset !== 0
                 ? { type: 'just' }
                 : {
                     type: 'spring',
-                    stiffness: 200,
-                    damping: 28,
+                    stiffness: 220,
+                    damping: 26,
                     mass: 0.85,
                   }
             }
             className="w-full flex flex-col items-center transform-gpu will-change-transform relative"
           >
-            {/* Previous Card Live Preview during Drag Down — 100vh distance */}
+            {/* Previous Card Live Preview during Drag Down — 100vh distance with 3D Scale */}
             {dragYOffset > 5 && hasPrev && (prevMoment || prevMomentUrl) && (
-              <div className="w-full flex flex-col items-center absolute bottom-[calc(100vh)] left-0 right-0 pointer-events-none opacity-90">
-                <div className="w-full aspect-square bg-black/40 backdrop-blur-sm flex-shrink-0 relative overflow-hidden rounded-[2.2rem] border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
+              <div
+                className="w-full flex flex-col items-center absolute bottom-[calc(100vh)] left-0 right-0 pointer-events-none opacity-90 transition-transform"
+                style={{ transform: `scale(${previewScale})` }}
+              >
+                <div className="w-full aspect-square bg-black/40 backdrop-blur-sm flex-shrink-0 relative overflow-hidden rounded-[2.4rem] border border-white/12 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
                   <img
                     src={prevMoment?.thumbnail_url || prevMoment?.media_url || prevMomentUrl}
                     alt=""
-                    className="w-full h-full object-cover rounded-[2.2rem]"
+                    className="w-full h-full object-cover rounded-[2.4rem]"
                   />
                   {prevMoment?.caption && (
                     <div className="absolute bottom-3 left-4 right-4 flex justify-center">
@@ -416,8 +422,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                   )}
                 </div>
                 {prevMoment?.sender && (
-                  <div className="w-full flex justify-center mt-2.5">
-                    <div className="flex items-center space-x-2">
+                  <div className="w-full flex justify-center mt-3">
+                    <div className="bg-black/40 backdrop-blur-xl border border-white/12 px-4 py-1.5 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.4)] flex items-center space-x-2.5">
                       <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 border border-[#D9266E]">
                         <img
                           src={prevMoment.sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${prevMoment.sender.username || 'user'}`}
@@ -435,14 +441,17 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               </div>
             )}
 
-            {/* Next Card Live Preview during Drag Up — 100vh distance */}
+            {/* Next Card Live Preview during Drag Up — 100vh distance with 3D Scale */}
             {dragYOffset < -5 && hasNext && (nextMoment || nextMomentUrl) && (
-              <div className="w-full flex flex-col items-center absolute top-[calc(100vh)] left-0 right-0 pointer-events-none opacity-90">
-                <div className="w-full aspect-square bg-black/40 backdrop-blur-sm flex-shrink-0 relative overflow-hidden rounded-[2.2rem] border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
+              <div
+                className="w-full flex flex-col items-center absolute top-[calc(100vh)] left-0 right-0 pointer-events-none opacity-90 transition-transform"
+                style={{ transform: `scale(${previewScale})` }}
+              >
+                <div className="w-full aspect-square bg-black/40 backdrop-blur-sm flex-shrink-0 relative overflow-hidden rounded-[2.4rem] border border-white/12 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
                   <img
                     src={nextMoment?.thumbnail_url || nextMoment?.media_url || nextMomentUrl}
                     alt=""
-                    className="w-full h-full object-cover rounded-[2.2rem]"
+                    className="w-full h-full object-cover rounded-[2.4rem]"
                   />
                   {nextMoment?.caption && (
                     <div className="absolute bottom-3 left-4 right-4 flex justify-center">
@@ -453,8 +462,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                   )}
                 </div>
                 {nextMoment?.sender && (
-                  <div className="w-full flex justify-center mt-2.5">
-                    <div className="flex items-center space-x-2">
+                  <div className="w-full flex justify-center mt-3">
+                    <div className="bg-black/40 backdrop-blur-xl border border-white/12 px-4 py-1.5 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.4)] flex items-center space-x-2.5">
                       <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 border border-[#D9266E]">
                         <img
                           src={nextMoment.sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${nextMoment.sender.username || 'user'}`}
@@ -596,8 +605,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             </div>
 
             {/* Sender Avatar, Name & Time — BELOW photo */}
-            <div className="w-full flex justify-center mt-2.5 pointer-events-none z-10">
-              <div className="flex items-center space-x-2">
+            <div className="w-full flex justify-center mt-3 pointer-events-none z-10">
+              <div className="bg-black/40 backdrop-blur-xl border border-white/12 px-4 py-1.5 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.4)] flex items-center space-x-2.5">
                 {(sender.isAdmin || sender.email === 'nguyenducmanh.ovaltine@gmail.com') ? (
                   <div className="relative flex-shrink-0">
                     <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] z-10 drop-shadow-[0_0_4px_rgba(255,215,0,0.9)] select-none">
