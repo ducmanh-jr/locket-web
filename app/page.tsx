@@ -210,6 +210,8 @@ export default function HomePage() {
                   hasPrev={safeIndex > 0}
                   hasNext={safeIndex < roomMoments.length - 1}
                   onDeleteMoment={deleteMoment}
+                  nextMoment={nextMoment}
+                  prevMoment={prevMoment}
                   nextMomentUrl={nextMoment?.media_url}
                   prevMomentUrl={prevMoment?.media_url}
                   activeReaction={lastReaction}

@@ -15,6 +15,8 @@ interface LocketFeedCardProps {
   hasPrev?: boolean;
   hasNext?: boolean;
   onDeleteMoment?: (momentId: string) => void;
+  nextMoment?: Moment;
+  prevMoment?: Moment;
   nextMomentUrl?: string;
   prevMomentUrl?: string;
   activeReaction?: { emoji: string; timestamp: number } | null;
@@ -28,6 +30,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   hasPrev = false,
   hasNext = false,
   onDeleteMoment,
+  nextMoment,
+  prevMoment,
   nextMomentUrl,
   prevMomentUrl,
   activeReaction,
@@ -35,6 +39,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   const touchStartY = useRef<number | null>(null);
   const mouseStartY = useRef<number | null>(null);
   const wheelCooldown = useRef<boolean>(false);
+  const [dragYOffset, setDragYOffset] = useState<number>(0);
   const [isMouseDown, setIsMouseDown] = useState<boolean>(false);
   const [direction, setDirection] = useState<'up' | 'down'>('up');
   const [floatingEmojis, setFloatingEmojis] = useState<
@@ -197,9 +202,11 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   const handleTouchMove = (e: React.TouchEvent) => {
     if (touchStartY.current !== null) {
       const touchCurrentY = e.touches[0].clientY;
-      const diffY = touchStartY.current - touchCurrentY;
-      if (Math.abs(diffY) > 5 && e.cancelable) {
-        e.preventDefault();
+      const diffY = touchCurrentY - touchStartY.current;
+      if (Math.abs(diffY) > 5) {
+        if (e.cancelable) e.preventDefault();
+        setDragYOffset(diffY);
+        if (Math.abs(diffY) > 15) isDraggingRef.current = true;
       }
     }
   };
@@ -209,18 +216,14 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     const touchEndY = e.changedTouches[0].clientY;
     const diffY = touchStartY.current - touchEndY;
 
-    if (Math.abs(diffY) > 15) {
-      isDraggingRef.current = true;
-    }
-
-    if (diffY > 50 && hasNext && onNext) {
+    if (diffY > 60 && hasNext && onNext) {
       setDirection('up');
       onNext();
-    } else if (diffY < -50 && hasPrev && onPrev) {
+    } else if (diffY < -60 && hasPrev && onPrev) {
       setDirection('down');
       onPrev();
     }
-
+    setDragYOffset(0);
     touchStartY.current = null;
   };
 
@@ -230,30 +233,42 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     isDraggingRef.current = false;
   };
 
-  const handleMouseUp = (e: React.MouseEvent) => {
-    if (mouseStartY.current === null || !isMouseDown) return;
-    const diffY = mouseStartY.current - e.clientY;
+  useEffect(() => {
+    const handleMouseMoveWindow = (e: MouseEvent) => {
+      if (mouseStartY.current !== null && isMouseDown) {
+        const diffY = e.clientY - mouseStartY.current;
+        if (Math.abs(diffY) > 5) {
+          setDragYOffset(diffY);
+          if (Math.abs(diffY) > 15) isDraggingRef.current = true;
+        }
+      }
+    };
 
-    if (Math.abs(diffY) > 15) {
-      isDraggingRef.current = true;
+    const handleMouseUpWindow = (e: MouseEvent) => {
+      if (mouseStartY.current !== null && isMouseDown) {
+        const diffY = mouseStartY.current - e.clientY;
+        if (diffY > 60 && hasNext && onNext) {
+          setDirection('up');
+          onNext();
+        } else if (diffY < -60 && hasPrev && onPrev) {
+          setDirection('down');
+          onPrev();
+        }
+        setDragYOffset(0);
+        mouseStartY.current = null;
+        setIsMouseDown(false);
+      }
+    };
+
+    if (isMouseDown) {
+      window.addEventListener('mousemove', handleMouseMoveWindow);
+      window.addEventListener('mouseup', handleMouseUpWindow);
     }
-
-    if (diffY > 50 && hasNext && onNext) {
-      setDirection('up');
-      onNext();
-    } else if (diffY < -50 && hasPrev && onPrev) {
-      setDirection('down');
-      onPrev();
-    }
-
-    mouseStartY.current = null;
-    setIsMouseDown(false);
-  };
-
-  const handleMouseLeave = () => {
-    mouseStartY.current = null;
-    setIsMouseDown(false);
-  };
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMoveWindow);
+      window.removeEventListener('mouseup', handleMouseUpWindow);
+    };
+  }, [isMouseDown, hasNext, hasPrev, onNext, onPrev]);
 
   const handleWheel = (e: React.WheelEvent) => {
     if (wheelCooldown.current) return;
@@ -353,8 +368,6 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseLeave}
       style={{ touchAction: 'none', overscrollBehavior: 'none' }}
       className={`w-full h-full flex flex-col justify-between items-center select-none relative pt-14 pb-20 ${
         isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
@@ -390,7 +403,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               scale: 0.92,
             }}
             animate={{
-              y: 0,
+              y: dragYOffset,
               opacity: 1,
               scale: 1,
             }}
@@ -399,14 +412,71 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               opacity: 0,
               scale: 0.92,
             }}
-            transition={{
-              type: 'spring',
-              stiffness: 170,
-              damping: 24,
-              mass: 0.95,
-            }}
-            className="w-full flex flex-col items-center transform-gpu will-change-[transform,opacity]"
+            transition={
+              dragYOffset !== 0
+                ? { type: 'just' }
+                : {
+                    type: 'spring',
+                    stiffness: 170,
+                    damping: 24,
+                    mass: 0.95,
+                  }
+            }
+            className="w-full flex flex-col items-center transform-gpu will-change-[transform,opacity] relative"
           >
+            {/* Previous Card Live Preview during Drag Down */}
+            {dragYOffset > 5 && hasPrev && (prevMoment || prevMomentUrl) && (
+              <div className="w-full flex flex-col items-center absolute bottom-[calc(100%+24px)] left-0 right-0 pointer-events-none opacity-90">
+                <div className="w-full aspect-square bg-black/40 backdrop-blur-sm flex-shrink-0 relative overflow-hidden rounded-[2.2rem] border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
+                  <img
+                    src={prevMoment?.thumbnail_url || prevMoment?.media_url || prevMomentUrl}
+                    alt=""
+                    className="w-full h-full object-cover rounded-[2.2rem]"
+                  />
+                  {prevMoment?.caption && (
+                    <div className="absolute bottom-3 left-4 right-4 flex justify-center">
+                      <div className="bg-black/55 backdrop-blur-xl border border-white/15 text-white text-xs font-semibold px-5 py-2 rounded-full truncate">
+                        {prevMoment.caption}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {prevMoment?.sender && (
+                  <div className="w-full flex justify-center mt-2.5">
+                    <span className="text-white text-sm font-bold truncate">
+                      {prevMoment.sender.display_name}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Next Card Live Preview during Drag Up */}
+            {dragYOffset < -5 && hasNext && (nextMoment || nextMomentUrl) && (
+              <div className="w-full flex flex-col items-center absolute top-[calc(100%+24px)] left-0 right-0 pointer-events-none opacity-90">
+                <div className="w-full aspect-square bg-black/40 backdrop-blur-sm flex-shrink-0 relative overflow-hidden rounded-[2.2rem] border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
+                  <img
+                    src={nextMoment?.thumbnail_url || nextMoment?.media_url || nextMomentUrl}
+                    alt=""
+                    className="w-full h-full object-cover rounded-[2.2rem]"
+                  />
+                  {nextMoment?.caption && (
+                    <div className="absolute bottom-3 left-4 right-4 flex justify-center">
+                      <div className="bg-black/55 backdrop-blur-xl border border-white/15 text-white text-xs font-semibold px-5 py-2 rounded-full truncate">
+                        {nextMoment.caption}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {nextMoment?.sender && (
+                  <div className="w-full flex justify-center mt-2.5">
+                    <span className="text-white text-sm font-bold truncate">
+                      {nextMoment.sender.display_name}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
             {/* 1:1 Square Photo Card Container */}
             <div
               onClick={handleCardClick}
