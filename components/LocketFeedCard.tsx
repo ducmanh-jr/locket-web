@@ -401,9 +401,9 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             }}
             transition={{
               type: 'spring',
-              stiffness: 320,
-              damping: 28,
-              mass: 0.85,
+              stiffness: 170,
+              damping: 24,
+              mass: 0.95,
             }}
             className="w-full flex flex-col items-center transform-gpu will-change-[transform,opacity]"
           >
