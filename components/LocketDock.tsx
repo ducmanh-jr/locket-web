@@ -12,6 +12,7 @@ interface LocketDockProps {
   onSendDirectMessage?: (text: string) => void;
   onReactEmoji?: (emoji: string) => void;
   isMyMoment?: boolean;
+  isDragging?: boolean;
 }
 
 export const LocketDock: React.FC<LocketDockProps> = ({
@@ -19,6 +20,7 @@ export const LocketDock: React.FC<LocketDockProps> = ({
   onToggleView,
   onOpenCamera,
   onOpenMenu,
+  isDragging = false,
 }) => {
   const triggerHaptic = () => {
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {
@@ -27,7 +29,9 @@ export const LocketDock: React.FC<LocketDockProps> = ({
   };
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-40 px-4 pb-4 pt-1 flex flex-col items-center bg-transparent pointer-events-none">
+    <div className={`absolute bottom-0 left-0 right-0 z-40 px-4 pb-4 pt-1 flex flex-col items-center bg-transparent pointer-events-none transition-opacity duration-200 ${
+      isDragging ? 'opacity-0' : 'opacity-100'
+    }`}>
       {/* Translucent Compact Glassmorphism Pill Dock */}
       <div
         className="w-[88%] max-w-[320px] rounded-full py-2 px-5 flex items-center justify-between backdrop-blur-2xl pointer-events-auto"

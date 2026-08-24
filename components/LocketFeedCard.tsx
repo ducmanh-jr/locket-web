@@ -20,6 +20,7 @@ interface LocketFeedCardProps {
   nextMomentUrl?: string;
   prevMomentUrl?: string;
   activeReaction?: { emoji: string; timestamp: number } | null;
+  onDragChange?: (isDragging: boolean) => void;
 }
 
 export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
@@ -35,12 +36,17 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   nextMomentUrl,
   prevMomentUrl,
   activeReaction,
+  onDragChange,
 }) => {
   const touchStartY = useRef<number | null>(null);
   const mouseStartY = useRef<number | null>(null);
   const wheelCooldown = useRef<boolean>(false);
   const [dragYOffset, setDragYOffset] = useState<number>(0);
   const [isMouseDown, setIsMouseDown] = useState<boolean>(false);
+
+  useEffect(() => {
+    onDragChange?.(dragYOffset !== 0);
+  }, [dragYOffset, onDragChange]);
   const [direction, setDirection] = useState<'up' | 'down'>('up');
   const [floatingEmojis, setFloatingEmojis] = useState<
     { id: number; emoji: string; x: number; rotation: number }[]
@@ -381,8 +387,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     >
 
 
-      {/* Centered Photo & Sender Section — Seamless Parallel Slide with 3D Depth */}
-      <div className="w-full flex flex-col items-center my-auto z-10 overflow-hidden">
+      {/* Centered Photo & Sender Section — Seamless Parallel Slide */}
+      <div className="w-full flex flex-col items-center my-auto z-10 overflow-visible">
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div
             key={moment.id}

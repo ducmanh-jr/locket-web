@@ -36,6 +36,7 @@ export default function HomePage() {
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [showChatSheet, setShowChatSheet] = useState<boolean>(false);
   const [lastReaction, setLastReaction] = useState<{ emoji: string; timestamp: number } | null>(null);
+  const [isFeedDragging, setIsFeedDragging] = useState<boolean>(false);
 
   const currentUser = userProfile || {
     id: 'user-me',
@@ -161,6 +162,7 @@ export default function HomePage() {
         selectedFilterId={selectedFriendFilter}
         onSelectFilter={setSelectedFriendFilter}
         members={membersFilterOptions}
+        isDragging={isFeedDragging}
       />
 
       {/* Main Views Container — Fullscreen Canvas */}
@@ -215,6 +217,7 @@ export default function HomePage() {
                   nextMomentUrl={nextMoment?.media_url}
                   prevMomentUrl={prevMoment?.media_url}
                   activeReaction={lastReaction}
+                  onDragChange={setIsFeedDragging}
                 />
               ) : (
                 <div className="w-[310px] h-[310px] my-auto rounded-[2.8rem] bg-black/40 p-8 flex flex-col items-center justify-center text-center border border-white/10">
@@ -255,6 +258,7 @@ export default function HomePage() {
               (currentMoment.sender?.username === currentUser.username)
             : false
         }
+        isDragging={isFeedDragging}
       />
 
       {/* Camera View Modal */}
