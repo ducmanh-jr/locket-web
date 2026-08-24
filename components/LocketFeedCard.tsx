@@ -356,7 +356,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
       style={{ touchAction: 'none', overscrollBehavior: 'none' }}
-      className={`w-full flex-1 flex flex-col items-center justify-between select-none overflow-hidden relative ${
+      className={`w-full flex-1 flex flex-col items-center justify-between select-none relative ${
         isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
       }`}
     >

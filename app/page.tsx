@@ -164,7 +164,7 @@ export default function HomePage() {
       />
 
       {/* Main Views Container */}
-      <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden w-full">
+      <div className="flex-1 flex flex-col items-center justify-center relative w-full">
         <AnimatePresence mode="wait">
           {currentView === 'grid' ? (
             <motion.div
@@ -191,7 +191,7 @@ export default function HomePage() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ duration: 0.2 }}
-              className="w-full flex-1 flex flex-col justify-center items-center overflow-hidden relative"
+              className="w-full flex-1 flex flex-col justify-center items-center relative"
             >
               <div className="w-full px-2 pt-1">
                 <SupabaseConfigNotice />
