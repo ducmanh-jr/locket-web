@@ -325,7 +325,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
         capturedMedia,
         caption,
         selectedFriendIds.length > 0 ? selectedFriendIds : ['all'],
-        audioOption === 'music' ? (selectedMusic || undefined) : undefined,
+        selectedMusic || undefined,
         audioOption
       );
       onClose();
@@ -482,8 +482,43 @@ export const CameraView: React.FC<CameraViewProps> = ({
             <img
               src={capturedMedia.dataUrl}
               alt="Locket Snapshot"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover rounded-[2.8rem]"
             />
+
+            {/* Clean Music Selector Pill Button at top of photo preview */}
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center justify-center z-20">
+              {selectedMusic ? (
+                <div className="flex items-center space-x-2 bg-black/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-[#D9266E]/60 shadow-xl">
+                  <Music className="w-3.5 h-3.5 text-[#D9266E] animate-spin" />
+                  <span className="text-white text-xs font-bold truncate max-w-[140px]">
+                    {selectedMusic.title}
+                  </span>
+                  <button
+                    onClick={() => {
+                      killGlobalAudio();
+                      setSelectedMusic(null);
+                      setAudioOption('mute');
+                    }}
+                    className="w-4 h-4 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white text-[10px] ml-1"
+                    title="Xóa nhạc"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    setAudioOption('music');
+                    setShowMusicPicker(true);
+                  }}
+                  className="flex items-center space-x-2 bg-black/75 backdrop-blur-md hover:bg-black/90 px-4 py-1.5 rounded-full border border-white/20 shadow-xl active:scale-95 transition-all text-white font-bold text-xs"
+                >
+                  <Music className="w-3.5 h-3.5 text-[#D9266E]" />
+                  <span>Thêm nhạc 🎵</span>
+                </button>
+              )}
+            </div>
+
             <div className="absolute bottom-4 left-4 right-4 flex justify-center z-20">
               <LocketCaptionWidgetSelector value={caption} onChange={setCaption} />
             </div>
