@@ -181,9 +181,11 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
           return isRecent && !existsInCloud;
         });
 
-        // STRICT MODE: Render ONLY Cloud Shared Room moments + active optimistic uploads.
-        // No local-only isolated moments allowed per account or device!
-        const merged = [...sanitized, ...pendingOptimistic].map((m) => {
+        const deletedIds = new Set(getDeletedMomentIds());
+        const validLocalMoments = localMoments.filter((m) => m && m.id && !deletedIds.has(m.id));
+
+        // Render Cloud Shared Room moments + local device moments + active optimistic uploads.
+        const merged = [...sanitized, ...validLocalMoments, ...pendingOptimistic].map((m) => {
           const isMyMoment = m.sender_id === currentUser.id || m.sender?.id === currentUser.id;
           if (isMyMoment && currentUser.avatar_url) {
             return {
