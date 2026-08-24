@@ -4,14 +4,15 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const term = searchParams.get('term') || '';
   const chart = searchParams.get('chart') || '';
+  const limit = Math.min(Number(searchParams.get('limit')) || 100, 200);
 
-  // If chart=trending or term is empty, fetch Real-Time Daily Apple Music Top Songs Chart for Vietnam
+  // If chart=trending or term is empty, fetch Real-Time Daily Apple Music Top Songs Chart for Vietnam (V-Pop Focus)
   if (chart === 'trending' || !term.trim()) {
     try {
-      const chartUrl = `https://itunes.apple.com/vn/rss/topsongs/limit=30/json`;
+      const chartUrl = `https://itunes.apple.com/vn/rss/topsongs/limit=${limit}/json`;
       const res = await fetch(chartUrl, {
         headers: { Accept: 'application/json' },
-        next: { revalidate: 3600 }, // Cache 1 hour for daily freshness
+        next: { revalidate: 1800 },
       });
 
       if (res.ok) {
@@ -39,22 +40,22 @@ export async function GET(request: Request) {
         if (results.length > 0) {
           return NextResponse.json({ results }, {
             headers: {
-              'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200',
+              'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600',
             },
           });
         }
       }
     } catch (err) {
-      console.warn('Chart fetch failed, falling back to search:', err);
+      console.warn('Chart fetch failed, falling back to V-Pop search:', err);
     }
   }
 
-  // Live iTunes Search when user types query
+  // Live iTunes Search focused on Vietnam / V-Pop
   try {
-    const searchTerm = term.trim() || 'vpop hot trending';
+    const searchTerm = term.trim() || 'vpop nhac viet hot trending';
     const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(
       searchTerm
-    )}&country=VN&media=music&entity=song&limit=50`;
+    )}&country=VN&media=music&entity=song&limit=${limit}`;
 
     const res = await fetch(itunesUrl, {
       headers: {

@@ -13,7 +13,9 @@ import {
   ArrowLeft,
   Scissors,
   Check,
-  FolderArchive
+  Sparkles,
+  Sliders,
+  Volume2
 } from 'lucide-react';
 import { killGlobalAudio, playGlobalAudio } from '@/lib/audioPlayer';
 
@@ -26,9 +28,10 @@ interface MusicPickerModalProps {
 interface ExtendedTrack extends MusicTrack {
   playsCount?: string;
   isCustomSaved?: boolean;
+  trimStart?: number; // Cut start offset in seconds
 }
 
-// Preset tracks list matching user screenshots 100%
+// 100% V-Pop & Vietnamese Trending Preset Fallback Songs
 const PRESET_TRENDING_TRACKS: ExtendedTrack[] = [
   {
     id: 'track-1',
@@ -95,61 +98,56 @@ const PRESET_TRENDING_TRACKS: ExtendedTrack[] = [
   },
   {
     id: 'track-10',
-    title: 'anh đã trái đủ sóng gió...',
+    title: 'anh đã trải đủ sóng gió...',
     artist: 'Võ Viết Duy Khiêm',
     cover_url: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=120&auto=format&fit=crop&q=80',
     preview_url: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3',
   },
   {
     id: 'track-11',
-    title: 'BLACK or WHITE (feat. Cari...',
-    artist: 'REVERSIBLE, Daichi',
-    cover_url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=120&auto=format&fit=crop&q=80',
-    preview_url: 'https://cdn.pixabay.com/download/audio/2022/10/14/audio_9939f792cb.mp3?filename=gimme-some-groove-122421.mp3',
-  },
-  {
-    id: 'track-12',
-    title: 'This is what we are all of',
-    artist: 'Check Cien',
-    cover_url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=120&auto=format&fit=crop&q=80',
-    preview_url: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=tuesday-glitch-soft-hip-hop-118327.mp3',
-  },
-  {
-    id: 'track-13',
-    title: 'Hành Trình Rực Rỡ',
-    artist: 'Do Showbiz',
-    cover_url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=120&auto=format&fit=crop&q=80',
-    preview_url: 'https://cdn.pixabay.com/download/audio/2022/11/06/audio_c0e95c1024.mp3?filename=good-night-160166.mp3',
-  },
-  {
-    id: 'track-14',
     title: 'Nơi Này Có Anh',
     artist: 'Sơn Tùng M-TP',
     cover_url: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=120&auto=format&fit=crop&q=80',
     preview_url: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3',
   },
   {
-    id: 'track-15',
+    id: 'track-12',
     title: 'Thái Bình Mồ Hôi Rơi',
     artist: 'Sơn Tùng M-TP',
     cover_url: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=120&auto=format&fit=crop&q=80',
     preview_url: 'https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c52077e2.mp3?filename=lofi-chill-medium-version-110860.mp3',
   },
   {
-    id: 'track-16',
+    id: 'track-13',
     title: 'Come My Way',
     artist: 'Sơn Tùng M-TP, Tyga',
     cover_url: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=120&auto=format&fit=crop&q=80',
     preview_url: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=tuesday-glitch-soft-hip-hop-118327.mp3',
   },
   {
-    id: 'track-17',
+    id: 'track-14',
     title: 'Âm Thầm Bên Em',
     artist: 'Sơn Tùng M-TP',
     cover_url: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=120&auto=format&fit=crop&q=80',
     preview_url: 'https://cdn.pixabay.com/download/audio/2022/05/16/audio_db6591201e.mp3?filename=ambient-piano-logo-165357.mp3',
   },
+  {
+    id: 'track-15',
+    title: 'Hành Trình Rực Rỡ',
+    artist: 'Do Showbiz',
+    cover_url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=120&auto=format&fit=crop&q=80',
+    preview_url: 'https://cdn.pixabay.com/download/audio/2022/11/06/audio_c0e95c1024.mp3?filename=good-night-160166.mp3',
+  },
 ];
+
+// Sleek 3-Bar Equalizer Animation Component (Replaces Ugly Yellow Ping Circle)
+const EqualizerBars: React.FC = () => (
+  <div className="absolute inset-0 bg-black/55 backdrop-blur-[2px] flex items-center justify-center space-x-1 z-10 rounded-xl">
+    <div className="w-1 bg-[#D9266E] rounded-full animate-pulse h-4" style={{ animationDuration: '0.4s' }} />
+    <div className="w-1 bg-white rounded-full animate-pulse h-6" style={{ animationDuration: '0.6s' }} />
+    <div className="w-1 bg-[#D9266E] rounded-full animate-pulse h-3.5" style={{ animationDuration: '0.5s' }} />
+  </div>
+);
 
 export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
   onSelectMusic,
@@ -158,11 +156,18 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
 }) => {
   const [viewMode, setViewMode] = useState<'main' | 'saved'>('main');
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<ExtendedTrack[]>(PRESET_TRENDING_TRACKS);
+  const [allTracks, setAllTracks] = useState<ExtendedTrack[]>(PRESET_TRENDING_TRACKS);
+  const [visibleCount, setVisibleCount] = useState<number>(20);
   const [loading, setLoading] = useState(false);
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
   const [selectedTrack, setSelectedTrack] = useState<ExtendedTrack | null>(null);
   const [expandedTrackId, setExpandedTrackId] = useState<string | null>(null);
+  const [showTrimmer, setShowTrimmer] = useState<boolean>(false);
+  const [trimOffset, setTrimOffset] = useState<number>(0);
+
+  // Sheet gesture drag state
+  const [dragY, setDragY] = useState<number>(0);
+  const touchStartY = useRef<number | null>(null);
 
   // Saved bookmarks state (persisted in localStorage)
   const [savedTrackIds, setSavedTrackIds] = useState<string[]>(() => {
@@ -197,71 +202,48 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
     }
   };
 
-  // Fetch Real-time Daily Top Trending Chart or Live iTunes Search
+  // Fetch Real-Time Daily Trending or Search focused on V-Pop Vietnamese songs
   useEffect(() => {
     let isCancelled = false;
+    setLoading(true);
 
-    if (!searchQuery.trim()) {
-      setLoading(true);
-      fetch('/api/music?chart=trending')
-        .then((res) => res.json())
-        .then((data) => {
-          if (isCancelled) return;
-          if (data.results && Array.isArray(data.results) && data.results.length > 0) {
-            const mapped: ExtendedTrack[] = data.results
-              .filter((item: any) => item.previewUrl)
-              .map((item: any) => ({
-                id: `trending-${item.trackId}`,
-                title: item.trackName,
-                artist: item.artistName,
-                cover_url: item.artworkUrl100 || item.artworkUrl60,
-                preview_url: item.previewUrl,
-              }));
-            setSearchResults(mapped.length > 0 ? mapped : PRESET_TRENDING_TRACKS);
-          } else {
-            setSearchResults(PRESET_TRENDING_TRACKS);
-          }
-        })
-        .catch(() => {
-          if (!isCancelled) setSearchResults(PRESET_TRENDING_TRACKS);
-        })
-        .finally(() => {
-          if (!isCancelled) setLoading(false);
-        });
+    const query = searchQuery.trim();
+    const endpoint = query
+      ? `/api/music?term=${encodeURIComponent(query)}&limit=100`
+      : `/api/music?chart=trending&limit=100`;
 
-      return () => {
-        isCancelled = true;
-      };
-    }
-
-    const timer = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/music?term=${encodeURIComponent(searchQuery)}`);
-        const data = await res.json();
-
-        if (data.results && Array.isArray(data.results)) {
+    fetch(endpoint)
+      .then((res) => res.json())
+      .then((data) => {
+        if (isCancelled) return;
+        if (data.results && Array.isArray(data.results) && data.results.length > 0) {
           const mapped: ExtendedTrack[] = data.results
-            .filter((item: any) => item.previewUrl)
+            .filter((item: any) => item.previewUrl || item.artworkUrl100)
             .map((item: any) => ({
-              id: `itunes-${item.trackId}`,
-              title: item.trackName,
-              artist: item.artistName,
-              cover_url: item.artworkUrl100 || item.artworkUrl60,
-              preview_url: item.previewUrl,
+              id: item.trackId ? `itunes-${item.trackId}` : `tr-${Math.random()}`,
+              title: item.trackName || item.title || 'Bài hát V-Pop',
+              artist: item.artistName || item.artist || 'Nghệ sĩ Việt',
+              cover_url: item.artworkUrl100 || item.cover_url,
+              preview_url: item.previewUrl || item.preview_url,
             }));
-          setSearchResults(mapped.length > 0 ? mapped : PRESET_TRENDING_TRACKS);
+
+          // Merge preset tracks + fetched tracks (ensuring V-Pop priority)
+          const merged = [...mapped, ...PRESET_TRENDING_TRACKS];
+          const unique = Array.from(new Map(merged.map((t) => [t.title + t.artist, t])).values());
+          setAllTracks(unique);
+        } else {
+          setAllTracks(PRESET_TRENDING_TRACKS);
         }
-      } catch (e) {
-        console.error('iTunes search error:', e);
-      } finally {
+      })
+      .catch(() => {
+        if (!isCancelled) setAllTracks(PRESET_TRENDING_TRACKS);
+      })
+      .finally(() => {
         if (!isCancelled) setLoading(false);
-      }
-    }, 300);
+      });
 
     return () => {
       isCancelled = true;
-      clearTimeout(timer);
     };
   }, [searchQuery]);
 
@@ -272,6 +254,38 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
       setPlayingTrackId(null);
     };
   }, []);
+
+  // Infinite scroll handler — loads 15 more songs when scrolling near bottom
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop <= clientHeight + 120) {
+      if (visibleCount < allTracks.length) {
+        setVisibleCount((prev) => Math.min(prev + 15, allTracks.length));
+      }
+    }
+  };
+
+  // Drag sheet touch handlers
+  const handleTouchStartHeader = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMoveHeader = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    const diffY = e.touches[0].clientY - touchStartY.current;
+    if (diffY > 0) {
+      setDragY(diffY);
+    }
+  };
+
+  const handleTouchEndHeader = () => {
+    if (dragY > 120) {
+      onClose();
+    } else {
+      setDragY(0);
+    }
+    touchStartY.current = null;
+  };
 
   const handleTogglePreview = (e: React.MouseEvent, track: ExtendedTrack) => {
     e.stopPropagation();
@@ -298,11 +312,15 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
   const handleConfirmSelect = (track: ExtendedTrack) => {
     killGlobalAudio();
     setPlayingTrackId(null);
-    onSelectMusic(track);
+    onSelectMusic({
+      ...track,
+      title: trimOffset > 0 ? `${track.title} (${trimOffset}s)` : track.title,
+    });
     onClose();
   };
 
-  const savedTracks = PRESET_TRENDING_TRACKS.filter((t) => savedTrackIds.includes(t.id));
+  const savedTracks = allTracks.filter((t) => savedTrackIds.includes(t.id));
+  const displayedTracks = allTracks.slice(0, visibleCount);
 
   return (
     <div
@@ -310,20 +328,28 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md bg-[#1C1B20] border border-white/10 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-4 pt-3 pb-6 shadow-2xl flex flex-col max-h-[92vh] text-white select-none relative overflow-hidden"
+        className="w-full max-w-md bg-[#1C1B20] border border-white/10 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-4 pt-3 pb-6 shadow-2xl flex flex-col max-h-[94vh] h-[92vh] text-white select-none relative overflow-hidden transition-transform"
+        style={{ transform: `translateY(${dragY}px)` }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Top Centered Drag Handle Pill */}
-        <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3 flex-shrink-0" />
+        {/* Top Draggable Header Handle Bar */}
+        <div
+          onTouchStart={handleTouchStartHeader}
+          onTouchMove={handleTouchMoveHeader}
+          onTouchEnd={handleTouchEndHeader}
+          className="w-full pt-1 pb-3 cursor-grab active:cursor-grabbing flex justify-center flex-shrink-0"
+        >
+          <div className="w-12 h-1.5 bg-white/30 hover:bg-white/50 rounded-full transition-colors" />
+        </div>
 
         {/* VIEW A: Saved Audio View ("Nhạc đã lưu") */}
         {viewMode === 'saved' ? (
-          <div className="flex flex-col h-full flex-1">
+          <div className="flex flex-col h-full flex-1 overflow-hidden">
             {/* Header with Back Arrow and Title */}
-            <div className="flex items-center justify-between mb-6 px-1 flex-shrink-0">
+            <div className="flex items-center justify-between mb-5 px-1 flex-shrink-0">
               <button
                 onClick={() => setViewMode('main')}
-                className="p-1.5 rounded-full hover:bg-white/10 text-white transition-colors"
+                className="p-2 rounded-full hover:bg-white/10 text-white transition-colors"
                 title="Quay lại"
               >
                 <ArrowLeft className="w-6 h-6" />
@@ -335,7 +361,7 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
             </div>
 
             {/* Content: Empty State vs Saved Tracks List */}
-            <div className="flex-1 flex flex-col items-center justify-center py-10 px-4 text-center">
+            <div className="flex-1 flex flex-col items-center justify-center py-6 px-4 text-center overflow-y-auto custom-scrollbar">
               {savedTracks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center space-y-4 my-auto">
                   {/* 3D Blue Archive Box Illustration */}
@@ -358,7 +384,7 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className="w-full space-y-2.5 overflow-y-auto custom-scrollbar pr-1">
+                <div className="w-full space-y-2.5 pr-1">
                   {savedTracks.map((track) => (
                     <div
                       key={track.id}
@@ -386,7 +412,7 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
             </div>
           </div>
         ) : (
-          /* VIEW B: Main Browse & Search View */
+          /* VIEW B: Main Browse & Infinite Scroll Search View */
           <div className="flex flex-col h-full flex-1 overflow-hidden">
             {/* Top Search Bar & Bookmark Icon */}
             <div className="flex items-center space-x-2.5 mb-4 flex-shrink-0">
@@ -395,7 +421,7 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Tìm lời bài hát"
+                  placeholder="Tìm lời bài hát, nhạc V-Pop..."
                   className="w-full bg-[#2B2A30] text-white text-sm font-medium rounded-full pl-10 pr-10 py-2.5 focus:outline-none focus:ring-1 focus:ring-zinc-500 placeholder-zinc-400"
                 />
                 <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3" />
@@ -432,126 +458,138 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
               )}
             </div>
 
-            {/* Section Header: "Mới phát hành" or "Dành cho bạn" */}
+            {/* Section Header */}
             <div className="flex items-center justify-between mb-3 px-1 flex-shrink-0">
-              <h3 className="text-white text-base font-bold tracking-tight">
-                {searchQuery ? 'Kết quả tìm kiếm' : 'Mới phát hành'}
+              <h3 className="text-white text-base font-bold tracking-tight flex items-center space-x-1.5">
+                <Sparkles className="w-4 h-4 text-[#D9266E]" />
+                <span>{searchQuery ? 'Kết quả tìm kiếm V-Pop' : 'Mới phát hành V-Pop 🔥'}</span>
               </h3>
               {!searchQuery && (
-                <button className="text-[#5B9DF6] hover:underline text-xs font-semibold">
-                  Xem tất cả
-                </button>
+                <span className="text-zinc-400 text-xs font-medium">
+                  {displayedTracks.length}/{allTracks.length} bài
+                </span>
               )}
             </div>
 
-            {/* Song List */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1 pb-16">
-              {loading ? (
+            {/* Infinite Scroll Song List */}
+            <div
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1 pb-20"
+            >
+              {loading && displayedTracks.length === 0 ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="w-7 h-7 rounded-full border-2 border-[#5B9DF6] border-t-transparent animate-spin" />
+                  <div className="w-7 h-7 rounded-full border-2 border-[#D9266E] border-t-transparent animate-spin" />
                 </div>
-              ) : searchResults.length === 0 ? (
+              ) : displayedTracks.length === 0 ? (
                 <p className="text-center text-zinc-500 text-xs py-10">
                   Không tìm thấy bài hát nào.
                 </p>
               ) : (
-                searchResults.map((track) => {
-                  const isSelected = selectedTrackId === track.id || selectedTrack?.id === track.id;
-                  const isPlaying = playingTrackId === track.id;
-                  const isSaved = savedTrackIds.includes(track.id);
-                  const isExpanded = expandedTrackId === track.id;
+                <>
+                  {displayedTracks.map((track) => {
+                    const isSelected = selectedTrackId === track.id || selectedTrack?.id === track.id;
+                    const isPlaying = playingTrackId === track.id;
+                    const isSaved = savedTrackIds.includes(track.id);
+                    const isExpanded = expandedTrackId === track.id;
 
-                  return (
-                    <div
-                      key={track.id}
-                      onClick={() => handleItemClick(track)}
-                      className={`flex flex-col p-2.5 rounded-2xl cursor-pointer transition-all ${
-                        isExpanded || isSelected
-                          ? 'bg-[#2B2A30] border border-white/15 shadow-md'
-                          : 'hover:bg-white/5'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        {/* Track Cover & Info */}
-                        <div className="flex items-center space-x-3 truncate flex-1 pr-2">
-                          <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-zinc-800 border border-white/10">
-                            <img src={track.cover_url} alt="" className="w-full h-full object-cover" />
-                            {isPlaying && (
-                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                <div className="w-2.5 h-2.5 bg-[#FFC700] rounded-full animate-ping" />
-                              </div>
-                            )}
+                    return (
+                      <div
+                        key={track.id}
+                        onClick={() => handleItemClick(track)}
+                        className={`flex flex-col p-2.5 rounded-2xl cursor-pointer transition-all ${
+                          isExpanded || isSelected
+                            ? 'bg-[#2B2A30] border border-white/15 shadow-md'
+                            : 'hover:bg-white/5'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          {/* Track Cover & Equalizer */}
+                          <div className="flex items-center space-x-3 truncate flex-1 pr-2">
+                            <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-zinc-800 border border-white/10">
+                              <img src={track.cover_url} alt="" className="w-full h-full object-cover" />
+                              {/* Replaced ugly yellow ping dot with 3-bar animated equalizer */}
+                              {isPlaying && <EqualizerBars />}
+                            </div>
+
+                            <div className="truncate">
+                              <h4 className="text-white text-sm font-bold truncate leading-tight">
+                                {track.title}
+                              </h4>
+                              <p className="text-zinc-400 text-xs truncate mt-0.5 font-medium">
+                                {track.artist}
+                              </p>
+                            </div>
                           </div>
 
-                          <div className="truncate">
-                            <h4 className="text-white text-sm font-bold truncate leading-tight">
-                              {track.title}
-                            </h4>
-                            <p className="text-zinc-400 text-xs truncate mt-0.5 font-medium">
-                              {track.artist}
-                            </p>
-                          </div>
-                        </div>
+                          {/* Right Actions */}
+                          {isExpanded ? (
+                            <div className="flex items-center space-x-2 flex-shrink-0">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                }}
+                                className="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
+                                title="Tùy chọn"
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </button>
 
-                        {/* Right Action Icons (Matching Screenshots 4 & 5) */}
-                        {isExpanded ? (
-                          <div className="flex items-center space-x-2 flex-shrink-0">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                              }}
-                              className="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
-                              title="Tùy chọn"
-                            >
-                              <MoreVertical className="w-4 h-4" />
-                            </button>
+                              <button
+                                onClick={(e) => toggleBookmark(e, track.id)}
+                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                                  isSaved ? 'bg-[#FFC700] text-black' : 'bg-white/10 text-white hover:bg-white/20'
+                                }`}
+                                title={isSaved ? 'Đã lưu' : 'Lưu nhạc'}
+                              >
+                                <Bookmark className="w-4 h-4 fill-current" />
+                              </button>
 
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleConfirmSelect(track);
+                                }}
+                                className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform"
+                                title="Chọn bài hát này"
+                              >
+                                <Plus className="w-5 h-5 stroke-[2.5]" />
+                              </button>
+                            </div>
+                          ) : (
                             <button
-                              onClick={(e) => toggleBookmark(e, track.id)}
-                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                                isSaved ? 'bg-[#FFC700] text-black' : 'bg-white/10 text-white hover:bg-white/20'
+                              onClick={(e) => handleTogglePreview(e, track)}
+                              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all flex-shrink-0 ${
+                                isPlaying
+                                  ? 'bg-white text-black shadow-lg scale-105'
+                                  : 'bg-[#2C2C34] text-zinc-200 hover:bg-white hover:text-black'
                               }`}
-                              title={isSaved ? 'Đã lưu' : 'Lưu nhạc'}
+                              title={isPlaying ? 'Tạm dừng' : 'Phát nghe thử'}
                             >
-                              <Bookmark className="w-4 h-4 fill-current" />
+                              {isPlaying ? (
+                                <Pause className="w-4 h-4 fill-current" />
+                              ) : (
+                                <Play className="w-4 h-4 fill-current ml-0.5" />
+                              )}
                             </button>
-
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleConfirmSelect(track);
-                              }}
-                              className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform"
-                              title="Chọn bài hát này"
-                            >
-                              <Plus className="w-5 h-5 stroke-[2.5]" />
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={(e) => handleTogglePreview(e, track)}
-                            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all flex-shrink-0 ${
-                              isPlaying
-                                ? 'bg-white text-black shadow-lg scale-105'
-                                : 'bg-[#2C2C34] text-zinc-200 hover:bg-white hover:text-black'
-                            }`}
-                            title={isPlaying ? 'Tạm dừng' : 'Phát nghe thử'}
-                          >
-                            {isPlaying ? (
-                              <Pause className="w-4 h-4 fill-current" />
-                            ) : (
-                              <Play className="w-4 h-4 fill-current ml-0.5" />
-                            )}
-                          </button>
-                        )}
+                          )}
+                        </div>
                       </div>
+                    );
+                  })}
+
+                  {/* Infinite Scroll Loader Indicator */}
+                  {visibleCount < allTracks.length && (
+                    <div className="py-4 text-center">
+                      <span className="text-zinc-500 text-xs font-medium animate-pulse">
+                        Đang tải thêm gợi ý nhạc V-Pop...
+                      </span>
                     </div>
-                  );
-                })
+                  )}
+                </>
               )}
             </div>
 
-            {/* FLOATING BOTTOM PLAYER DOCK (Matching Screenshot 4) */}
+            {/* FLOATING BOTTOM PLAYER DOCK */}
             {selectedTrack && (
               <div className="absolute bottom-3 left-4 right-4 bg-[#18171C]/95 backdrop-blur-2xl border border-white/15 rounded-full px-3.5 py-2 flex items-center justify-between shadow-[0_10px_35px_rgba(0,0,0,0.8)] z-30 animate-in slide-in-from-bottom-3 duration-300">
                 {/* Left: Play/Pause Toggle Button */}
@@ -579,9 +617,7 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
                 {/* Right Actions: Cut Scissors + Confirm Plus Circle */}
                 <div className="flex items-center space-x-2 flex-shrink-0">
                   <button
-                    onClick={() => {
-                      alert('Cắt đoạn nhạc: Đã tự động chọn đoạn điệp khúc 30s hay nhất!');
-                    }}
+                    onClick={() => setShowTrimmer(true)}
                     className="p-2 text-white/80 hover:text-white transition-colors"
                     title="Cắt đoạn nhạc"
                   >
@@ -598,6 +634,67 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* INTERACTIVE MUSIC SEGMENT TRIMMER OVERLAY (Nút Cắt Nhạc ✂) */}
+        {showTrimmer && selectedTrack && (
+          <div className="absolute inset-0 z-50 bg-[#141318] p-5 flex flex-col justify-between animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <button
+                onClick={() => setShowTrimmer(false)}
+                className="p-1.5 rounded-full hover:bg-white/10 text-white"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <h3 className="text-white text-base font-bold">Cắt đoạn nhạc ✂</h3>
+              <div className="w-6" />
+            </div>
+
+            {/* Track Info */}
+            <div className="flex flex-col items-center space-y-3 my-auto text-center">
+              <img
+                src={selectedTrack.cover_url}
+                alt=""
+                className="w-24 h-24 rounded-2xl shadow-xl object-cover border border-white/10"
+              />
+              <div>
+                <h4 className="text-white font-bold text-base">{selectedTrack.title}</h4>
+                <p className="text-zinc-400 text-xs mt-0.5">{selectedTrack.artist}</p>
+              </div>
+
+              {/* Segment Waveform Slider Selector */}
+              <div className="w-full max-w-xs space-y-2 pt-4">
+                <div className="flex items-center justify-between text-xs text-zinc-400 font-medium">
+                  <span>Đoạn 30s chọn:</span>
+                  <span className="text-white font-bold">{trimOffset}s - {trimOffset + 30}s</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={60}
+                  step={5}
+                  value={trimOffset}
+                  onChange={(e) => setTrimOffset(Number(e.target.value))}
+                  className="w-full accent-[#D9266E] h-2 bg-zinc-800 rounded-lg cursor-pointer"
+                />
+                <p className="text-[11px] text-zinc-500">Kéo để chọn đoạn điệp khúc phát trong khoảnh khắc Locket</p>
+              </div>
+            </div>
+
+            {/* Bottom Apply Action */}
+            <button
+              onClick={() => {
+                setShowTrimmer(false);
+                handleConfirmSelect({
+                  ...selectedTrack,
+                  title: `${selectedTrack.title} (${trimOffset}s)`,
+                });
+              }}
+              className="w-full py-3 bg-[#D9266E] text-white font-bold rounded-full shadow-lg hover:bg-[#be185d] active:scale-95 transition-all text-center"
+            >
+              Áp dụng đoạn cắt này
+            </button>
           </div>
         )}
       </div>
