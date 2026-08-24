@@ -224,11 +224,9 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     if (touchStartY.current !== null) {
       const touchCurrentY = e.touches[0].clientY;
       const diffY = touchCurrentY - touchStartY.current;
-      if (Math.abs(diffY) > 5) {
-        if (e.cancelable) e.preventDefault();
-        setDragYOffset(diffY);
-        if (Math.abs(diffY) > 15) isDraggingRef.current = true;
-      }
+      if (e.cancelable) e.preventDefault();
+      setDragYOffset(diffY);
+      if (Math.abs(diffY) > 10) isDraggingRef.current = true;
     }
   };
 
@@ -236,6 +234,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     if (touchStartY.current === null) return;
     const touchEndY = e.changedTouches[0].clientY;
     const diffY = touchStartY.current - touchEndY;
+    setDragYOffset(0);
 
     if (diffY > 60 && hasNext && onNext) {
       setDirection('up');
@@ -243,8 +242,6 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     } else if (diffY < -60 && hasPrev && onPrev) {
       setDirection('down');
       onPrev();
-    } else {
-      setDragYOffset(0);
     }
     touchStartY.current = null;
   };
@@ -259,24 +256,21 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     const handleMouseMoveWindow = (e: MouseEvent) => {
       if (mouseStartY.current !== null && isMouseDown) {
         const diffY = e.clientY - mouseStartY.current;
-        if (Math.abs(diffY) > 5) {
-          setDragYOffset(diffY);
-          if (Math.abs(diffY) > 15) isDraggingRef.current = true;
-        }
+        setDragYOffset(diffY);
+        if (Math.abs(diffY) > 10) isDraggingRef.current = true;
       }
     };
 
     const handleMouseUpWindow = (e: MouseEvent) => {
       if (mouseStartY.current !== null && isMouseDown) {
         const diffY = mouseStartY.current - e.clientY;
+        setDragYOffset(0);
         if (diffY > 60 && hasNext && onNext) {
           setDirection('up');
           onNext();
         } else if (diffY < -60 && hasPrev && onPrev) {
           setDirection('down');
           onPrev();
-        } else {
-          setDragYOffset(0);
         }
         mouseStartY.current = null;
         setIsMouseDown(false);
@@ -411,12 +405,12 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             exit={{ y: direction === 'down' ? '100vh' : '-100vh', scale: 1, opacity: 1 }}
             transition={
               dragYOffset !== 0
-                ? { type: 'just' }
+                ? { duration: 0 }
                 : {
                     type: 'spring',
-                    stiffness: 240,
-                    damping: 28,
-                    mass: 0.8,
+                    stiffness: 300,
+                    damping: 30,
+                    mass: 0.7,
                   }
             }
             className="w-full flex flex-col items-center transform-gpu will-change-transform relative"
