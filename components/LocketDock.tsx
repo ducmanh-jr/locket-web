@@ -52,19 +52,29 @@ export const LocketDock: React.FC<LocketDockProps> = ({
           <Grid3x3 className="w-5 h-5 stroke-[2]" />
         </motion.button>
 
-        {/* Center: Static Dark Rose Button with Home Icon */}
+        {/* Center: Locket Gold Dual-Ring Shutter Home Button */}
         <motion.button
           whileTap={{ scale: 0.90 }}
+          whileHover={{ scale: 1.05 }}
           onClick={() => {
             triggerHaptic();
             onOpenCamera();
           }}
-          className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#D9266E] via-[#BE185D] to-[#9F1239] text-white flex items-center justify-center shadow-[0_4px_18px_rgba(217,38,110,0.5)] cursor-pointer hover:brightness-105 transition-all"
+          className="relative group p-[2px] rounded-full bg-gradient-to-tr from-[#FFC700] via-[#FF2A85] to-[#D9266E] shadow-[0_0_20px_rgba(255,42,133,0.5),0_0_25px_rgba(255,199,0,0.3)] transition-all cursor-pointer"
           title="Chụp khoảnh khắc mới"
         >
-          <svg className="w-5 h-5 text-white fill-current drop-shadow-sm" viewBox="0 0 24 24">
-            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-          </svg>
+          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#BE185D] via-[#D9266E] to-[#FF2A85] flex items-center justify-center border border-white/30 relative overflow-hidden">
+            {/* Ambient Top Light Reflection */}
+            <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-transparent rounded-full pointer-events-none" />
+
+            <svg
+              className="w-5.5 h-5.5 text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.5)] relative z-10 transition-transform group-hover:scale-110"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M11.235 2.686a1.2 1.2 0 0 1 1.53 0l8.1 6.75a1.2 1.2 0 0 1 .435.924V19.5a2.25 2.25 0 0 1-2.25 2.25H15a1.2 1.2 0 0 1-1.2-1.2v-4.5a.75.75 0 0 0-.75-.75h-2.1a.75.75 0 0 0-.75.75v4.5a1.2 1.2 0 0 1-1.2 1.2H6a2.25 2.25 0 0 1-2.25-2.25V10.36a1.2 1.2 0 0 1 .435-.924l8.1-6.75z" />
+            </svg>
+          </div>
         </motion.button>
 
         {/* Right: MessageCircle with badge */}
