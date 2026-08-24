@@ -163,8 +163,8 @@ export default function HomePage() {
         members={membersFilterOptions}
       />
 
-      {/* Main Views Container */}
-      <div className="flex-1 flex flex-col items-center justify-center relative w-full">
+      {/* Main Views Container — Fullscreen Canvas */}
+      <div className="absolute inset-0 w-full h-full z-0">
         <AnimatePresence mode="wait">
           {currentView === 'grid' ? (
             <motion.div
@@ -173,7 +173,7 @@ export default function HomePage() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-              className="w-full h-full absolute inset-0 bg-[#0c060a] z-30 transform-gpu will-change-transform"
+              className="w-full h-full absolute inset-0 bg-[#0c060a] z-30 transform-gpu will-change-transform pt-16"
             >
               <LocketHistoryGrid
                 moments={roomMoments}
@@ -191,9 +191,9 @@ export default function HomePage() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ duration: 0.2 }}
-              className="w-full flex-1 flex flex-col justify-center items-center relative"
+              className="w-full h-full absolute inset-0 flex flex-col justify-center items-center"
             >
-              <div className="w-full px-2 pt-1">
+              <div className="w-full px-2 pt-1 absolute top-14 z-30 pointer-events-auto">
                 <SupabaseConfigNotice />
               </div>
 

@@ -48,7 +48,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
 
   return (
     <>
-      <div className="relative w-full z-40 px-4 pt-3 sm:pt-4 pb-2 flex items-center justify-between bg-transparent flex-shrink-0">
+      <div className="absolute top-0 left-0 right-0 z-40 px-4 pt-3 sm:pt-4 pb-2 flex items-center justify-between bg-transparent pointer-events-none">
 
         {/* Left: Speaker / Announcement Icon Button (Exact Screenshot) */}
         <motion.button
@@ -58,7 +58,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
               try { navigator.vibrate(20); } catch (e) { }
             }
           }}
-          className="w-9 h-9 flex items-center justify-center text-white/70 hover:text-white transition-colors rounded-full hover:bg-white/5"
+          className="w-9 h-9 flex items-center justify-center text-white/70 hover:text-white transition-colors rounded-full hover:bg-white/5 pointer-events-auto"
           title="Thông báo Locket"
         >
           <Megaphone className="w-5 h-5 stroke-[2]" />
@@ -68,7 +68,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
         <motion.button
           whileTap={{ scale: 0.93 }}
           onClick={() => setShowFilterModal(true)}
-          className="flex items-center space-x-2 backdrop-blur-xl text-white font-extrabold px-4 py-1.5 rounded-full shadow-lg cursor-pointer border border-white/10"
+          className="flex items-center space-x-2 backdrop-blur-xl text-white font-extrabold px-4 py-1.5 rounded-full shadow-lg cursor-pointer border border-white/10 pointer-events-auto"
           style={{
             background: 'rgba(20, 10, 18, 0.78)',
             boxShadow: '0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
@@ -83,7 +83,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
         {/* Right: Circular User Avatar with Gold Ring + Crown for Admin */}
         <button
           onClick={onOpenProfile}
-          className="relative flex-shrink-0 active:scale-95 transition-transform"
+          className="relative flex-shrink-0 active:scale-95 transition-transform pointer-events-auto"
           title="Trang cá nhân của bạn"
         >
           {(currentUser.isAdmin || currentUser.email === 'nguyenducmanh.ovaltine@gmail.com') ? (
