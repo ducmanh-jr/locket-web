@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Moment, Profile } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, Trash2, MoreVertical, Volume2, VolumeX } from 'lucide-react';
@@ -52,6 +53,19 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     { id: number; emoji: string; x: number; rotation: number }[]
   >([]);
   const [showOptionsModal, setShowOptionsModal] = useState<boolean>(false);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (showOptionsModal) {
+      onDragChange?.(true);
+    } else if (dragYOffset === 0) {
+      onDragChange?.(false);
+    }
+  }, [showOptionsModal, dragYOffset, onDragChange]);
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [hasVideoError, setHasVideoError] = useState<boolean>(false);
@@ -665,63 +679,67 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         </div>
       </div>
 
-      {/* Options Modal Sheet — Spring Physics */}
-      <AnimatePresence>
-        {showOptionsModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={() => setShowOptionsModal(false)}
-            className="absolute inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-end sm:items-center justify-center p-0 sm:p-4"
-          >
-            <motion.div
-              initial={{ y: 100, scale: 0.92, opacity: 0 }}
-              animate={{ y: 0, scale: 1, opacity: 1 }}
-              exit={{ y: 100, scale: 0.92, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 28, mass: 0.8 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-xs bg-[#160a12]/95 backdrop-blur-2xl border border-white/10 rounded-t-3xl sm:rounded-3xl p-5 text-left space-y-2.5 shadow-[0_-10px_40px_rgba(0,0,0,0.6)]"
-            >
-              <h4 className="text-white text-xs font-extrabold text-center pb-2.5 border-b border-zinc-800/80">
-                Tùy chọn Khoảnh khắc
-              </h4>
-
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                onClick={handleDownload}
-                className="w-full p-3.5 bg-[#25121f] hover:bg-[#33182b] rounded-2xl text-white text-xs font-semibold flex items-center space-x-3 transition-colors border border-white/5"
-              >
-                <Download className="w-4 h-4 text-[#D9266E]" />
-                <span>Tải ảnh về máy</span>
-              </motion.button>
-
-              {canDeleteMoment && onDeleteMoment && (
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => {
-                    onDeleteMoment(moment.id);
-                    setShowOptionsModal(false);
-                  }}
-                  className="w-full p-3.5 bg-red-500/10 hover:bg-red-500/20 rounded-2xl text-red-400 text-xs font-semibold flex items-center space-x-3 transition-colors border border-red-500/20"
-                >
-                  <Trash2 className="w-4 h-4 text-red-400" />
-                  <span>{isAdmin && !isMyMoment ? 'Xóa khoảnh khắc này (Quyền Admin)' : 'Xóa khoảnh khắc này'}</span>
-                </motion.button>
-              )}
-
-              <motion.button
-                whileTap={{ scale: 0.97 }}
+      {/* Options Modal Sheet — Portaled directly to document.body at z-[999] */}
+      {isMounted &&
+        createPortal(
+          <AnimatePresence>
+            {showOptionsModal && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
                 onClick={() => setShowOptionsModal(false)}
-                className="w-full py-3 bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-400 text-xs font-bold rounded-2xl text-center transition-colors"
+                className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-xl flex items-end sm:items-center justify-center p-4 pb-8 sm:pb-4"
               >
-                Đóng
-              </motion.button>
-            </motion.div>
-          </motion.div>
+                <motion.div
+                  initial={{ y: 120, scale: 0.92, opacity: 0 }}
+                  animate={{ y: 0, scale: 1, opacity: 1 }}
+                  exit={{ y: 120, scale: 0.92, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 340, damping: 28, mass: 0.8 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full max-w-xs bg-[#160a12]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-5 text-left space-y-2.5 shadow-[0_10px_40px_rgba(0,0,0,0.9)] relative z-[1000]"
+                >
+                  <h4 className="text-white text-xs font-extrabold text-center pb-2.5 border-b border-zinc-800/80">
+                    Tùy chọn Khoảnh khắc
+                  </h4>
+
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleDownload}
+                    className="w-full p-3.5 bg-[#25121f] hover:bg-[#33182b] rounded-2xl text-white text-xs font-semibold flex items-center space-x-3 transition-colors border border-white/5"
+                  >
+                    <Download className="w-4 h-4 text-[#D9266E]" />
+                    <span>Tải ảnh về máy</span>
+                  </motion.button>
+
+                  {canDeleteMoment && onDeleteMoment && (
+                    <motion.button
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => {
+                        onDeleteMoment(moment.id);
+                        setShowOptionsModal(false);
+                      }}
+                      className="w-full p-3.5 bg-red-500/10 hover:bg-red-500/20 rounded-2xl text-red-400 text-xs font-semibold flex items-center space-x-3 transition-colors border border-red-500/20"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                      <span>{isAdmin && !isMyMoment ? 'Xóa khoảnh khắc này (Quyền Admin)' : 'Xóa khoảnh khắc này'}</span>
+                    </motion.button>
+                  )}
+
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setShowOptionsModal(false)}
+                    className="w-full py-3 bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-400 text-xs font-bold rounded-2xl text-center transition-colors"
+                  >
+                    Đóng
+                  </motion.button>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
         )}
-      </AnimatePresence>
     </div>
   );
 };
