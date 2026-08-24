@@ -6,8 +6,6 @@ import {
   ArrowLeft,
   Users,
   Grid,
-  Smartphone,
-  ShieldCheck,
   LogOut,
   Edit3,
   Check,
@@ -34,7 +32,6 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
-  const [showWidgetModal, setShowWidgetModal] = useState<boolean>(false);
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
@@ -393,38 +390,6 @@ export default function ProfilePage() {
             <ChevronRight className="w-4 h-4 text-zinc-500" />
           </button>
 
-          <button
-            onClick={() => setShowWidgetModal(true)}
-            className="w-full bg-[#160b13] hover:bg-[#22121d] border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between transition-all active:scale-98 shadow-sm"
-          >
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-zinc-800/80 text-[#FF2A85] flex items-center justify-center border border-zinc-700/50">
-                <Smartphone className="w-5 h-5 stroke-[2.2]" />
-              </div>
-              <div className="text-left">
-                <h4 className="text-white text-xs font-bold">Tiện ích Widget Màn hình</h4>
-                <p className="text-zinc-500 text-[11px] mt-0.5">Hướng dẫn đưa Locket ra Màn hình chính</p>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-zinc-500" />
-          </button>
-
-          <div className="w-full bg-[#160b13] border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between shadow-sm">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-zinc-800/80 text-[#FF2A85] flex items-center justify-center border border-zinc-700/50">
-                <ShieldCheck className="w-5 h-5 stroke-[2.2]" />
-              </div>
-              <div className="text-left">
-                <h4 className="text-white text-xs font-bold">Bảo mật & Quyền riêng tư</h4>
-                <p className="text-zinc-500 text-[11px] mt-0.5">Bảo vệ dữ liệu & quyền riêng tư cá nhân</p>
-              </div>
-            </div>
-            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center space-x-1 bg-[#FF2A85]/10 border border-[#FF2A85]/30 text-[#FF2A85]">
-              <Check className="w-3 h-3" />
-              <span>An toàn</span>
-            </span>
-          </div>
-
           <PWAInstallBanner forceDisplay={true} />
         </div>
       </div>
@@ -436,31 +401,6 @@ export default function ProfilePage() {
         <LogOut className="w-4 h-4" />
         <span>Đăng xuất tài khoản</span>
       </button>
-
-      {showWidgetModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center space-y-4 bg-[#160b13] border border-[#FF2A85]/40 shadow-[0_0_30px_rgba(255,42,133,0.2)]">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto bg-[#FF2A85]/20 border border-[#FF2A85]/40 text-[#FF2A85]">
-              <Smartphone className="w-6 h-6" />
-            </div>
-            <h3 className="text-white text-base font-bold">Cài đặt Widget Màn hình</h3>
-            <p className="text-zinc-400 text-xs text-left leading-relaxed">
-              Để xem ảnh bạn bè gửi ngay trên Màn hình chính như ứng dụng Locket thật:
-            </p>
-            <div className="text-left text-xs text-zinc-300 space-y-2.5 bg-zinc-900/80 p-4 rounded-2xl border border-zinc-800">
-              <p>1. Nhấn nút <b>"Cài đặt LocketWeb"</b> bên ngoài trang cài đặt.</p>
-              <p>2. Chọn <b>"Thêm vào Màn hình chính"</b> trên trình duyệt của bạn.</p>
-              <p>3. Mở LocketWeb trực tiếp từ màn hình chính để dùng chuẩn full-screen!</p>
-            </div>
-            <button
-              onClick={() => setShowWidgetModal(false)}
-              className="w-full py-3 bg-[#FF2A85] text-white font-extrabold text-xs rounded-2xl active:scale-95 transition-all shadow-[0_0_15px_rgba(255,42,133,0.5)]"
-            >
-              Đã hiểu ✨
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
