@@ -197,12 +197,41 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
     }
   };
 
-  // Search iTunes API when user types
+  // Fetch Real-time Daily Top Trending Chart or Live iTunes Search
   useEffect(() => {
+    let isCancelled = false;
+
     if (!searchQuery.trim()) {
-      setSearchResults(PRESET_TRENDING_TRACKS);
-      setLoading(false);
-      return;
+      setLoading(true);
+      fetch('/api/music?chart=trending')
+        .then((res) => res.json())
+        .then((data) => {
+          if (isCancelled) return;
+          if (data.results && Array.isArray(data.results) && data.results.length > 0) {
+            const mapped: ExtendedTrack[] = data.results
+              .filter((item: any) => item.previewUrl)
+              .map((item: any) => ({
+                id: `trending-${item.trackId}`,
+                title: item.trackName,
+                artist: item.artistName,
+                cover_url: item.artworkUrl100 || item.artworkUrl60,
+                preview_url: item.previewUrl,
+              }));
+            setSearchResults(mapped.length > 0 ? mapped : PRESET_TRENDING_TRACKS);
+          } else {
+            setSearchResults(PRESET_TRENDING_TRACKS);
+          }
+        })
+        .catch(() => {
+          if (!isCancelled) setSearchResults(PRESET_TRENDING_TRACKS);
+        })
+        .finally(() => {
+          if (!isCancelled) setLoading(false);
+        });
+
+      return () => {
+        isCancelled = true;
+      };
     }
 
     const timer = setTimeout(async () => {
@@ -226,11 +255,14 @@ export const MusicPickerModal: React.FC<MusicPickerModalProps> = ({
       } catch (e) {
         console.error('iTunes search error:', e);
       } finally {
-        setLoading(false);
+        if (!isCancelled) setLoading(false);
       }
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+    };
   }, [searchQuery]);
 
   // Clean audio on unmount
