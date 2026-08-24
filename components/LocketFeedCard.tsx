@@ -64,6 +64,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   useEffect(() => {
     setIsMuted(true);
     setHasVideoError(false);
+    setDragYOffset(0);
     if (videoRef.current) {
       videoRef.current.play().catch(() => {});
     }
@@ -222,8 +223,9 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     } else if (diffY < -60 && hasPrev && onPrev) {
       setDirection('down');
       onPrev();
+    } else {
+      setDragYOffset(0);
     }
-    setDragYOffset(0);
     touchStartY.current = null;
   };
 
@@ -253,8 +255,9 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         } else if (diffY < -60 && hasPrev && onPrev) {
           setDirection('down');
           onPrev();
+        } else {
+          setDragYOffset(0);
         }
-        setDragYOffset(0);
         mouseStartY.current = null;
         setIsMouseDown(false);
       }
@@ -394,7 +397,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
 
       {/* Centered Photo & Sender Section — Full Card Vertical Slide */}
       <div className="w-full flex flex-col items-center my-auto z-10">
-        <AnimatePresence mode="wait" initial={false}>
+        <AnimatePresence mode="sync" initial={false}>
           <motion.div
             key={moment.id}
             initial={{
