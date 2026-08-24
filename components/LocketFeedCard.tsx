@@ -3,7 +3,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Moment, Profile } from '@/lib/types';
-import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Download, Trash2, MoreVertical, Volume2, VolumeX } from 'lucide-react';
 import { killGlobalAudio, playGlobalAudio } from '@/lib/audioPlayer';
 import { getSafeMediaUrl } from '@/lib/media';
@@ -42,18 +42,12 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   const touchStartY = useRef<number | null>(null);
   const mouseStartY = useRef<number | null>(null);
   const wheelCooldown = useRef<boolean>(false);
-  const dragY = useMotionValue(0);
-  const [dragVal, setDragVal] = useState<number>(0);
+  const [dragYOffset, setDragYOffset] = useState<number>(0);
   const [isMouseDown, setIsMouseDown] = useState<boolean>(false);
 
   useEffect(() => {
-    const unsub = dragY.on('change', (latest) => {
-      setDragVal(latest);
-      onDragChange?.(latest !== 0);
-    });
-    return () => unsub();
-  }, [dragY, onDragChange]);
-
+    onDragChange?.(dragYOffset !== 0);
+  }, [dragYOffset, onDragChange]);
   const [direction, setDirection] = useState<'up' | 'down'>('up');
   const [floatingEmojis, setFloatingEmojis] = useState<
     { id: number; emoji: string; x: number; rotation: number }[]
@@ -68,11 +62,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   useEffect(() => {
     if (showOptionsModal) {
       onDragChange?.(true);
-    } else if (dragVal === 0) {
+    } else if (dragYOffset === 0) {
       onDragChange?.(false);
     }
-  }, [showOptionsModal, dragVal, onDragChange]);
-
+  }, [showOptionsModal, dragYOffset, onDragChange]);
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [hasVideoError, setHasVideoError] = useState<boolean>(false);
@@ -89,13 +82,13 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   currentMomentIdRef.current = moment.id;
 
   useEffect(() => {
-    dragY.set(0);
     setIsMuted(true);
     setHasVideoError(false);
+    setDragYOffset(0);
     if (videoRef.current) {
       videoRef.current.play().catch(() => {});
     }
-  }, [moment.id, moment.media_url, dragY]);
+  }, [moment.id, moment.media_url]);
 
   const toggleVideoMute = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -231,9 +224,11 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     if (touchStartY.current !== null) {
       const touchCurrentY = e.touches[0].clientY;
       const diffY = touchCurrentY - touchStartY.current;
-      if (e.cancelable) e.preventDefault();
-      dragY.set(diffY);
-      if (Math.abs(diffY) > 8) isDraggingRef.current = true;
+      if (Math.abs(diffY) > 5) {
+        if (e.cancelable) e.preventDefault();
+        setDragYOffset(diffY);
+        if (Math.abs(diffY) > 15) isDraggingRef.current = true;
+      }
     }
   };
 
@@ -244,14 +239,12 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
 
     if (diffY > 60 && hasNext && onNext) {
       setDirection('up');
-      dragY.set(0);
       onNext();
     } else if (diffY < -60 && hasPrev && onPrev) {
       setDirection('down');
-      dragY.set(0);
       onPrev();
     } else {
-      animate(dragY, 0, { type: 'spring', stiffness: 450, damping: 30, mass: 0.6 });
+      setDragYOffset(0);
     }
     touchStartY.current = null;
   };
@@ -266,8 +259,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     const handleMouseMoveWindow = (e: MouseEvent) => {
       if (mouseStartY.current !== null && isMouseDown) {
         const diffY = e.clientY - mouseStartY.current;
-        dragY.set(diffY);
-        if (Math.abs(diffY) > 8) isDraggingRef.current = true;
+        if (Math.abs(diffY) > 5) {
+          setDragYOffset(diffY);
+          if (Math.abs(diffY) > 15) isDraggingRef.current = true;
+        }
       }
     };
 
@@ -276,14 +271,12 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         const diffY = mouseStartY.current - e.clientY;
         if (diffY > 60 && hasNext && onNext) {
           setDirection('up');
-          dragY.set(0);
           onNext();
         } else if (diffY < -60 && hasPrev && onPrev) {
           setDirection('down');
-          dragY.set(0);
           onPrev();
         } else {
-          animate(dragY, 0, { type: 'spring', stiffness: 450, damping: 30, mass: 0.6 });
+          setDragYOffset(0);
         }
         mouseStartY.current = null;
         setIsMouseDown(false);
@@ -298,7 +291,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       window.removeEventListener('mousemove', handleMouseMoveWindow);
       window.removeEventListener('mouseup', handleMouseUpWindow);
     };
-  }, [isMouseDown, hasNext, hasPrev, onNext, onPrev, dragY]);
+  }, [isMouseDown, hasNext, hasPrev, onNext, onPrev]);
 
   const handleWheel = (e: React.WheelEvent) => {
     if (wheelCooldown.current) return;
@@ -391,6 +384,9 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     }
   };
 
+  const liveScale = dragYOffset !== 0 ? Math.max(0.93, 1 - Math.abs(dragYOffset) / 3000) : 1;
+  const previewScale = dragYOffset !== 0 ? Math.min(1, 0.94 + Math.abs(dragYOffset) / 3000) : 0.94;
+
   return (
     <div
       onWheel={handleWheel}
@@ -411,19 +407,22 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
           <motion.div
             key={moment.id}
             initial={{ y: direction === 'down' ? '-100vh' : '100vh', scale: 1, opacity: 1 }}
-            animate={{ y: 0, scale: 1, opacity: 1 }}
+            animate={{ y: dragYOffset, scale: 1, opacity: 1 }}
             exit={{ y: direction === 'down' ? '100vh' : '-100vh', scale: 1, opacity: 1 }}
-            style={{ y: dragY }}
-            transition={{
-              type: 'spring',
-              stiffness: 300,
-              damping: 30,
-              mass: 0.7,
-            }}
+            transition={
+              dragYOffset !== 0
+                ? { type: 'just' }
+                : {
+                    type: 'spring',
+                    stiffness: 240,
+                    damping: 28,
+                    mass: 0.8,
+                  }
+            }
             className="w-full flex flex-col items-center transform-gpu will-change-transform relative"
           >
             {/* Previous Card (Screen 1 Center) during Drag Down — 100vh Spacing & 100% Sharp */}
-            {dragVal > 2 && hasPrev && (prevMoment || prevMomentUrl) && (
+            {dragYOffset > 2 && hasPrev && (prevMoment || prevMomentUrl) && (
               <div className="w-full flex flex-col items-center absolute bottom-[calc(100vh)] left-0 right-0 pointer-events-none opacity-100 scale-100">
                 <div className="w-full aspect-square bg-black/40 flex-shrink-0 relative overflow-hidden rounded-[2.2rem] border border-white/12 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
                   <img
@@ -460,7 +459,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             )}
 
             {/* Next Card (Screen 2 Center) during Drag Up — 100vh Spacing & 100% Sharp */}
-            {dragVal < -2 && hasNext && (nextMoment || nextMomentUrl) && (
+            {dragYOffset < -2 && hasNext && (nextMoment || nextMomentUrl) && (
               <div className="w-full flex flex-col items-center absolute top-[calc(100vh)] left-0 right-0 pointer-events-none opacity-100 scale-100">
                 <div className="w-full aspect-square bg-black/40 flex-shrink-0 relative overflow-hidden rounded-[2.2rem] border border-white/12 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
                   <img
