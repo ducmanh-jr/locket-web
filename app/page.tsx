@@ -150,7 +150,7 @@ export default function HomePage() {
 
 
   return (
-    <div className="h-full flex flex-col justify-between bg-[#3D1F3D] selection:bg-[#D9266E] selection:text-white overflow-hidden relative">
+    <div className="h-full flex flex-col justify-between bg-[#10091D] selection:bg-[#D9266E] selection:text-white overflow-hidden relative">
       {/* Shared Room Header */}
 
       {/* Shared Room Header */}
@@ -173,7 +173,7 @@ export default function HomePage() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-              className="w-full h-full absolute inset-0 bg-[#3D1F3D] z-30 transform-gpu will-change-transform pt-16"
+              className="w-full h-full absolute inset-0 bg-[#10091D] z-30 transform-gpu will-change-transform pt-16"
             >
               <LocketHistoryGrid
                 moments={roomMoments}
