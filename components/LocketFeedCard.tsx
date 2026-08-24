@@ -386,32 +386,29 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div
             key={moment.id}
-            initial={{ y: direction === 'down' ? '-100vh' : '100vh', scale: 0.93, opacity: 0.85 }}
-            animate={{ y: dragYOffset, scale: liveScale, opacity: 1 }}
-            exit={{ y: direction === 'down' ? '100vh' : '-100vh', scale: 0.93, opacity: 0.85 }}
+            initial={{ y: direction === 'down' ? '-100%' : '100%', scale: 1, opacity: 1 }}
+            animate={{ y: dragYOffset, scale: 1, opacity: 1 }}
+            exit={{ y: direction === 'down' ? '100%' : '-100%', scale: 1, opacity: 1 }}
             transition={
               dragYOffset !== 0
                 ? { type: 'just' }
                 : {
                     type: 'spring',
-                    stiffness: 220,
-                    damping: 26,
-                    mass: 0.85,
+                    stiffness: 240,
+                    damping: 28,
+                    mass: 0.8,
                   }
             }
             className="w-full flex flex-col items-center transform-gpu will-change-transform relative"
           >
-            {/* Previous Card Live Preview during Drag Down — 100vh distance with 3D Scale */}
-            {dragYOffset > 5 && hasPrev && (prevMoment || prevMomentUrl) && (
-              <div
-                className="w-full flex flex-col items-center absolute bottom-[calc(100vh)] left-0 right-0 pointer-events-none opacity-90 transition-transform"
-                style={{ transform: `scale(${previewScale})` }}
-              >
-                <div className="w-full aspect-square bg-black/40 backdrop-blur-sm flex-shrink-0 relative overflow-hidden rounded-[2.4rem] border border-white/12 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
+            {/* Previous Card Crisp Continuous Filmstrip Tape during Drag Down */}
+            {dragYOffset > 2 && hasPrev && (prevMoment || prevMomentUrl) && (
+              <div className="w-full flex flex-col items-center absolute bottom-[calc(100%+28px)] left-0 right-0 pointer-events-none opacity-100 scale-100">
+                <div className="w-full aspect-square bg-black/40 flex-shrink-0 relative overflow-hidden rounded-[2.2rem] border border-white/12 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
                   <img
                     src={prevMoment?.thumbnail_url || prevMoment?.media_url || prevMomentUrl}
                     alt=""
-                    className="w-full h-full object-cover rounded-[2.4rem]"
+                    className="w-full h-full object-cover rounded-[2.2rem]"
                   />
                   {prevMoment?.caption && (
                     <div className="absolute bottom-3 left-4 right-4 flex justify-center">
@@ -441,17 +438,14 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               </div>
             )}
 
-            {/* Next Card Live Preview during Drag Up — 100vh distance with 3D Scale */}
-            {dragYOffset < -5 && hasNext && (nextMoment || nextMomentUrl) && (
-              <div
-                className="w-full flex flex-col items-center absolute top-[calc(100vh)] left-0 right-0 pointer-events-none opacity-90 transition-transform"
-                style={{ transform: `scale(${previewScale})` }}
-              >
-                <div className="w-full aspect-square bg-black/40 backdrop-blur-sm flex-shrink-0 relative overflow-hidden rounded-[2.4rem] border border-white/12 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
+            {/* Next Card Crisp Continuous Filmstrip Tape during Drag Up */}
+            {dragYOffset < -2 && hasNext && (nextMoment || nextMomentUrl) && (
+              <div className="w-full flex flex-col items-center absolute top-[calc(100%+28px)] left-0 right-0 pointer-events-none opacity-100 scale-100">
+                <div className="w-full aspect-square bg-black/40 flex-shrink-0 relative overflow-hidden rounded-[2.2rem] border border-white/12 shadow-[0_25px_60px_rgba(0,0,0,0.7)]">
                   <img
                     src={nextMoment?.thumbnail_url || nextMoment?.media_url || nextMomentUrl}
                     alt=""
-                    className="w-full h-full object-cover rounded-[2.4rem]"
+                    className="w-full h-full object-cover rounded-[2.2rem]"
                   />
                   {nextMoment?.caption && (
                     <div className="absolute bottom-3 left-4 right-4 flex justify-center">
