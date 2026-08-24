@@ -485,7 +485,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             <div
               onClick={handleCardClick}
               onDoubleClick={handleDoubleTap}
-              className="w-full aspect-square bg-black/30 backdrop-blur-sm flex-shrink-0 relative overflow-hidden rounded-[2.2rem] cursor-pointer border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)]"
+              className="w-full aspect-square bg-black/40 flex-shrink-0 relative overflow-hidden rounded-[2.2rem] cursor-pointer border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)] transform-gpu"
             >
               <div className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.2rem]">
                 {isVideo && !hasVideoError ? (
