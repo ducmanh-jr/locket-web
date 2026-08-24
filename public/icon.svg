@@ -1,12 +1,47 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <g transform="translate(0, 15)">
-    <!-- 1. Outermost White Heart -->
-    <path d="M 256 420 C 120 325 55 240 55 165 C 55 102 102 55 165 55 C 208 55 240 78 256 104 C 272 78 304 55 347 55 C 410 55 457 102 457 165 C 457 240 392 325 256 420 Z" fill="#FFFFFF"/>
+  <defs>
+    <!-- Background Gradient using deep violet palette tones -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1b1424"/>
+      <stop offset="50%" stop-color="#130e18"/>
+      <stop offset="100%" stop-color="#0a070d"/>
+    </linearGradient>
 
-    <!-- 2. Middle Soft Sweet Pink Heart -->
-    <path transform="translate(256, 230) scale(0.76) translate(-256, -230)" d="M 256 420 C 120 325 55 240 55 165 C 55 102 102 55 165 55 C 208 55 240 78 256 104 C 272 78 304 55 347 55 C 410 55 457 102 457 165 C 457 240 392 325 256 420 Z" fill="#FF85B3"/>
+    <!-- Outer Platinum Glow Gradient (#D9D8D9) -->
+    <linearGradient id="platGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#D9D8D9"/>
+    </linearGradient>
 
-    <!-- 3. Inner Deep Hot Pink Heart -->
-    <path transform="translate(256, 230) scale(0.53) translate(-256, -230)" d="M 256 420 C 120 325 55 240 55 165 C 55 102 102 55 165 55 C 208 55 240 78 256 104 C 272 78 304 55 347 55 C 410 55 457 102 457 165 C 457 240 392 325 256 420 Z" fill="#FF2A85"/>
+    <!-- Middle Lavender Gradient (#B3A3BA) -->
+    <linearGradient id="lavGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4C8DC"/>
+      <stop offset="100%" stop-color="#B3A3BA"/>
+    </linearGradient>
+
+    <!-- Inner Deep Violet Gradient (#8D769A) -->
+    <linearGradient id="violetGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9C83AA"/>
+      <stop offset="100%" stop-color="#8D769A"/>
+    </linearGradient>
+
+    <!-- Subtle Drop Shadow -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#8D769A" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Maskable PWA Squircle Background -->
+  <rect width="512" height="512" rx="140" fill="url(#bgGrad)"/>
+
+  <g transform="translate(0, 15)" filter="url(#shadow)">
+    <!-- 1. Outermost Platinum Silver Heart (#D9D8D9) -->
+    <path d="M 256 420 C 120 325 55 240 55 165 C 55 102 102 55 165 55 C 208 55 240 78 256 104 C 272 78 304 55 347 55 C 410 55 457 102 457 165 C 457 240 392 325 256 420 Z" fill="url(#platGrad)"/>
+
+    <!-- 2. Middle Soft Lavender Mauve Heart (#B3A3BA) -->
+    <path transform="translate(256, 230) scale(0.76) translate(-256, -230)" d="M 256 420 C 120 325 55 240 55 165 C 55 102 102 55 165 55 C 208 55 240 78 256 104 C 272 78 304 55 347 55 C 410 55 457 102 457 165 C 457 240 392 325 256 420 Z" fill="url(#lavGrad)"/>
+
+    <!-- 3. Inner Deep Muted Violet Heart (#8D769A) -->
+    <path transform="translate(256, 230) scale(0.53) translate(-256, -230)" d="M 256 420 C 120 325 55 240 55 165 C 55 102 102 55 165 55 C 208 55 240 78 256 104 C 272 78 304 55 347 55 C 410 55 457 102 457 165 C 457 240 392 325 256 420 Z" fill="url(#violetGrad)"/>
   </g>
 </svg>
