@@ -52,29 +52,23 @@ export const LocketDock: React.FC<LocketDockProps> = ({
           <Grid3x3 className="w-5 h-5 stroke-[2]" />
         </motion.button>
 
-        {/* Center: Locket Gold Dual-Ring Shutter Home Button */}
+        {/* Center: Solid Dark Pink Button with Large Solid White House Icon */}
         <motion.button
           whileTap={{ scale: 0.90 }}
-          whileHover={{ scale: 1.05 }}
           onClick={() => {
             triggerHaptic();
             onOpenCamera();
           }}
-          className="relative group p-[2px] rounded-full bg-gradient-to-tr from-[#FFC700] via-[#FF2A85] to-[#D9266E] shadow-[0_0_20px_rgba(255,42,133,0.5),0_0_25px_rgba(255,199,0,0.3)] transition-all cursor-pointer flex-shrink-0"
+          className="w-12 h-12 rounded-full bg-[#C2185B] text-white flex items-center justify-center cursor-pointer transition-all flex-shrink-0"
           title="Chụp khoảnh khắc mới"
         >
-          <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#BE185D] via-[#D9266E] to-[#FF2A85] flex items-center justify-center border border-white/30 relative overflow-hidden">
-            {/* Ambient Top Light Reflection */}
-            <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-transparent rounded-full pointer-events-none" />
-
-            <svg
-              className="w-[22px] h-[22px] text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] relative z-10 transition-transform group-hover:scale-105"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M11.235 2.686a1.2 1.2 0 0 1 1.53 0l8.1 6.75a1.2 1.2 0 0 1 .435.924V19.5a2.25 2.25 0 0 1-2.25 2.25H15a1.2 1.2 0 0 1-1.2-1.2v-4.5a.75.75 0 0 0-.75-.75h-2.1a.75.75 0 0 0-.75.75v4.5a1.2 1.2 0 0 1-1.2 1.2H6a2.25 2.25 0 0 1-2.25-2.25V10.36a1.2 1.2 0 0 1 .435-.924l8.1-6.75z" />
-            </svg>
-          </div>
+          <svg
+            className="w-7 h-7 text-white"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path d="M11.235 2.686a1.2 1.2 0 0 1 1.53 0l8.1 6.75a1.2 1.2 0 0 1 .435.924V19.5a2.25 2.25 0 0 1-2.25 2.25H4.95A2.25 2.25 0 0 1 2.7 19.5V10.36a1.2 1.2 0 0 1 .435-.924l8.1-6.75z" />
+          </svg>
         </motion.button>
 
         {/* Right: MessageCircle with badge */}
