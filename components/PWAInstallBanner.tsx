@@ -61,32 +61,32 @@ export const PWAInstallBanner: React.FC<PWAInstallBannerProps> = ({ forceDisplay
 
   return (
     <>
-      {/* Sleek Standardized PWA Card */}
-      <div className="w-full bg-[#18181C] border border-zinc-800/80 rounded-2xl p-4 shadow-lg flex items-center justify-between transition-all">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF2A85] to-[#FF69B4] text-white font-black text-xl shadow-[0_0_15px_rgba(255,42,133,0.4)] flex items-center justify-center flex-shrink-0">
+      {/* Sleek Minimalist Glassmorphic PWA Banner */}
+      <div className="w-full bg-[#160b13]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.35)] flex items-center justify-between transition-all">
+        <div className="flex items-center space-x-3 min-w-0 pr-2">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#D9266E] to-[#9F1239] text-white font-bold text-base shadow-sm flex items-center justify-center flex-shrink-0 border border-white/15">
             L
           </div>
-          <div className="text-left">
-            <h4 className="text-white text-xs font-bold leading-tight">Cài đặt LocketWeb</h4>
-            <p className="text-zinc-400 text-[11px] mt-0.5">Trải nghiệm như App thật trên Màn hình chính</p>
+          <div className="text-left min-w-0">
+            <h4 className="text-white text-xs font-semibold leading-tight truncate">Cài đặt LocketWeb</h4>
+            <p className="text-zinc-400 text-[11px] mt-0.5 truncate">Dùng mượt hơn trên Màn hình chính</p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 flex-shrink-0">
           <button
             onClick={handleInstallClick}
-            className="py-2 px-4 bg-[#FF2A85] hover:bg-[#FF69B4] text-white font-extrabold text-xs rounded-full shadow-[0_0_15px_rgba(255,42,133,0.4)] transition-all active:scale-95 flex items-center space-x-1.5"
+            className="py-1.5 px-3.5 bg-[#D9266E] hover:bg-[#BE185D] text-white font-medium text-xs rounded-full shadow-md transition-all active:scale-95 flex items-center space-x-1.5 border border-white/15"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Tải ngay</span>
           </button>
           <button
             onClick={() => setDismissed(true)}
-            className="w-8 h-8 rounded-full bg-zinc-800/90 text-zinc-400 hover:text-white flex items-center justify-center hover:bg-zinc-700 transition-colors"
-            title="Đóng thông báo"
+            className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors border border-white/5"
+            title="Đóng"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
