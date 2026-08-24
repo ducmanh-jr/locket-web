@@ -30,7 +30,7 @@ export const LocketDock: React.FC<LocketDockProps> = ({
     <div className="w-full flex flex-col items-center z-40 px-4 pb-4 pt-1 space-y-2.5 flex-shrink-0 bg-transparent pointer-events-auto">
       {/* Translucent Compact Glassmorphism Pill Dock */}
       <div
-        className="w-[78%] max-w-[300px] rounded-full py-2 px-6 flex items-center justify-between backdrop-blur-2xl"
+        className="w-[88%] max-w-[320px] rounded-full py-2 px-5 flex items-center justify-between backdrop-blur-2xl"
         style={{
           background: 'rgba(20, 10, 18, 0.78)',
           border: '1px solid rgba(217, 38, 110, 0.20)',
@@ -44,7 +44,7 @@ export const LocketDock: React.FC<LocketDockProps> = ({
             triggerHaptic();
             onToggleView(currentView === 'grid' ? 'feed' : 'grid');
           }}
-          className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
+          className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors flex-shrink-0 ${
             currentView === 'grid' ? 'text-[#D9266E] bg-[#D9266E]/15' : 'text-white/60 hover:text-white'
           }`}
           title="Lưới khoảnh khắc"
@@ -60,15 +60,15 @@ export const LocketDock: React.FC<LocketDockProps> = ({
             triggerHaptic();
             onOpenCamera();
           }}
-          className="relative group p-[2px] rounded-full bg-gradient-to-tr from-[#FFC700] via-[#FF2A85] to-[#D9266E] shadow-[0_0_20px_rgba(255,42,133,0.5),0_0_25px_rgba(255,199,0,0.3)] transition-all cursor-pointer"
+          className="relative group p-[2px] rounded-full bg-gradient-to-tr from-[#FFC700] via-[#FF2A85] to-[#D9266E] shadow-[0_0_20px_rgba(255,42,133,0.5),0_0_25px_rgba(255,199,0,0.3)] transition-all cursor-pointer flex-shrink-0"
           title="Chụp khoảnh khắc mới"
         >
-          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#BE185D] via-[#D9266E] to-[#FF2A85] flex items-center justify-center border border-white/30 relative overflow-hidden">
+          <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#BE185D] via-[#D9266E] to-[#FF2A85] flex items-center justify-center border border-white/30 relative overflow-hidden">
             {/* Ambient Top Light Reflection */}
             <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-transparent rounded-full pointer-events-none" />
 
             <svg
-              className="w-5.5 h-5.5 text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.5)] relative z-10 transition-transform group-hover:scale-110"
+              className="w-[22px] h-[22px] text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] relative z-10 transition-transform group-hover:scale-105"
               viewBox="0 0 24 24"
               fill="currentColor"
             >
@@ -84,7 +84,7 @@ export const LocketDock: React.FC<LocketDockProps> = ({
             triggerHaptic();
             onOpenMenu();
           }}
-          className="relative w-10 h-10 flex items-center justify-center text-white/60 hover:text-white rounded-full transition-colors"
+          className="relative w-10 h-10 flex items-center justify-center text-white/60 hover:text-white rounded-full transition-colors flex-shrink-0"
           title="Trò chuyện Locket"
         >
           <MessageCircle className="w-5 h-5 stroke-[2]" />
