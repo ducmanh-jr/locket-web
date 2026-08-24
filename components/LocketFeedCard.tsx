@@ -426,7 +426,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                 </div>
                 {prevMoment?.sender && (
                   <div className="w-full flex justify-center mt-3">
-                    <div className="bg-black/40 backdrop-blur-xl border border-white/12 px-4 py-1.5 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.4)] flex items-center space-x-2.5">
+                    <div className="bg-black/40 backdrop-blur-xl px-4 py-1.5 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.4)] flex items-center space-x-2.5">
                       <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 border border-[#D9266E]">
                         <img
                           src={prevMoment.sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${prevMoment.sender.username || 'user'}`}
@@ -463,7 +463,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                 </div>
                 {nextMoment?.sender && (
                   <div className="w-full flex justify-center mt-3">
-                    <div className="bg-black/40 backdrop-blur-xl border border-white/12 px-4 py-1.5 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.4)] flex items-center space-x-2.5">
+                    <div className="bg-black/40 backdrop-blur-xl px-4 py-1.5 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.4)] flex items-center space-x-2.5">
                       <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 border border-[#D9266E]">
                         <img
                           src={nextMoment.sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${nextMoment.sender.username || 'user'}`}
@@ -606,7 +606,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
 
             {/* Sender Avatar, Name & Time — BELOW photo */}
             <div className="w-full flex justify-center mt-3 pointer-events-none z-10">
-              <div className="bg-black/40 backdrop-blur-xl border border-white/12 px-4 py-1.5 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.4)] flex items-center space-x-2.5">
+              <div className="bg-black/40 backdrop-blur-xl px-4 py-1.5 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.4)] flex items-center space-x-2.5">
                 {(sender.isAdmin || sender.email === 'nguyenducmanh.ovaltine@gmail.com') ? (
                   <div className="relative flex-shrink-0">
                     <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] z-10 drop-shadow-[0_0_4px_rgba(255,215,0,0.9)] select-none">
