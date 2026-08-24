@@ -86,7 +86,7 @@ export default function FriendsPage() {
                 </div>
               </div>
               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#FF2A85]/20 text-[#FF2A85] border border-[#FF2A85]/30">
-                {userProfile.isAdmin ? '👑 Admin' : 'Bạn'}
+                {userProfile.isAdmin ? 'Admin' : 'Bạn'}
               </span>
             </div>
           </div>

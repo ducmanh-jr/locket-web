@@ -607,60 +607,25 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
             {/* Sender Avatar, Name & Time — BELOW photo */}
             <div className="w-full flex justify-center mt-3 pointer-events-none z-10">
               <div className="bg-black/40 backdrop-blur-xl px-4 py-1.5 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.4)] flex items-center space-x-2.5">
-                {(sender.isAdmin || sender.email === 'nguyenducmanh.ovaltine@gmail.com') ? (
-                  <div className="relative flex-shrink-0">
-                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] z-10 drop-shadow-[0_0_4px_rgba(255,215,0,0.9)] select-none">
-                      👑
-                    </span>
-                    <div
-                      className="w-8 h-8 rounded-full"
-                      style={{
-                        padding: '1.5px',
-                        background: 'linear-gradient(135deg, #f5c842, #e6a817, #f5d442)',
-                        boxShadow: '0 0 10px rgba(255,215,0,0.5)',
+                <div
+                  className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0"
+                  style={{
+                    padding: '1.5px',
+                    background: 'linear-gradient(135deg, #D9266E, #BE185D)',
+                    boxShadow: '0 0 8px rgba(217, 38, 110, 0.5)',
+                  }}
+                >
+                  <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
+                    <img
+                      src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`}
+                      alt={sender.display_name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`;
                       }}
-                    >
-                      <div
-                        className="w-full h-full rounded-full"
-                        style={{
-                          padding: '1.5px',
-                          background: 'linear-gradient(135deg, #D9266E, #BE185D)',
-                        }}
-                      >
-                        <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
-                          <img
-                            src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`}
-                            alt={sender.display_name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`;
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
+                    />
                   </div>
-                ) : (
-                  <div
-                    className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0"
-                    style={{
-                      padding: '1.5px',
-                      background: 'linear-gradient(135deg, #D9266E, #BE185D)',
-                      boxShadow: '0 0 8px rgba(217, 38, 110, 0.5)',
-                    }}
-                  >
-                    <div className="w-full h-full rounded-full overflow-hidden bg-zinc-900">
-                      <img
-                        src={sender.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`}
-                        alt={sender.display_name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${sender.username || 'user'}`;
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
+                </div>
                 <span className="text-white text-sm font-bold truncate max-w-[160px]">
                   {sender.display_name}
                 </span>
@@ -742,7 +707,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                   className="w-full p-3.5 bg-red-500/10 hover:bg-red-500/20 rounded-2xl text-red-400 text-xs font-semibold flex items-center space-x-3 transition-colors border border-red-500/20"
                 >
                   <Trash2 className="w-4 h-4 text-red-400" />
-                  <span>{isAdmin && !isMyMoment ? 'Xóa khoảnh khắc này (Quyền Admin 👑)' : 'Xóa khoảnh khắc này'}</span>
+                  <span>{isAdmin && !isMyMoment ? 'Xóa khoảnh khắc này (Quyền Admin)' : 'Xóa khoảnh khắc này'}</span>
                 </motion.button>
               )}
 
