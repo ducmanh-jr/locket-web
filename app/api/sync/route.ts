@@ -4,6 +4,8 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 // Global Server-Side In-Memory Shared Room Store (Syncs all devices even without Supabase env vars)
 let globalSharedMoments: any[] = [];
 let globalSharedProfiles: any[] = [];
+// Blocklist: IDs of members permanently deleted by Admin — prevents auto-sync re-push resurrection
+const deletedMemberIds: Set<string> = new Set();
 
 function isVideoMoment(moment: any): boolean {
   if (!moment) return false;
@@ -98,7 +100,7 @@ export async function GET() {
     const sanitized = sanitizeMoments(allRawMoments);
 
     return NextResponse.json(
-      { profiles: allProfiles, moments: sanitized },
+      { profiles: allProfiles, moments: sanitized, deleted_member_ids: Array.from(deletedMemberIds) },
       {
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate',
@@ -145,6 +147,14 @@ export async function POST(request: Request) {
       }
 
       const senderId = moment.sender_id || moment.sender?.id;
+
+      // Block re-push of moments from deleted members
+      if (senderId && deletedMemberIds.has(senderId)) {
+        return NextResponse.json(
+          { error: 'Thành viên đã bị xóa khỏi căn phòng' },
+          { status: 403 }
+        );
+      }
 
       const cleanMoment = {
         ...moment,
@@ -212,6 +222,9 @@ export async function POST(request: Request) {
 
     if (action === 'delete_member' && (body.member_id || body.profile_id)) {
       const targetId = body.member_id || body.profile_id;
+
+      // 0. Add to permanent blocklist to prevent auto-sync re-push resurrection
+      deletedMemberIds.add(targetId);
 
       // 1. Purge from in-memory server arrays
       globalSharedProfiles = globalSharedProfiles.filter((p) => p && p.id !== targetId);

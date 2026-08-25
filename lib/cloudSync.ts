@@ -331,9 +331,16 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
       const contentType = res.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {
         const data = await res.json();
-        if (Array.isArray(data.moments) && data.moments.length > 0) {
-          console.log('[CloudSync] API route returned', data.moments.length, 'moments');
-          return sanitizeMoments(data.moments);
+        let momentsList = Array.isArray(data.moments) ? data.moments : [];
+        if (Array.isArray(data.deleted_member_ids) && data.deleted_member_ids.length > 0) {
+          const deletedSet = new Set(data.deleted_member_ids as string[]);
+          momentsList = momentsList.filter(
+            (m: any) => !deletedSet.has(m.sender_id) && !deletedSet.has(m.sender?.id)
+          );
+        }
+        if (momentsList.length > 0) {
+          console.log('[CloudSync] API route returned', momentsList.length, 'moments');
+          return sanitizeMoments(momentsList);
         }
       } else {
         console.warn('[CloudSync] API route returned non-JSON (possible Vercel protection). Falling back to direct Supabase.');

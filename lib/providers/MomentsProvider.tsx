@@ -190,7 +190,13 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // AUTO-SYNC: Push any local moments not yet on the server up to global cloud so ALL accounts receive them
       localMoments.forEach((lm) => {
         if (!cloudIds.has(lm.id) && lm.media_url && !lm.media_url.startsWith('blob:')) {
-          pushMomentToGlobalCloud(lm).catch(() => {});
+          pushMomentToGlobalCloud(lm)
+            .then((success) => {
+              if (!success) {
+                removeLocalMoment(lm.id);
+              }
+            })
+            .catch(() => {});
         }
       });
 
