@@ -14,6 +14,15 @@ export function getCleanFallbackAvatar(nameOrUsername?: string, isAdmin?: boolea
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=D9266E&color=fff&size=256&bold=true`;
 }
 
+export function getGoogleAvatarUrl(email?: string, nameOrUsername?: string, isAdmin?: boolean): string {
+  if (isAdmin) return ADMIN_AVATAR_URL;
+  if (!email || !email.includes('@')) {
+    return getCleanFallbackAvatar(nameOrUsername, isAdmin);
+  }
+  const cleanEmail = email.trim().toLowerCase();
+  return `https://profiles.google.com/s2/photos/profile/${encodeURIComponent(cleanEmail)}?sz=256`;
+}
+
 // Fallback Current User
 export const DEMO_CURRENT_USER: Profile = {
   id: "user-me",

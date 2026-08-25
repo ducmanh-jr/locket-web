@@ -50,7 +50,7 @@ function clearCachedProfile(): void {
   } catch (e) {}
 }
 
-import { getCleanFallbackAvatar } from '@/lib/demoStore';
+import { getCleanFallbackAvatar, getGoogleAvatarUrl } from '@/lib/demoStore';
 
 function buildProfileFromSupabaseUser(user: any): Profile {
   const email = user.email || user.user_metadata?.email || '';
@@ -67,7 +67,7 @@ function buildProfileFromSupabaseUser(user: any): Profile {
   const ADMIN_EMAIL = 'nguyenducmanh.ovaltine@gmail.com';
   const isAdmin = email.toLowerCase().trim() === ADMIN_EMAIL;
 
-  const fallbackAvatar = getCleanFallbackAvatar(name || username, isAdmin);
+  const fallbackAvatar = getGoogleAvatarUrl(email, name || username, isAdmin);
   const avatarUrl =
     user.user_metadata?.avatar_url ||
     user.user_metadata?.picture ||
