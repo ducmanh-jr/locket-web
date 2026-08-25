@@ -179,7 +179,29 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
   useEffect(() => {
     fetchMessages();
     const interval = setInterval(fetchMessages, 1500);
-    return () => clearInterval(interval);
+
+    let bc: BroadcastChannel | null = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        bc = new BroadcastChannel('locket_chat_sync_channel');
+        bc.onmessage = (event) => {
+          if (event.data?.type === 'new_message' && event.data?.message) {
+            const msg = event.data.message;
+            setMessages((prev) => {
+              if (prev.some((x) => x.id === msg.id)) return prev;
+              const next = [...prev, msg];
+              next.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+              return next;
+            });
+          }
+        };
+      } catch (e) {}
+    }
+
+    return () => {
+      clearInterval(interval);
+      if (bc) bc.close();
+    };
   }, [fetchMessages]);
 
   useEffect(() => {
@@ -215,6 +237,15 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
     if (textToSend === undefined) setInputText('');
     setIsSubmitting(false);
     scrollToBottom();
+
+    // Instant Cross-Tab Broadcast Channel Sync
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        const bc = new BroadcastChannel('locket_chat_sync_channel');
+        bc.postMessage({ type: 'new_message', message: newMsg });
+        bc.close();
+      } catch (e) {}
+    }
 
     try {
       await fetch('/api/chat', {
