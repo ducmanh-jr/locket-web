@@ -79,13 +79,29 @@ export default function LoginPage() {
       const ADMIN_EMAIL = 'nguyenducmanh.ovaltine@gmail.com';
       const isAdmin = email.trim().toLowerCase() === ADMIN_EMAIL;
 
-      const safeId = `user-gmail-${cleanUsername}-${btoa(email).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8)}`;
+      // 1. Account Unification: Check if a profile with matching email/username already exists in Supabase DB
+      let existingDbProfile: any = null;
+      if (isSupabaseConfigured()) {
+        try {
+          const { data } = await supabase
+            .from('profiles')
+            .select('*')
+            .or(`email.eq.${email},username.eq.${cleanUsername}`)
+            .maybeSingle();
+          if (data) existingDbProfile = data;
+        } catch (e) {}
+      }
+
+      const safeId = existingDbProfile?.id || `user-gmail-${cleanUsername}-${btoa(email).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8)}`;
+      const finalUsername = existingDbProfile?.username || cleanUsername;
+      const finalDisplayName = existingDbProfile?.display_name || rawDisplayName || 'Thành viên Locket';
+      const finalAvatarUrl = existingDbProfile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${cleanUsername}`;
 
       const profile = {
         id: safeId,
-        username: cleanUsername,
-        display_name: rawDisplayName || 'Thành viên Locket',
-        avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${cleanUsername}`,
+        username: finalUsername,
+        display_name: finalDisplayName,
+        avatar_url: finalAvatarUrl,
         email: email,
         isAdmin: isAdmin,
       };

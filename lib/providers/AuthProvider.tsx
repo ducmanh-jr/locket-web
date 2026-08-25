@@ -84,10 +84,16 @@ async function fetchMergedProfile(user: any): Promise<Profile> {
   const cached = readCachedProfile();
 
   let dbProfile: any = null;
-  if (isSupabaseConfigured() && user?.id) {
+  if (isSupabaseConfigured()) {
     try {
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
-      if (data) dbProfile = data;
+      if (user?.id) {
+        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+        if (data) dbProfile = data;
+      }
+      if (!dbProfile && baseProfile.email) {
+        const { data } = await supabase.from('profiles').select('*').eq('email', baseProfile.email).maybeSingle();
+        if (data) dbProfile = data;
+      }
     } catch (e) {}
   }
 
