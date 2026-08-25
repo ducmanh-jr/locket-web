@@ -114,6 +114,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
 
     const list = friends.filter((f) => {
       if (!f.id) return false;
+      if (f.id === 'all' || f.name.toLowerCase().includes('tất cả')) return false;
       if (f.id === currentUser.id) return false;
       if (isSystemUser(f.id, f.name)) return false;
       return true;
