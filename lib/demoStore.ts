@@ -102,6 +102,15 @@ export function addDeletedMemberId(memberId: string): void {
   } catch (e) {}
 }
 
+export function removeDeletedMemberId(memberId: string): void {
+  if (typeof window === 'undefined' || !memberId) return;
+  try {
+    const deleted = getDeletedMemberIds();
+    const updated = deleted.filter((id) => id !== memberId);
+    localStorage.setItem(DELETED_MEMBERS_KEY, JSON.stringify(updated));
+  } catch (e) {}
+}
+
 export function isMemberDeleted(memberId: string): boolean {
   if (!memberId) return false;
   return getDeletedMemberIds().includes(memberId);

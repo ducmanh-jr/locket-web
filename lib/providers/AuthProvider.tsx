@@ -50,7 +50,7 @@ function clearCachedProfile(): void {
   } catch (e) {}
 }
 
-import { getCleanFallbackAvatar, getGoogleAvatarUrl } from '@/lib/demoStore';
+import { getCleanFallbackAvatar, getGoogleAvatarUrl, removeDeletedMemberId } from '@/lib/demoStore';
 
 function buildProfileFromSupabaseUser(user: any): Profile {
   const email = user.email || user.user_metadata?.email || '';
@@ -150,6 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (user) {
           const profile = await fetchMergedProfile(user);
+          removeDeletedMemberId(profile.id);
           if (mounted) {
             setUserProfile(profile);
           }

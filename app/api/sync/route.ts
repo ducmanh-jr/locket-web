@@ -188,15 +188,18 @@ export async function POST(request: Request) {
     await loadDeletedMembersFromDB();
 
     if (action === 'push_profile' && profile?.id) {
-      // Block resurrection of deleted members
+      // Returning user re-login: Unblock from deletedMemberIds & remove DB marker so user starts clean as a fresh user
       if (deletedMemberIds.has(profile.id)) {
-        return NextResponse.json({ error: 'Thành viên đã bị xóa' }, { status: 403 });
+        deletedMemberIds.delete(profile.id);
       }
 
       globalSharedProfiles = [profile, ...globalSharedProfiles.filter((p) => p.id !== profile.id)];
 
       if (isSupabaseConfigured()) {
         try {
+          // Remove DB marker if present
+          await supabase.from('profiles').delete().eq('id', `del_marker_${profile.id}`);
+
           await supabase.from('profiles').upsert({
             id: profile.id,
             username: profile.username || `user_${profile.id.substring(0, 6)}`,
@@ -205,7 +208,7 @@ export async function POST(request: Request) {
           });
         } catch (e) {}
       }
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, deleted_member_ids: Array.from(deletedMemberIds) });
     }
 
     if (action === 'push_moment' && moment?.id && moment?.media_url) {
