@@ -187,7 +187,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!mounted) return;
 
         if (session?.user) {
+          removeDeletedMemberId(session.user.id);
           const profile = await fetchMergedProfile(session.user);
+          if (profile?.id) {
+            removeDeletedMemberId(profile.id);
+          }
           if (mounted) {
             setUserProfile(profile);
           }
