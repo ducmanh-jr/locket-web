@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { LocketHeader } from '@/components/LocketHeader';
 import { LocketDock } from '@/components/LocketDock';
 import { LocketFeedCard } from '@/components/LocketFeedCard';
@@ -37,6 +37,7 @@ export default function HomePage() {
   const [showChatSheet, setShowChatSheet] = useState<boolean>(false);
   const [lastReaction, setLastReaction] = useState<{ emoji: string; timestamp: number } | null>(null);
   const [isFeedDragging, setIsFeedDragging] = useState<boolean>(false);
+  const hasParsedDeepLinkRef = useRef<boolean>(false);
 
   const isGuest = !userProfile;
 
@@ -66,8 +67,9 @@ export default function HomePage() {
     }
   }, []);
 
-  // Deep-linking: auto-select moment specified in ?m= or ?moment= query string
+  // Deep-linking: auto-select moment specified in ?m= or ?moment= query string ONCE on initial load
   useEffect(() => {
+    if (hasParsedDeepLinkRef.current) return;
     if (typeof window !== 'undefined' && filteredMoments.length > 0) {
       const params = new URLSearchParams(window.location.search);
       const sharedId = params.get('m') || params.get('moment');
@@ -75,6 +77,10 @@ export default function HomePage() {
         const matched = filteredMoments.find((m) => m.id === sharedId);
         if (matched) {
           setSelectedMomentId(matched.id);
+          hasParsedDeepLinkRef.current = true;
+          try {
+            window.history.replaceState({}, '', window.location.pathname);
+          } catch (e) {}
         }
       }
     }
