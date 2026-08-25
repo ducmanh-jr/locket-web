@@ -90,16 +90,21 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
           <ChevronDown className="w-3.5 h-3.5 text-zinc-400 stroke-[2.2]" />
         </motion.button>
 
-        {/* Right: Circular User Avatar or Login Pill */}
+        {/* Right: Circular User Avatar or Pill Login Button */}
         {isGuest ? (
           <motion.button
             whileTap={{ scale: 0.92 }}
+            whileHover={{ scale: 1.05 }}
             onClick={onOpenProfile}
-            className="flex items-center space-x-1.5 bg-[#D9266E] hover:bg-[#be185d] text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg pointer-events-auto active:scale-95 transition-all"
-            title="Đăng nhập Locket"
+            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full font-black text-xs text-white shadow-xl cursor-pointer border border-[#D9266E]/60 pointer-events-auto transition-all transform-gpu"
+            style={{
+              background: 'linear-gradient(135deg, #D9266E 0%, #BE185D 100%)',
+              boxShadow: '0 4px 18px rgba(217, 38, 110, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+            }}
+            title="Đăng nhập để trải nghiệm đầy đủ tính năng"
           >
-            <LogIn className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>Đăng nhập</span>
+            <LogIn className="w-3.5 h-3.5 text-white stroke-[2.8]" />
+            <span className="text-xs font-black tracking-tight text-white drop-shadow-sm">Đăng nhập</span>
           </motion.button>
         ) : (
           <button
