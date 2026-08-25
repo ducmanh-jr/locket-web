@@ -56,6 +56,13 @@ export default function HomePage() {
     action();
   };
 
+  // Auth Guard: Unauthenticated / Logged out users MUST be redirected to /login
+  useEffect(() => {
+    if (!authLoading && !userProfile) {
+      router.replace('/login');
+    }
+  }, [userProfile, authLoading, router]);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.scrollTo(0, 0);
@@ -69,6 +76,8 @@ export default function HomePage() {
 
   // Mobile edge swipe-back gesture & popstate backstack listener
   useEffect(() => {
+    if (!userProfile) return;
+
     const handlePopState = () => {
       if (showCamera) {
         setShowCamera(false);
@@ -94,7 +103,7 @@ export default function HomePage() {
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [showCamera, showChatSheet, currentView]);
+  }, [showCamera, showChatSheet, currentView, userProfile]);
 
   // Unregister old Service Workers to clear stale cache in normal browser tabs
   useEffect(() => {

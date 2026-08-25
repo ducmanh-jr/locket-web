@@ -23,15 +23,6 @@ export default function LoginPage() {
   const [showGoogleModal, setShowGoogleModal] = useState<boolean>(false);
   const [customGoogleEmail, setCustomGoogleEmail] = useState<string>('');
 
-  // Mobile edge swipe-back gesture: return to Home
-  useEffect(() => {
-    const handlePopState = () => {
-      router.push('/');
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [router]);
-
   const handleGoogleLogin = () => {
     setErrorMessage(null);
     setLoading(false);
