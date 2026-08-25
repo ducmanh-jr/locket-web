@@ -111,6 +111,13 @@ export function removeDeletedMemberId(memberId: string): void {
   } catch (e) {}
 }
 
+export function syncDeletedMemberIdsWithServer(serverDeletedIds: string[]): void {
+  if (typeof window === 'undefined' || !Array.isArray(serverDeletedIds)) return;
+  try {
+    localStorage.setItem(DELETED_MEMBERS_KEY, JSON.stringify(serverDeletedIds));
+  } catch (e) {}
+}
+
 export function isMemberDeleted(memberId: string): boolean {
   if (!memberId) return false;
   return getDeletedMemberIds().includes(memberId);

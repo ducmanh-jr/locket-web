@@ -1,7 +1,7 @@
 import { Moment } from './types';
 import { hasRenderableMedia, sanitizeMoments } from './media';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
-import { getDeletedMemberIds, addDeletedMemberId } from './demoStore';
+import { getDeletedMemberIds, addDeletedMemberId, syncDeletedMemberIdsWithServer } from './demoStore';
 
 export interface CloudProfile {
   id: string;
@@ -212,13 +212,11 @@ export async function fetchGlobalCloudProfiles(): Promise<CloudProfile[]> {
       if (contentType.includes('application/json')) {
         const data = await res.json();
         if (Array.isArray(data.deleted_member_ids)) {
-          data.deleted_member_ids.forEach((id: string) => {
-            deletedSet.add(id);
-            addDeletedMemberId(id);
-          });
+          syncDeletedMemberIdsWithServer(data.deleted_member_ids);
         }
+        const updatedSet = new Set(getDeletedMemberIds());
         if (Array.isArray(data.profiles)) {
-          return data.profiles.filter((p: any) => p && p.id && !deletedSet.has(p.id));
+          return data.profiles.filter((p: any) => p && p.id && !updatedSet.has(p.id));
         }
       }
     }
