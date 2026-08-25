@@ -73,20 +73,13 @@ export const PWAInstallBanner: React.FC<PWAInstallBannerProps> = ({ forceDisplay
           </div>
         </div>
 
-        <div className="flex items-center space-x-2 flex-shrink-0">
+        <div className="flex items-center flex-shrink-0">
           <button
             onClick={handleInstallClick}
             className="py-1.5 px-3.5 bg-[#D9266E] hover:bg-[#BE185D] text-white font-medium text-xs rounded-full shadow-md transition-all active:scale-95 flex items-center space-x-1.5 border border-white/15"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Tải ngay</span>
-          </button>
-          <button
-            onClick={() => setDismissed(true)}
-            className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors border border-white/5"
-            title="Đóng"
-          >
-            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
