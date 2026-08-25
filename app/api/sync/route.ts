@@ -56,24 +56,27 @@ function sanitizeMoments(moments: any[]): any[] {
 async function loadDeletedMembersFromDB(): Promise<void> {
   if (!isSupabaseConfigured()) return;
   try {
-    // Strategy: Read all profiles and detect deletion markers
+    // CLEAR and rebuild from DB so that push_profile deletions are respected
+    const freshSet = new Set<string>();
     const { data: profs } = await supabase.from('profiles').select('id, display_name, avatar_url').limit(500);
     if (profs && profs.length > 0) {
       profs.forEach((p: any) => {
         if (p?.display_name === '__DELETED_MEMBER__' && p.avatar_url) {
-          // Marker row: avatar_url stores the real deleted member ID
-          deletedMemberIds.add(p.avatar_url);
+          freshSet.add(p.avatar_url);
         }
         if (p?.display_name === '__DELETED__') {
-          deletedMemberIds.add(p.id);
+          freshSet.add(p.id);
         }
         if (p?.id?.startsWith('del_marker_')) {
-          deletedMemberIds.add(p.id.replace('del_marker_', ''));
+          freshSet.add(p.id.replace('del_marker_', ''));
         }
       });
     }
+    // Replace the global set with fresh DB state
+    deletedMemberIds.clear();
+    freshSet.forEach((id) => deletedMemberIds.add(id));
   } catch (e) {
-    // Silent fallback — in-memory set still works
+    // Silent fallback — keep existing in-memory set
   }
 }
 
@@ -209,12 +212,13 @@ export async function POST(request: Request) {
 
       if (isSupabaseConfigured()) {
         try {
-          // Remove DB marker if present
+          // Remove ALL forms of DB deletion markers for this user
           await supabase
             .from('profiles')
             .delete()
-            .or(`id.eq.del_marker_${profile.id},avatar_url.eq.${profile.id}`);
+            .or(`id.eq.del_marker_${profile.id},avatar_url.eq.${profile.id},id.eq.${profile.id}`);
 
+          // Now upsert the clean profile (this replaces any __DELETED__ row with the real profile)
           await supabase.from('profiles').upsert({
             id: profile.id,
             username: profile.username || `user_${profile.id.substring(0, 6)}`,

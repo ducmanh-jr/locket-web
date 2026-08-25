@@ -50,7 +50,7 @@ function clearCachedProfile(): void {
   } catch (e) {}
 }
 
-import { getCleanFallbackAvatar, getGoogleAvatarUrl, removeDeletedMemberId } from '@/lib/demoStore';
+import { getCleanFallbackAvatar, getGoogleAvatarUrl, removeDeletedMemberId, isMemberDeleted } from '@/lib/demoStore';
 
 function buildProfileFromSupabaseUser(user: any): Profile {
   const email = user.email || user.user_metadata?.email || '';

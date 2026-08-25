@@ -1,7 +1,7 @@
 import { Moment } from './types';
 import { hasRenderableMedia, sanitizeMoments } from './media';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
-import { getDeletedMemberIds, addDeletedMemberId, syncDeletedMemberIdsWithServer } from './demoStore';
+import { getDeletedMemberIds, addDeletedMemberId, removeDeletedMemberId, syncDeletedMemberIdsWithServer } from './demoStore';
 
 export interface CloudProfile {
   id: string;
@@ -192,11 +192,23 @@ export function compressImageForCloudSync(dataUrl: string): Promise<string> {
 export async function pushProfileToGlobalCloud(profile: CloudProfile): Promise<boolean> {
   try {
     if (!profile.id || !profile.username) return false;
+    removeDeletedMemberId(profile.id);
+    if ((profile as any).email) removeDeletedMemberId((profile as any).email);
+
     const res = await fetch('/api/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'push_profile', profile }),
     });
+
+    if (res.ok) {
+      try {
+        const data = await res.json();
+        if (Array.isArray(data.deleted_member_ids)) {
+          syncDeletedMemberIdsWithServer(data.deleted_member_ids);
+        }
+      } catch (e) {}
+    }
     return res.ok;
   } catch (e) {
     return false;
@@ -326,9 +338,11 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
       if (contentType.includes('application/json')) {
         const data = await res.json();
         let momentsList = Array.isArray(data.moments) ? data.moments : [];
-        if (Array.isArray(data.deleted_member_ids) && data.deleted_member_ids.length > 0) {
+        if (Array.isArray(data.deleted_member_ids)) {
+          // SYNC (replace) local list with server's authoritative list — so if server
+          // removed a user from the deleted list (after re-login), the client follows.
+          syncDeletedMemberIdsWithServer(data.deleted_member_ids);
           const deletedSet = new Set(data.deleted_member_ids as string[]);
-          data.deleted_member_ids.forEach((id: string) => addDeletedMemberId(id));
           momentsList = momentsList.filter(
             (m: any) => !deletedSet.has(m.sender_id) && !deletedSet.has(m.sender?.id)
           );
