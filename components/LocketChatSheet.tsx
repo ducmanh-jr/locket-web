@@ -17,6 +17,7 @@ import {
   MicOff,
   VideoOff,
   PhoneOff,
+  Check,
   CheckCheck,
 } from 'lucide-react';
 
@@ -27,6 +28,7 @@ export interface ChatMessage {
   content: string;
   media_url?: string;
   created_at: string;
+  status?: 'sent' | 'delivered' | 'read';
   sender?: Profile;
 }
 
@@ -214,6 +216,17 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
   const openThread = (friendId: string) => {
     setSelectedFriendId(friendId);
     setActiveView('thread');
+    try {
+      fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'mark_read',
+          sender_id: currentUser.id,
+          recipient_id: friendId,
+        }),
+      }).catch(() => {});
+    } catch (e) {}
   };
 
   // Send message handler
@@ -659,7 +672,15 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
 
                       <span className="text-[9px] text-zinc-400 mt-0.5 px-1 font-normal flex items-center space-x-1">
                         <span>{formattedTime}</span>
-                        {isMe && <CheckCheck className="w-3 h-3 text-[#D9266E]" />}
+                        {isMe && (
+                          msg.status === 'read' ? (
+                            <CheckCheck className="w-3 h-3 text-[#D9266E]" />
+                          ) : msg.status === 'delivered' ? (
+                            <CheckCheck className="w-3 h-3 text-zinc-400" />
+                          ) : (
+                            <Check className="w-3 h-3 text-zinc-400" />
+                          )
+                        )}
                       </span>
                     </div>
                   </div>

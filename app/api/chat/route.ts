@@ -8,6 +8,7 @@ export interface ChatMessage {
   content: string;
   media_url?: string;
   created_at: string;
+  status?: 'sent' | 'delivered' | 'read';
 }
 
 // Global In-Memory Fallback Chat Store for instant cross-device delivery
@@ -18,6 +19,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('user_id');
     const friendId = searchParams.get('friend_id');
+    const isThreadActive = searchParams.get('active') === 'true';
 
     let dbMessages: ChatMessage[] = [];
 
@@ -40,6 +42,19 @@ export async function GET(request: Request) {
     const unique = merged.filter((m, i, self) => m && m.id && i === self.findIndex((x) => x?.id === m?.id));
     unique.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
 
+    // Mark messages as delivered or read when recipient queries
+    if (userId) {
+      globalSharedMessages.forEach((m) => {
+        if (m.recipient_id === userId) {
+          if (isThreadActive && friendId && m.sender_id === friendId) {
+            m.status = 'read';
+          } else if (m.status !== 'read') {
+            m.status = 'delivered';
+          }
+        }
+      });
+    }
+
     let filtered = unique;
 
     if (userId && friendId) {
@@ -61,8 +76,19 @@ export async function GET(request: Request) {
       );
     }
 
+    // Assign dynamic status fallback if missing
+    const enriched = filtered.map((m) => {
+      let currentStatus: 'sent' | 'delivered' | 'read' = m.status || 'sent';
+      if (userId && m.sender_id === userId) {
+        // If sender is me, find memory status
+        const mem = globalSharedMessages.find((x) => x.id === m.id);
+        if (mem?.status) currentStatus = mem.status;
+      }
+      return { ...m, status: currentStatus };
+    });
+
     return NextResponse.json(
-      { messages: filtered },
+      { messages: enriched },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
     );
   } catch (e: any) {
@@ -73,13 +99,23 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { sender_id, recipient_id, content, media_url, sender_name, sender_avatar } = body;
+    const { action, sender_id, recipient_id, content, media_url, sender_name, sender_avatar, message_id } = body;
+
+    // Action: Mark thread as read
+    if (action === 'mark_read' && sender_id && recipient_id) {
+      globalSharedMessages.forEach((m) => {
+        if (m.sender_id === recipient_id && m.recipient_id === sender_id) {
+          m.status = 'read';
+        }
+      });
+      return NextResponse.json({ success: true });
+    }
 
     if (!sender_id || (!content && !media_url)) {
       return NextResponse.json({ error: 'Thiếu thông tin người gửi hoặc nội dung' }, { status: 400 });
     }
 
-    const messageId = body.id || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const messageId = body.id || message_id || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const createdAt = body.created_at || new Date().toISOString();
 
     const newMsg: ChatMessage = {
@@ -89,6 +125,7 @@ export async function POST(request: Request) {
       content: content || '',
       media_url: media_url || undefined,
       created_at: createdAt,
+      status: 'sent',
     };
 
     // Store in global in-memory store
