@@ -86,24 +86,10 @@ export default function LoginPage() {
           transition={{ duration: 0.45, ease: [0.32, 0.72, 0, 1] }}
           className="relative"
         >
-          {/* Outer Glowing Locket Photo Card Preview */}
-          <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-[2.8rem] bg-gradient-to-tr from-[#D9266E] via-[#BE185D] to-[#9F1239] p-1 shadow-[0_0_45px_rgba(217,38,110,0.45)] relative flex items-center justify-center">
-            <div className="w-full h-full bg-[#180a14] rounded-[2.5rem] p-2 flex flex-col items-center justify-between border border-[#D9266E]/30 relative overflow-hidden">
-              {/* Top Mini Tag */}
-              <div className="flex items-center space-x-1 bg-black/60 backdrop-blur-md border border-white/15 px-2 py-0.5 rounded-full z-10">
-                <div className="w-2 h-2 rounded-full bg-[#D9266E] animate-ping" />
-                <span className="text-[9px] text-white font-bold">Locket Live</span>
-              </div>
-
-              {/* Center Shutter Pure SVG 3D Heart Logo */}
-              <div className="w-14 h-14 rounded-2xl overflow-hidden drop-shadow-lg my-auto">
-                <img src="/icon.svg" alt="Locket 3D Logo" className="w-full h-full object-contain" />
-              </div>
-
-              {/* Floating Heart Reaction Badge */}
-              <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-md border border-white/20 p-1 rounded-full text-xs shadow-md">
-                💖
-              </div>
+          {/* Outer Glowing Locket Logo Card */}
+          <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-[2.8rem] bg-gradient-to-tr from-[#D9266E] via-[#BE185D] to-[#9F1239] p-1 shadow-[0_0_45px_rgba(217,38,110,0.45)] flex items-center justify-center">
+            <div className="w-full h-full bg-[#180a14] rounded-[2.5rem] flex items-center justify-center border border-[#D9266E]/30">
+              <img src="/icon.svg" alt="Locket Logo" className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-lg" />
             </div>
           </div>
         </motion.div>
