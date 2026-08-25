@@ -85,7 +85,7 @@ export const LocketDock: React.FC<LocketDockProps> = ({
         >
           <MessageCircle className="w-5 h-5 stroke-[2]" />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#D9266E] text-white text-[9px] font-black flex items-center justify-center shadow-md animate-pulse">
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#D9266E] text-white text-[9px] font-black flex items-center justify-center shadow-md">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}

@@ -561,45 +561,24 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
 
           {/* Friends Horizontal Row (Sorted by Most Recent Conversation First) */}
           <div className="px-4 py-2.5 flex items-center space-x-4 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden border-b border-zinc-100">
-            {sortedFriends.map((friend) => {
-              const lastMsg = getLastMessage(friend.id);
-              const isUnread = Boolean(
-                lastMsg &&
-                  lastMsg.sender_id === friend.id &&
-                  lastMsg.status !== 'read'
-              );
-              return (
-                <button
-                  key={friend.id}
-                  onClick={() => openThread(friend.id)}
-                  className="flex flex-col items-center space-y-1 flex-shrink-0 relative group"
-                >
-                  <div
-                    className={`w-[52px] h-[52px] rounded-full p-0.5 transition-all shadow-sm overflow-hidden relative ${
-                      isUnread
-                        ? 'bg-gradient-to-tr from-[#D9266E] to-[#BE185D] shadow-[0_0_12px_rgba(217,38,110,0.4)]'
-                        : 'bg-zinc-100 border border-zinc-200'
-                    }`}
-                  >
-                    <img
-                      src={friend.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${friend.id}`}
-                      alt={friend.name}
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  </div>
-                  {isUnread && (
-                    <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-[#D9266E] border-2 border-white shadow-md animate-pulse" />
-                  )}
-                  <span
-                    className={`text-[11px] truncate max-w-[58px] ${
-                      isUnread ? 'font-black text-black' : 'font-medium text-zinc-700'
-                    }`}
-                  >
-                    {friend.name.trim().split(' ')[0]}
-                  </span>
-                </button>
-              );
-            })}
+            {sortedFriends.map((friend) => (
+              <button
+                key={friend.id}
+                onClick={() => openThread(friend.id)}
+                className="flex flex-col items-center space-y-1 flex-shrink-0"
+              >
+                <div className="w-[50px] h-[50px] rounded-full bg-zinc-100 p-0.5 border border-zinc-200 shadow-sm active:scale-95 transition-transform overflow-hidden">
+                  <img
+                    src={friend.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${friend.id}`}
+                    alt={friend.name}
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                </div>
+                <span className="text-[11px] text-zinc-700 font-medium truncate max-w-[56px]">
+                  {friend.name.trim().split(' ')[0]}
+                </span>
+              </button>
+            ))}
           </div>
 
           {/* Individual Friend Chat List (Sorted by Most Recent Conversation First) */}
@@ -628,52 +607,34 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                     }`}
                   >
                     <div className="flex items-center space-x-3.5 min-w-0 flex-1">
-                      {/* Avatar with unread ring */}
-                      <div className="relative flex-shrink-0">
-                        <div
-                          className={`w-[52px] h-[52px] rounded-full p-0.5 transition-all shadow-sm ${
-                            isUnread
-                              ? 'bg-gradient-to-tr from-[#D9266E] to-[#BE185D] shadow-[0_0_12px_rgba(217,38,110,0.35)]'
-                              : 'bg-zinc-100 border border-zinc-200'
-                          }`}
-                        >
-                          <img
-                            src={friend.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${friend.id}`}
-                            alt={friend.name}
-                            className="w-full h-full object-cover rounded-full"
-                          />
-                        </div>
-                        {isUnread && (
-                          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-[#D9266E] border-2 border-white shadow-md animate-pulse" />
-                        )}
+                      {/* Clean Avatar (Zero Pink Rings or Dots) */}
+                      <div className="w-[50px] h-[50px] rounded-full bg-zinc-100 flex-shrink-0 overflow-hidden border border-zinc-200 shadow-sm">
+                        <img
+                          src={friend.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${friend.id}`}
+                          alt={friend.name}
+                          className="w-full h-full object-cover rounded-full"
+                        />
                       </div>
 
                       {/* Display Name & Last Message Preview */}
                       <div className="text-left min-w-0 flex-1 pr-2">
                         <div className="flex items-center justify-between">
-                          <h4
-                            className={`text-sm tracking-tight truncate ${
-                              isUnread ? 'font-black text-black text-[15px]' : 'font-semibold text-zinc-800'
-                            }`}
-                          >
+                          <h4 className="text-sm font-semibold text-zinc-900 truncate">
                             {friend.name}
                           </h4>
                           {lastMsg && (
-                            <span
-                              className={`text-[11px] flex-shrink-0 ml-2 ${
-                                isUnread ? 'font-black text-[#D9266E]' : 'font-medium text-zinc-400'
-                              }`}
-                            >
+                            <span className="text-[11px] text-zinc-400 font-medium flex-shrink-0 ml-2">
                               {formatChatTime(lastMsg.created_at)}
                             </span>
                           )}
                         </div>
 
+                        {/* ONLY Bold the message content preview text when unread */}
                         <p
                           className={`text-xs sm:text-[13px] truncate mt-0.5 leading-snug ${
                             isUnread
-                              ? 'font-black text-black'
-                              : 'font-normal text-zinc-400'
+                              ? 'font-bold text-zinc-950 text-[13px]'
+                              : 'font-normal text-zinc-500'
                           }`}
                         >
                           {lastMsg
@@ -684,11 +645,6 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                         </p>
                       </div>
                     </div>
-
-                    {/* Unread Glow Dot on right */}
-                    {isUnread && (
-                      <div className="w-3 h-3 rounded-full bg-[#D9266E] shadow-[0_0_10px_rgba(217,38,110,0.6)] flex-shrink-0 ml-2.5 animate-pulse" />
-                    )}
                   </button>
                 );
               })
