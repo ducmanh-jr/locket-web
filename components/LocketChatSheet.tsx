@@ -852,17 +852,17 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
   );
 };
 
-export function getUnreadConversationsCount(currentUserId: string): number {
+export function getUnreadMessagesCount(currentUserId: string): number {
   if (typeof window === 'undefined' || !currentUserId) return 0;
   try {
     const msgs = readLocalMessages();
-    const unreadSenders = new Set<string>();
+    let count = 0;
     msgs.forEach((m) => {
       if (m && m.sender_id !== currentUserId && m.status !== 'read') {
-        unreadSenders.add(m.sender_id);
+        count += 1;
       }
     });
-    return unreadSenders.size;
+    return count;
   } catch (e) {
     return 0;
   }

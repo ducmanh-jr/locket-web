@@ -6,7 +6,7 @@ import { LocketDock } from '@/components/LocketDock';
 import { LocketFeedCard } from '@/components/LocketFeedCard';
 import { LocketHistoryGrid } from '@/components/LocketHistoryGrid';
 import { CameraView } from '@/components/CameraView';
-import { LocketChatSheet, getUnreadConversationsCount } from '@/components/LocketChatSheet';
+import { LocketChatSheet, getUnreadMessagesCount } from '@/components/LocketChatSheet';
 import { SupabaseConfigNotice } from '@/components/SupabaseConfigNotice';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { useAuth } from '@/lib/providers/AuthProvider';
@@ -321,7 +321,7 @@ export default function HomePage() {
       <LocketDock
         currentView={currentView}
         isGuest={isGuest}
-        unreadCount={isGuest ? 0 : getUnreadConversationsCount(currentUser.id)}
+        unreadCount={isGuest ? 0 : getUnreadMessagesCount(currentUser.id)}
         onToggleView={(view) => {
           if (view === 'grid') {
             openSubView(() => setCurrentView('grid'), 'grid');
