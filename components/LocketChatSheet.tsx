@@ -12,7 +12,6 @@ import {
   Video,
   ThumbsUp,
   Search,
-  Users,
   Image as ImageIcon,
   Mic,
   MicOff,
@@ -24,7 +23,7 @@ import {
 export interface ChatMessage {
   id: string;
   sender_id: string;
-  recipient_id: string; // 'all' for room chat or specific user_id
+  recipient_id: string;
   content: string;
   media_url?: string;
   created_at: string;
@@ -66,7 +65,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
   onClose,
 }) => {
   const [activeView, setActiveView] = useState<'inbox' | 'thread'>('inbox');
-  const [selectedFriendId, setSelectedFriendId] = useState<string>('all');
+  const [selectedFriendId, setSelectedFriendId] = useState<string>('');
   const [messages, setMessages] = useState<ChatMessage[]>(() => readLocalMessages());
   const [inputText, setInputText] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -99,7 +98,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // 1. Sanitize & Deduplicate Friends List
+  // 1. Sanitize & Deduplicate Friends List (Filter out self and test/system users)
   const sanitizedFriends = React.useMemo(() => {
     const isSystemUser = (id?: string, name?: string) => {
       const checkStr = `${id || ''} ${name || ''}`.toLowerCase();
@@ -129,6 +128,13 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
     return Array.from(uniqueMap.values());
   }, [friends, currentUser.id]);
 
+  // Set default selected friend ID on mount if available
+  useEffect(() => {
+    if (!selectedFriendId && sanitizedFriends.length > 0) {
+      setSelectedFriendId(sanitizedFriends[0].id);
+    }
+  }, [sanitizedFriends, selectedFriendId]);
+
   // Search Filter
   const filteredFriends = React.useMemo(() => {
     if (!searchQuery.trim()) return sanitizedFriends;
@@ -146,6 +152,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
 
   // Fetch messages from Cloud API
   const fetchMessages = useCallback(async () => {
+    if (!selectedFriendId) return;
     try {
       const res = await fetch(`/api/chat?friend_id=${selectedFriendId}`);
       if (res.ok) {
@@ -184,7 +191,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
   // Send message handler
   const handleSend = async (textToSend?: string, mediaUrl?: string) => {
     const text = textToSend !== undefined ? textToSend : inputText;
-    if ((!text.trim() && !mediaUrl) || isSubmitting) return;
+    if ((!text.trim() && !mediaUrl) || isSubmitting || !selectedFriendId) return;
 
     setIsSubmitting(true);
     const newMsg: ChatMessage = {
@@ -237,11 +244,8 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
     e.target.value = '';
   };
 
-  // Filter messages for current active conversation
+  // Filter messages for current active conversation (strict 1-on-1)
   const activeConversationMessages = messages.filter((m) => {
-    if (selectedFriendId === 'all') {
-      return m.recipient_id === 'all' || !m.recipient_id;
-    }
     return (
       (m.sender_id === currentUser.id && m.recipient_id === selectedFriendId) ||
       (m.sender_id === selectedFriendId && m.recipient_id === currentUser.id)
@@ -251,7 +255,6 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
   // Get last message for a specific thread
   const getLastMessage = (friendId: string) => {
     const threadMsgs = messages.filter((m) => {
-      if (friendId === 'all') return m.recipient_id === 'all' || !m.recipient_id;
       return (
         (m.sender_id === currentUser.id && m.recipient_id === friendId) ||
         (m.sender_id === friendId && m.recipient_id === currentUser.id)
@@ -303,11 +306,11 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
           >
             {/* Call Header */}
             <div className="flex flex-col items-center text-center pt-8 space-y-2">
-              <span className="text-xs text-emerald-400 font-semibold tracking-wider uppercase bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+              <span className="text-xs text-zinc-400 font-semibold tracking-wider uppercase bg-white/10 px-3 py-1 rounded-full border border-white/10">
                 {activeCallType === 'video' ? 'Cuộc gọi Video HD' : 'Cuộc gọi thoại'}
               </span>
               <h3 className="text-xl font-bold text-white">
-                {selectedFriendId === 'all' ? 'Phòng trò chuyện chung' : selectedFriend?.name}
+                {selectedFriend?.name || 'Bạn bè'}
               </h3>
               <p className="text-xs text-zinc-400 font-mono font-medium">
                 {formatCallTimer(callDurationSeconds)}
@@ -325,7 +328,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   <span className="absolute bottom-3 left-3 text-[11px] font-semibold text-white bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-lg">
-                    {selectedFriend?.name || 'Phòng chung'}
+                    {selectedFriend?.name}
                   </span>
 
                   {/* My Camera PiP Preview */}
@@ -339,9 +342,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                 </div>
               ) : (
                 <div className="relative">
-                  {/* Animated Soundwave Rings */}
-                  <div className="absolute -inset-4 rounded-full bg-[#D9266E]/20 animate-ping" />
-                  <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-[#D9266E] shadow-[0_0_35px_rgba(217,38,110,0.5)] z-10 relative">
+                  <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-[#D9266E] shadow-xl z-10 relative">
                     <img
                       src={selectedFriend?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedFriendId}`}
                       alt=""
@@ -434,32 +435,20 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
             </div>
           </div>
 
-          {/* Active / Online Friends Horizontal Row */}
+          {/* Friends Horizontal Row (Without Online Dots or Group Room) */}
           <div className="px-4 py-2.5 flex items-center space-x-4 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden border-b border-zinc-100">
-            <button
-              onClick={() => openThread('all')}
-              className="flex flex-col items-center space-y-1 flex-shrink-0"
-            >
-              <div className="relative w-[50px] h-[50px] rounded-full bg-zinc-100 p-0.5 flex items-center justify-center border border-zinc-200 shadow-sm active:scale-95 transition-transform">
-                <Users className="w-5 h-5 text-[#D9266E]" />
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white" />
-              </div>
-              <span className="text-[11px] text-zinc-700 font-medium truncate max-w-[56px]">Phòng chung</span>
-            </button>
-
             {sanitizedFriends.map((friend) => (
               <button
                 key={friend.id}
                 onClick={() => openThread(friend.id)}
                 className="flex flex-col items-center space-y-1 flex-shrink-0"
               >
-                <div className="relative w-[50px] h-[50px] rounded-full bg-zinc-100 p-0.5 border border-zinc-200 shadow-sm active:scale-95 transition-transform">
+                <div className="w-[50px] h-[50px] rounded-full bg-zinc-100 p-0.5 border border-zinc-200 shadow-sm active:scale-95 transition-transform overflow-hidden">
                   <img
                     src={friend.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${friend.id}`}
                     alt={friend.name}
                     className="w-full h-full object-cover rounded-full"
                   />
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white" />
                 </div>
                 <span className="text-[11px] text-zinc-700 font-medium truncate max-w-[56px]">
                   {friend.name.trim().split(' ')[0]}
@@ -468,78 +457,49 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
             ))}
           </div>
 
-          {/* Minimal Light Chat List */}
+          {/* Individual Friend Chat List */}
           <div className="flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-            {/* Conversation 1: All Room Chat */}
-            {(() => {
-              const lastMsg = getLastMessage('all');
-              return (
-                <button
-                  onClick={() => openThread('all')}
-                  className="w-full px-4 py-3 flex items-center justify-between border-b border-zinc-100 hover:bg-zinc-50 active:bg-zinc-100 transition-colors"
-                >
-                  <div className="flex items-center space-x-3 min-w-0">
-                    <div className="relative w-[50px] h-[50px] rounded-full bg-zinc-100 flex-shrink-0 border border-zinc-200 shadow-sm flex items-center justify-center">
-                      <Users className="w-5 h-5 text-[#D9266E]" />
-                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white" />
+            {filteredFriends.length === 0 ? (
+              <div className="p-8 text-center text-xs text-zinc-400">
+                Không tìm thấy cuộc trò chuyện nào
+              </div>
+            ) : (
+              filteredFriends.map((friend) => {
+                const lastMsg = getLastMessage(friend.id);
+                return (
+                  <button
+                    key={friend.id}
+                    onClick={() => openThread(friend.id)}
+                    className="w-full px-4 py-3 flex items-center justify-between border-b border-zinc-100 hover:bg-zinc-50 active:bg-zinc-100 transition-colors"
+                  >
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div className="w-[50px] h-[50px] rounded-full bg-zinc-100 flex-shrink-0 overflow-hidden border border-zinc-200 shadow-sm">
+                        <img
+                          src={friend.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${friend.id}`}
+                          alt={friend.name}
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                      </div>
+                      <div className="text-left min-w-0 flex-1">
+                        <h4 className="text-sm font-semibold text-zinc-900 truncate">{friend.name}</h4>
+                        <p className="text-xs text-zinc-500 font-normal truncate mt-0.5">
+                          {lastMsg
+                            ? lastMsg.media_url
+                              ? `${lastMsg.sender_id === currentUser.id ? 'Bạn: ' : ''}📷 [Hình ảnh]`
+                              : `${lastMsg.sender_id === currentUser.id ? 'Bạn: ' : ''}${lastMsg.content}`
+                            : 'Nhấn để trò chuyện'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-left min-w-0 flex-1">
-                      <h4 className="text-sm font-semibold text-zinc-900 truncate">Phòng trò chuyện chung</h4>
-                      <p className="text-xs text-zinc-500 font-normal truncate mt-0.5">
-                        {lastMsg
-                          ? lastMsg.media_url
-                            ? `${lastMsg.sender_id === currentUser.id ? 'Bạn: ' : ''}📷 [Hình ảnh]`
-                            : `${lastMsg.sender_id === currentUser.id ? 'Bạn: ' : ''}${lastMsg.content}`
-                          : 'Chưa có tin nhắn'}
-                      </p>
-                    </div>
-                  </div>
-                  {lastMsg && (
-                    <span className="text-[11px] text-zinc-400 font-medium flex-shrink-0 ml-3">
-                      {formatChatTime(lastMsg.created_at)}
-                    </span>
-                  )}
-                </button>
-              );
-            })()}
-
-            {/* Individual Friend Chats */}
-            {filteredFriends.map((friend) => {
-              const lastMsg = getLastMessage(friend.id);
-              return (
-                <button
-                  key={friend.id}
-                  onClick={() => openThread(friend.id)}
-                  className="w-full px-4 py-3 flex items-center justify-between border-b border-zinc-100 hover:bg-zinc-50 active:bg-zinc-100 transition-colors"
-                >
-                  <div className="flex items-center space-x-3 min-w-0">
-                    <div className="relative w-[50px] h-[50px] rounded-full bg-zinc-100 flex-shrink-0 overflow-hidden border border-zinc-200 shadow-sm">
-                      <img
-                        src={friend.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${friend.id}`}
-                        alt={friend.name}
-                        className="w-full h-full object-cover rounded-full"
-                      />
-                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white" />
-                    </div>
-                    <div className="text-left min-w-0 flex-1">
-                      <h4 className="text-sm font-semibold text-zinc-900 truncate">{friend.name}</h4>
-                      <p className="text-xs text-zinc-500 font-normal truncate mt-0.5">
-                        {lastMsg
-                          ? lastMsg.media_url
-                            ? `${lastMsg.sender_id === currentUser.id ? 'Bạn: ' : ''}📷 [Hình ảnh]`
-                            : `${lastMsg.sender_id === currentUser.id ? 'Bạn: ' : ''}${lastMsg.content}`
-                          : 'Nhấn để trò chuyện'}
-                      </p>
-                    </div>
-                  </div>
-                  {lastMsg && (
-                    <span className="text-[11px] text-zinc-400 font-medium flex-shrink-0 ml-3">
-                      {formatChatTime(lastMsg.created_at)}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+                    {lastMsg && (
+                      <span className="text-[11px] text-zinc-400 font-medium flex-shrink-0 ml-3">
+                        {formatChatTime(lastMsg.created_at)}
+                      </span>
+                    )}
+                  </button>
+                );
+              })
+            )}
           </div>
         </div>
       ) : (
@@ -555,32 +515,21 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
               >
                 <ChevronLeft className="w-6 h-6" />
               </button>
-              <div className="relative w-9 h-9 rounded-full overflow-hidden bg-zinc-100 border border-zinc-200">
-                {selectedFriendId === 'all' ? (
-                  <div className="w-full h-full bg-zinc-100 flex items-center justify-center text-[#D9266E]">
-                    <Users className="w-4 h-4" />
-                  </div>
-                ) : (
-                  <img
-                    src={selectedFriend?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedFriendId}`}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
-                )}
-                <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border border-white" />
+              <div className="w-9 h-9 rounded-full overflow-hidden bg-zinc-100 border border-zinc-200">
+                <img
+                  src={selectedFriend?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedFriendId}`}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div>
-                <h3 className="text-xs font-bold text-zinc-900 truncate max-w-[130px]">
-                  {selectedFriendId === 'all' ? 'Phòng trò chuyện chung' : selectedFriend?.name}
+                <h3 className="text-xs font-bold text-zinc-900 truncate max-w-[150px]">
+                  {selectedFriend?.name || 'Bạn bè'}
                 </h3>
-                <span className="text-[10px] text-emerald-600 font-medium flex items-center space-x-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>Đang hoạt động</span>
-                </span>
               </div>
             </div>
 
-            {/* Actions: REAL Phone & Video Calls */}
+            {/* Actions: Phone & Video Calls */}
             <div className="flex items-center space-x-1 text-zinc-600">
               <button
                 onClick={() => setActiveCallType('audio')}
@@ -611,7 +560,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                 </div>
                 <p className="text-sm font-semibold text-zinc-800">Bắt đầu trò chuyện</p>
                 <p className="text-xs text-zinc-500 mt-1">
-                  Gửi tin nhắn tới {selectedFriendId === 'all' ? 'Phòng chung' : selectedFriend?.name}
+                  Gửi tin nhắn tới {selectedFriend?.name}
                 </p>
               </div>
             ) : (
@@ -697,7 +646,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
             ))}
           </div>
 
-          {/* Input Bar with REAL Attachment Picker */}
+          {/* Input Bar */}
           <div className="p-2.5 bg-white border-t border-zinc-100 flex items-center space-x-2">
             {/* Attachment Button */}
             <button
