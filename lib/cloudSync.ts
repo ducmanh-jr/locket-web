@@ -261,6 +261,13 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
 
     if (!hasRenderableMedia(moment)) return false;
 
+    // ANTI-RESURRECTION: Block push if sender is a deleted member
+    const senderId = moment.sender_id || moment.sender?.id;
+    const deletedSet = new Set(getDeletedMemberIds());
+    if (senderId && deletedSet.has(senderId)) {
+      return false;
+    }
+
     // 1. Primary: Try API Sync Endpoint
     try {
       const res = await fetch('/api/sync', {
@@ -269,20 +276,28 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
         body: JSON.stringify({ action: 'push_moment', moment }),
       });
       if (res.ok) return true;
+      // If server returns 403 (deleted member), save the deletion locally
+      if (res.status === 403 && senderId) {
+        try {
+          const data = await res.json();
+          if (Array.isArray(data.deleted_member_ids)) {
+            data.deleted_member_ids.forEach((id: string) => addDeletedMemberId(id));
+          }
+        } catch (e) {}
+        addDeletedMemberId(senderId);
+        return false;
+      }
     } catch (apiErr) {}
 
-    // 2. Direct Supabase JS Client Fallback (Guarantees DB insert directly from browser)
-    if (isSupabaseConfigured()) {
-      const senderId = moment.sender_id || moment.sender?.id;
-      if (senderId) {
-        const senderObj: any = moment.sender || {};
-        await supabase.from('profiles').upsert({
-          id: senderId,
-          username: senderObj.username || `user_${senderId.substring(0, 6)}`,
-          display_name: senderObj.display_name || 'Thành viên Locket',
-          avatar_url: senderObj.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${senderId}`,
-        });
-      }
+    // 2. Direct Supabase JS Client Fallback (only if sender is NOT deleted)
+    if (isSupabaseConfigured() && senderId && !deletedSet.has(senderId)) {
+      const senderObj: any = moment.sender || {};
+      await supabase.from('profiles').upsert({
+        id: senderId,
+        username: senderObj.username || `user_${senderId.substring(0, 6)}`,
+        display_name: senderObj.display_name || 'Thành viên Locket',
+        avatar_url: senderObj.avatar_url || '',
+      });
 
       const { error: dbErr } = await supabase.from('moments').upsert({
         id: moment.id,
