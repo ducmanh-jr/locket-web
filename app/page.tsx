@@ -67,7 +67,7 @@ export default function HomePage() {
     }
   }, []);
 
-  // Deep-linking: auto-select moment specified in ?m= or ?moment= query string ONCE on initial load
+  // Deep-linking: auto-select moment specified in ?m= or ?moment= query string ONCE on initial page load
   useEffect(() => {
     if (hasParsedDeepLinkRef.current) return;
     if (typeof window !== 'undefined' && filteredMoments.length > 0) {
@@ -78,9 +78,6 @@ export default function HomePage() {
         if (matched) {
           setSelectedMomentId(matched.id);
           hasParsedDeepLinkRef.current = true;
-          try {
-            window.history.replaceState({}, '', window.location.pathname);
-          } catch (e) {}
         }
       }
     }
