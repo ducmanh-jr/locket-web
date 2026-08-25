@@ -56,12 +56,7 @@ export default function HomePage() {
     action();
   };
 
-  // Auth Guard: Unauthenticated / Logged out users MUST be redirected to /login
-  useEffect(() => {
-    if (!authLoading && !userProfile) {
-      router.replace('/login');
-    }
-  }, [userProfile, authLoading, router]);
+  // Public Guest View: Allow unauthenticated visitors to view shared moments & feed without being forced to /login
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
