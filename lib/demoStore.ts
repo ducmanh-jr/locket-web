@@ -106,8 +106,19 @@ export function removeDeletedMemberId(memberId: string): void {
   if (typeof window === 'undefined' || !memberId) return;
   try {
     const deleted = getDeletedMemberIds();
-    const updated = deleted.filter((id) => id !== memberId);
+    const cleanTarget = memberId.trim().toLowerCase();
+    const updated = deleted.filter((id) => {
+      const lower = id.trim().toLowerCase();
+      return lower !== cleanTarget && !lower.includes(cleanTarget) && !cleanTarget.includes(lower);
+    });
     localStorage.setItem(DELETED_MEMBERS_KEY, JSON.stringify(updated));
+  } catch (e) {}
+}
+
+export function clearAllDeletedMemberIds(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(DELETED_MEMBERS_KEY);
   } catch (e) {}
 }
 

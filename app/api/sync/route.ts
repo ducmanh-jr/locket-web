@@ -188,17 +188,32 @@ export async function POST(request: Request) {
     await loadDeletedMembersFromDB();
 
     if (action === 'push_profile' && profile?.id) {
-      // Returning user re-login: Unblock from deletedMemberIds & remove DB marker so user starts clean as a fresh user
-      if (deletedMemberIds.has(profile.id)) {
-        deletedMemberIds.delete(profile.id);
-      }
+      const pid = String(profile.id).toLowerCase();
+      const pemail = String(profile.email || '').toLowerCase();
+      const puser = String(profile.username || '').toLowerCase();
+
+      // Returning user re-login: Unblock from deletedMemberIds across all ID/email/username variants
+      Array.from(deletedMemberIds).forEach((id) => {
+        const lower = id.toLowerCase();
+        if (
+          lower === pid ||
+          (pemail && lower.includes(pemail)) ||
+          (puser && lower.includes(puser)) ||
+          (pid && lower.includes(pid))
+        ) {
+          deletedMemberIds.delete(id);
+        }
+      });
 
       globalSharedProfiles = [profile, ...globalSharedProfiles.filter((p) => p.id !== profile.id)];
 
       if (isSupabaseConfigured()) {
         try {
           // Remove DB marker if present
-          await supabase.from('profiles').delete().eq('id', `del_marker_${profile.id}`);
+          await supabase
+            .from('profiles')
+            .delete()
+            .or(`id.eq.del_marker_${profile.id},avatar_url.eq.${profile.id}`);
 
           await supabase.from('profiles').upsert({
             id: profile.id,

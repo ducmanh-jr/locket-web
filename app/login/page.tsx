@@ -6,7 +6,13 @@ import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { Camera, Sparkles, ShieldCheck, Zap, Users, Info, X, Heart, Mail, CheckCircle2, UserCheck, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/providers/AuthProvider';
-import { getCleanFallbackAvatar, ADMIN_AVATAR_URL, removeDeletedMemberId, syncDeletedMemberIdsWithServer } from '@/lib/demoStore';
+import {
+  getCleanFallbackAvatar,
+  ADMIN_AVATAR_URL,
+  removeDeletedMemberId,
+  clearAllDeletedMemberIds,
+  syncDeletedMemberIdsWithServer,
+} from '@/lib/demoStore';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -105,8 +111,12 @@ export default function LoginPage() {
         isAdmin: isAdmin,
       };
 
-      // 2. Clear local deletion state & register Profile on Server API
+      // 2. Wipe local deletion blocklist & register Profile on Server API
+      clearAllDeletedMemberIds();
       removeDeletedMemberId(safeId);
+      if (email) removeDeletedMemberId(email);
+      if (cleanUsername) removeDeletedMemberId(cleanUsername);
+
       try {
         const res = await fetch('/api/sync', {
           method: 'POST',
@@ -121,7 +131,7 @@ export default function LoginPage() {
         }
       } catch (err) {}
 
-      removeDeletedMemberId(safeId);
+      clearAllDeletedMemberIds();
       loginWithProfile(profile);
       router.push('/');
     } catch (err: any) {
