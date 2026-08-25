@@ -4,7 +4,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Moment, Profile } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, Trash2, MoreVertical, Volume2, VolumeX } from 'lucide-react';
+import { Download, Trash2, MoreVertical, Volume2, VolumeX, Share2 } from 'lucide-react';
 import { killGlobalAudio, playGlobalAudio } from '@/lib/audioPlayer';
 import { getSafeMediaUrl } from '@/lib/media';
 import { useRouter } from 'next/navigation';
@@ -57,6 +57,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     { id: number; emoji: string; x: number; rotation: number }[]
   >([]);
   const [showOptionsModal, setShowOptionsModal] = useState<boolean>(false);
+  const [showShareToast, setShowShareToast] = useState<boolean>(false);
   const [isMounted, setIsMounted] = useState<boolean>(false);
 
   useEffect(() => {
@@ -328,6 +329,36 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     setTimeout(() => {
       setFloatingEmojis((prev) => prev.filter((item) => !burst.some((b) => b.id === item.id)));
     }, 1350);
+  };
+
+  const handleShareMoment = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (typeof window === 'undefined') return;
+
+    const shareUrl = `${window.location.origin}/?m=${moment.id}`;
+    const shareTitle = `Khoảnh khắc Locket của ${sender.display_name}`;
+    const shareText = moment.caption
+      ? `Xem khoảnh khắc "${moment.caption}" trên LocketWeb!`
+      : `Xem khoảnh khắc Locket của ${sender.display_name}!`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+        return;
+      } catch (err) {
+        // User cancelled native share or not supported, fallback to copy
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShowShareToast(true);
+      setTimeout(() => setShowShareToast(false), 2500);
+    } catch (err) {}
   };
 
   const handleDownload = async () => {
@@ -660,8 +691,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* Message Input Bar + Emoji Reactions — Premium Glassmorphism */}
-      <div className="w-full px-3 pb-2.5 pointer-events-auto flex-shrink-0 z-10">
+      {/* Message Input Bar + Emoji Reactions + Standalone Share Button */}
+      <div className="w-full px-3 pb-2.5 pointer-events-auto flex-shrink-0 z-10 flex items-center space-x-2">
         <div
           onClick={(e) => {
             e.stopPropagation();
@@ -669,16 +700,16 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               router.push('/login');
             }
           }}
-          className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-full backdrop-blur-2xl cursor-pointer"
+          className="flex-1 flex items-center space-x-2 px-3.5 py-2.5 rounded-full backdrop-blur-2xl cursor-pointer min-w-0"
           style={{
             background: 'rgba(255,255,255,0.06)',
             border: '1px solid rgba(255,255,255,0.10)',
             boxShadow: '0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)',
           }}
         >
-          <span className="flex-1 text-white/35 text-sm select-none font-medium">Gửi tin nhắn...</span>
-          <div className="flex items-center space-x-2.5 flex-shrink-0">
-            {['❤️', '😂', '💕', '😊'].map((emoji) => (
+          <span className="flex-1 text-white/35 text-xs sm:text-sm select-none font-medium truncate">Gửi tin nhắn...</span>
+          <div className="flex items-center space-x-2 flex-shrink-0">
+            {['❤️', '😂'].map((emoji) => (
               <motion.button
                 key={emoji}
                 whileTap={{ scale: 1.35 }}
@@ -690,13 +721,29 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                   }
                   handleDoubleTap();
                 }}
-                className="text-xl transition-transform hover:scale-110"
+                className="text-lg transition-transform hover:scale-110"
               >
                 {emoji}
               </motion.button>
             ))}
           </div>
         </div>
+
+        {/* Standalone Circular Share Button */}
+        <motion.button
+          whileTap={{ scale: 0.88 }}
+          whileHover={{ scale: 1.05 }}
+          onClick={handleShareMoment}
+          className="w-10 h-10 rounded-full flex items-center justify-center text-white/80 hover:text-white flex-shrink-0 backdrop-blur-2xl transition-all shadow-lg active:scale-90 cursor-pointer"
+          style={{
+            background: 'rgba(255, 255, 255, 0.08)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12)',
+          }}
+          title="Chia sẻ khoảnh khắc"
+        >
+          <Share2 className="w-4 h-4 stroke-[2.2] text-white" />
+        </motion.button>
       </div>
 
       {/* Options Modal Sheet — Portaled directly to document.body at z-[999] */}
@@ -723,6 +770,18 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                   <h4 className="text-white text-xs font-extrabold text-center pb-2.5 border-b border-zinc-800/80">
                     Tùy chọn Khoảnh khắc
                   </h4>
+
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={(e) => {
+                      setShowOptionsModal(false);
+                      handleShareMoment(e);
+                    }}
+                    className="w-full p-3.5 bg-[#25121f] hover:bg-[#33182b] rounded-2xl text-white text-xs font-semibold flex items-center space-x-3 transition-colors border border-white/5"
+                  >
+                    <Share2 className="w-4 h-4 text-[#D9266E]" />
+                    <span>Chia sẻ khoảnh khắc này</span>
+                  </motion.button>
 
                   <motion.button
                     whileTap={{ scale: 0.97 }}
@@ -760,6 +819,22 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
           </AnimatePresence>,
           document.body
         )}
+
+      {/* Toast Notification for Link Copying */}
+      <AnimatePresence>
+        {showShareToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            transition={{ duration: 0.2 }}
+            className="fixed top-16 left-1/2 -translate-x-1/2 z-[999] bg-[#1a0a14]/95 backdrop-blur-2xl border border-[#D9266E]/40 text-white px-4 py-2.5 rounded-full shadow-[0_10px_30px_rgba(217,38,110,0.4)] flex items-center space-x-2 text-xs font-bold pointer-events-none"
+          >
+            <span className="text-[#D9266E] text-sm">✨</span>
+            <span>Đã sao chép liên kết khoảnh khắc!</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -66,6 +66,20 @@ export default function HomePage() {
     }
   }, []);
 
+  // Deep-linking: auto-select moment specified in ?m= or ?moment= query string
+  useEffect(() => {
+    if (typeof window !== 'undefined' && filteredMoments.length > 0) {
+      const params = new URLSearchParams(window.location.search);
+      const sharedId = params.get('m') || params.get('moment');
+      if (sharedId) {
+        const matched = filteredMoments.find((m) => m.id === sharedId);
+        if (matched) {
+          setSelectedMomentId(matched.id);
+        }
+      }
+    }
+  }, [filteredMoments]);
+
   if (authLoading) {
     return <LoadingScreen message="Đang kết nối khoảnh khắc..." />;
   }
