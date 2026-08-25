@@ -56,7 +56,31 @@ function saveLocalMessage(msg: ChatMessage): void {
   if (typeof window === 'undefined') return;
   try {
     const existing = readLocalMessages();
-    const updated = [...existing.filter((m) => m.id !== msg.id), msg].slice(-300);
+    const updated = [...existing.filter((m) => m.id !== msg.id), msg].slice(-500);
+    localStorage.setItem(LOCAL_CHAT_KEY, JSON.stringify(updated));
+  } catch (e) {}
+}
+
+function saveLocalMessages(msgs: ChatMessage[]): void {
+  if (typeof window === 'undefined' || !Array.isArray(msgs) || msgs.length === 0) return;
+  try {
+    const existing = readLocalMessages();
+    const map = new Map<string, ChatMessage>();
+    existing.forEach((m) => map.set(m.id, m));
+    msgs.forEach((m) => {
+      if (m && m.id) {
+        const prev = map.get(m.id);
+        if (prev) {
+          const statusOrder: Record<string, number> = { sent: 1, delivered: 2, read: 3 };
+          const pStatus = statusOrder[prev.status || 'sent'] || 1;
+          const mStatus = statusOrder[m.status || 'sent'] || 1;
+          map.set(m.id, { ...prev, ...m, status: mStatus >= pStatus ? m.status : prev.status });
+        } else {
+          map.set(m.id, m);
+        }
+      }
+    });
+    const updated = Array.from(map.values()).slice(-500);
     localStorage.setItem(LOCAL_CHAT_KEY, JSON.stringify(updated));
   } catch (e) {}
 }
@@ -166,10 +190,27 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.messages)) {
+          if (data.messages.length > 0) {
+            saveLocalMessages(data.messages);
+          }
           setMessages((prev) => {
             const local = readLocalMessages();
-            const merged = [...local, ...data.messages];
-            const unique = merged.filter((m, i, self) => i === self.findIndex((x) => x.id === m.id));
+            const merged = [...prev, ...local, ...data.messages];
+            const map = new Map<string, ChatMessage>();
+            merged.forEach((m) => {
+              if (m && m.id) {
+                const prevM = map.get(m.id);
+                if (prevM) {
+                  const statusOrder: Record<string, number> = { sent: 1, delivered: 2, read: 3 };
+                  const pStatus = statusOrder[prevM.status || 'sent'] || 1;
+                  const mStatus = statusOrder[m.status || 'sent'] || 1;
+                  map.set(m.id, { ...prevM, ...m, status: mStatus >= pStatus ? m.status : prevM.status });
+                } else {
+                  map.set(m.id, m);
+                }
+              }
+            });
+            const unique = Array.from(map.values());
             unique.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
             return unique;
           });
