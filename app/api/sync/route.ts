@@ -54,9 +54,26 @@ export async function GET() {
 
     if (isSupabaseConfigured()) {
       try {
-        const { data: profs } = await supabase.from('profiles').select('*').limit(100);
+        const { data: profs } = await supabase.from('profiles').select('*').limit(200);
         if (profs && profs.length > 0) {
-          dbProfiles = profs;
+          profs.forEach((p: any) => {
+            if (p?.display_name === '__DELETED_MEMBER__' && p.avatar_url) {
+              deletedMemberIds.add(p.avatar_url);
+            } else if (p?.id?.startsWith('del_marker_')) {
+              deletedMemberIds.add(p.id.replace('del_marker_', ''));
+            } else if (p?.display_name === '__DELETED__') {
+              deletedMemberIds.add(p.id);
+            }
+          });
+          dbProfiles = profs.filter(
+            (p: any) =>
+              p &&
+              p.id &&
+              !p.id.startsWith('del_marker_') &&
+              p.display_name !== '__DELETED_MEMBER__' &&
+              p.display_name !== '__DELETED__' &&
+              !deletedMemberIds.has(p.id)
+          );
         }
 
         const { data: joinMoments, error: joinErr } = await supabase
@@ -78,24 +95,39 @@ export async function GET() {
       } catch (err) {}
     }
 
-    // Merge DB profiles with In-Memory profiles
+    // Merge DB profiles with In-Memory profiles (excluding deleted member IDs)
     const allProfiles = [...dbProfiles, ...globalSharedProfiles].filter(
-      (p, i, self) => p && p.id && i === self.findIndex((x) => x && x.id === p.id)
+      (p, i, self) =>
+        p &&
+        p.id &&
+        !deletedMemberIds.has(p.id) &&
+        !p.id.startsWith('del_marker_') &&
+        p.display_name !== '__DELETED_MEMBER__' &&
+        p.display_name !== '__DELETED__' &&
+        i === self.findIndex((x) => x && x.id === p.id)
     );
     const profilesMap = new Map(allProfiles.map((p) => [p.id, p]));
 
     // Merge DB moments with In-Memory moments so 100% of devices get identical data
-    const allRawMoments = [...dbMoments, ...globalSharedMoments].map((m: any) => {
-      const senderObj =
-        m.sender ||
-        profilesMap.get(m.sender_id) || {
-          id: m.sender_id || 'unknown',
-          username: m.sender_id ? `user_${m.sender_id.substring(0, 6)}` : 'locket_user',
-          display_name: 'Thành viên Locket',
-          avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${m.sender_id || 'locket'}`,
-        };
-      return { ...m, sender: senderObj };
-    });
+    const allRawMoments = [...dbMoments, ...globalSharedMoments]
+      .filter(
+        (m: any) =>
+          m &&
+          m.sender_id &&
+          !deletedMemberIds.has(m.sender_id) &&
+          !deletedMemberIds.has(m.sender?.id)
+      )
+      .map((m: any) => {
+        const senderObj =
+          m.sender ||
+          profilesMap.get(m.sender_id) || {
+            id: m.sender_id || 'unknown',
+            username: m.sender_id ? `user_${m.sender_id.substring(0, 6)}` : 'locket_user',
+            display_name: 'Thành viên Locket',
+            avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${m.sender_id || 'locket'}`,
+          };
+        return { ...m, sender: senderObj };
+      });
 
     const sanitized = sanitizeMoments(allRawMoments);
 
@@ -232,9 +264,23 @@ export async function POST(request: Request) {
         (m) => m && m.sender_id !== targetId && m.sender?.id !== targetId
       );
 
-      // 2. Purge from Supabase DB tables & Storage
+      // 2. Purge from Supabase DB tables & Storage + write persistent DB deletion markers
       if (isSupabaseConfigured()) {
         try {
+          // Store permanent DB deletion marker row in Supabase profiles table
+          await supabase.from('profiles').upsert({
+            id: `del_marker_${targetId}`,
+            username: `__del_${targetId.substring(0, 8)}`,
+            display_name: '__DELETED_MEMBER__',
+            avatar_url: targetId,
+          });
+
+          // Soft delete target profile
+          await supabase.from('profiles').upsert({
+            id: targetId,
+            display_name: '__DELETED__',
+          });
+
           await supabase.from('reactions').delete().eq('user_id', targetId);
 
           const { data: userMoments } = await supabase

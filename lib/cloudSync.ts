@@ -212,7 +212,10 @@ export async function fetchGlobalCloudProfiles(): Promise<CloudProfile[]> {
       if (contentType.includes('application/json')) {
         const data = await res.json();
         if (Array.isArray(data.deleted_member_ids)) {
-          data.deleted_member_ids.forEach((id: string) => deletedSet.add(id));
+          data.deleted_member_ids.forEach((id: string) => {
+            deletedSet.add(id);
+            addDeletedMemberId(id);
+          });
         }
         if (Array.isArray(data.profiles)) {
           return data.profiles.filter((p: any) => p && p.id && !deletedSet.has(p.id));
@@ -256,52 +259,23 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
   try {
     if (!moment.id || !moment.media_url) return false;
 
-    let finalMediaUrl = moment.media_url;
-    let finalThumbnailUrl = moment.thumbnail_url;
-
-    if (moment.media_url.startsWith('data:') || moment.media_url.startsWith('blob:')) {
-      const uploadedUrl = await uploadMediaToPublicUrl(moment.media_url, `locket_${moment.id}`);
-      if (uploadedUrl) {
-        finalMediaUrl = uploadedUrl;
-      } else if (moment.media_url.startsWith('blob:')) {
-        finalMediaUrl = await blobToDataUrl(moment.media_url);
-      } else if (moment.media_type !== 'video') {
-        finalMediaUrl = await compressImageForCloudSync(moment.media_url);
-      }
-    }
-
-    if (moment.thumbnail_url?.startsWith('data:') || moment.thumbnail_url?.startsWith('blob:')) {
-      const uploadedThumb = await uploadMediaToPublicUrl(moment.thumbnail_url, `locket_${moment.id}_thumb`);
-      if (uploadedThumb) {
-        finalThumbnailUrl = uploadedThumb;
-      } else if (moment.thumbnail_url.startsWith('blob:')) {
-        finalThumbnailUrl = await blobToDataUrl(moment.thumbnail_url);
-      }
-    }
-
-    const compressedMoment: Moment = {
-      ...moment,
-      media_url: finalMediaUrl,
-      thumbnail_url: finalThumbnailUrl,
-    };
-
-    if (!hasRenderableMedia(compressedMoment)) return false;
+    if (!hasRenderableMedia(moment)) return false;
 
     // 1. Primary: Try API Sync Endpoint
     try {
       const res = await fetch('/api/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'push_moment', moment: compressedMoment }),
+        body: JSON.stringify({ action: 'push_moment', moment }),
       });
       if (res.ok) return true;
     } catch (apiErr) {}
 
     // 2. Direct Supabase JS Client Fallback (Guarantees DB insert directly from browser)
     if (isSupabaseConfigured()) {
-      const senderId = compressedMoment.sender_id || compressedMoment.sender?.id;
+      const senderId = moment.sender_id || moment.sender?.id;
       if (senderId) {
-        const senderObj: any = compressedMoment.sender || {};
+        const senderObj: any = moment.sender || {};
         await supabase.from('profiles').upsert({
           id: senderId,
           username: senderObj.username || `user_${senderId.substring(0, 6)}`,
@@ -311,15 +285,15 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
       }
 
       const { error: dbErr } = await supabase.from('moments').upsert({
-        id: compressedMoment.id,
+        id: moment.id,
         sender_id: senderId,
-        media_url: compressedMoment.media_url,
-        thumbnail_url: compressedMoment.thumbnail_url || null,
-        media_type: compressedMoment.media_type || 'photo',
-        audio_option: compressedMoment.audio_option || null,
-        caption: compressedMoment.caption || '',
-        music: compressedMoment.music || null,
-        created_at: compressedMoment.created_at || new Date().toISOString(),
+        media_url: moment.media_url,
+        thumbnail_url: moment.thumbnail_url || null,
+        media_type: moment.media_type || 'photo',
+        audio_option: moment.audio_option || null,
+        caption: moment.caption || '',
+        music: moment.music || null,
+        created_at: moment.created_at || new Date().toISOString(),
       });
       return !dbErr;
     }
@@ -341,6 +315,7 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
         let momentsList = Array.isArray(data.moments) ? data.moments : [];
         if (Array.isArray(data.deleted_member_ids) && data.deleted_member_ids.length > 0) {
           const deletedSet = new Set(data.deleted_member_ids as string[]);
+          data.deleted_member_ids.forEach((id: string) => addDeletedMemberId(id));
           momentsList = momentsList.filter(
             (m: any) => !deletedSet.has(m.sender_id) && !deletedSet.has(m.sender?.id)
           );
