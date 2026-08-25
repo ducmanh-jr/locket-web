@@ -262,7 +262,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
     setMessages((prev) => {
       let changed = false;
       const updated = prev.map((m) => {
-        if (m.sender_id === friendId && m.recipient_id === currentUser.id && m.status !== 'read') {
+        if (m.sender_id === friendId && m.status !== 'read') {
           changed = true;
           return { ...m, status: 'read' as const };
         }
@@ -566,7 +566,6 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
               const isUnread = Boolean(
                 lastMsg &&
                   lastMsg.sender_id === friend.id &&
-                  lastMsg.recipient_id === currentUser.id &&
                   lastMsg.status !== 'read'
               );
               return (
@@ -593,7 +592,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                   )}
                   <span
                     className={`text-[11px] truncate max-w-[58px] ${
-                      isUnread ? 'font-black text-zinc-950' : 'font-medium text-zinc-700'
+                      isUnread ? 'font-black text-black' : 'font-medium text-zinc-700'
                     }`}
                   >
                     {friend.name.trim().split(' ')[0]}
@@ -615,7 +614,6 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                 const isUnread = Boolean(
                   lastMsg &&
                     lastMsg.sender_id === friend.id &&
-                    lastMsg.recipient_id === currentUser.id &&
                     lastMsg.status !== 'read'
                 );
 
@@ -625,7 +623,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                     onClick={() => openThread(friend.id)}
                     className={`w-full px-4 py-3.5 flex items-center justify-between border-b border-zinc-100 transition-all ${
                       isUnread
-                        ? 'bg-[#D9266E]/[0.05] hover:bg-[#D9266E]/[0.09] active:bg-[#D9266E]/[0.12]'
+                        ? 'bg-[#D9266E]/[0.06] hover:bg-[#D9266E]/[0.10] active:bg-[#D9266E]/[0.14]'
                         : 'hover:bg-zinc-50 active:bg-zinc-100'
                     }`}
                   >
@@ -655,7 +653,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                         <div className="flex items-center justify-between">
                           <h4
                             className={`text-sm tracking-tight truncate ${
-                              isUnread ? 'font-extrabold text-zinc-950 text-[14.5px]' : 'font-semibold text-zinc-800'
+                              isUnread ? 'font-black text-black text-[15px]' : 'font-semibold text-zinc-800'
                             }`}
                           >
                             {friend.name}
@@ -672,10 +670,10 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                         </div>
 
                         <p
-                          className={`text-xs truncate mt-0.5 leading-snug ${
+                          className={`text-xs sm:text-[13px] truncate mt-0.5 leading-snug ${
                             isUnread
-                              ? 'font-bold text-zinc-950 text-[12.5px]'
-                              : 'font-normal text-zinc-500'
+                              ? 'font-black text-black'
+                              : 'font-normal text-zinc-400'
                           }`}
                         >
                           {lastMsg
@@ -904,7 +902,7 @@ export function getUnreadConversationsCount(currentUserId: string): number {
     const msgs = readLocalMessages();
     const unreadSenders = new Set<string>();
     msgs.forEach((m) => {
-      if (m && m.recipient_id === currentUserId && m.sender_id !== currentUserId && m.status !== 'read') {
+      if (m && m.sender_id !== currentUserId && m.status !== 'read') {
         unreadSenders.add(m.sender_id);
       }
     });
