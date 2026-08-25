@@ -32,27 +32,8 @@ export default function LoginPage() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [router]);
 
-  const handleGoogleLogin = async () => {
-    setLoading(true);
+  const handleGoogleLogin = () => {
     setErrorMessage(null);
-
-    // Try primary Supabase Google OAuth redirect
-    if (isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: `${window.location.origin}/`,
-          },
-        });
-        if (!error && data?.url) {
-          window.location.href = data.url;
-          return;
-        }
-      } catch (e) {}
-    }
-
-    // If OAuth redirect is unsupported or unavailable, open 1-Tap Google Account Dialog
     setLoading(false);
     setShowGoogleModal(true);
   };
