@@ -7,6 +7,8 @@ import { Camera, Sparkles, ShieldCheck, Zap, Users, Info, X, Heart, Mail, Send }
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/providers/AuthProvider';
 
+import { getCleanFallbackAvatar } from '@/lib/demoStore';
+
 export default function LoginPage() {
   const router = useRouter();
   const { loginWithProfile } = useAuth();
@@ -95,7 +97,11 @@ export default function LoginPage() {
       const safeId = existingDbProfile?.id || `user-gmail-${cleanUsername}-${btoa(email).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8)}`;
       const finalUsername = existingDbProfile?.username || cleanUsername;
       const finalDisplayName = existingDbProfile?.display_name || rawDisplayName || 'Thành viên Locket';
-      const finalAvatarUrl = existingDbProfile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${cleanUsername}`;
+      const fallbackAvatar = getCleanFallbackAvatar(finalDisplayName, isAdmin);
+      const finalAvatarUrl =
+        existingDbProfile?.avatar_url && existingDbProfile.avatar_url.trim() !== ''
+          ? existingDbProfile.avatar_url
+          : fallbackAvatar;
 
       const profile = {
         id: safeId,

@@ -50,6 +50,8 @@ function clearCachedProfile(): void {
   } catch (e) {}
 }
 
+import { getCleanFallbackAvatar } from '@/lib/demoStore';
+
 function buildProfileFromSupabaseUser(user: any): Profile {
   const email = user.email || user.user_metadata?.email || '';
   const name =
@@ -61,13 +63,15 @@ function buildProfileFromSupabaseUser(user: any): Profile {
     user.user_metadata?.username ||
     email.split('@')[0]?.toLowerCase().replace(/[^a-z0-9_]/g, '') ||
     `user_${user.id.substring(0, 6)}`;
-  const avatarUrl =
-    user.user_metadata?.avatar_url ||
-    user.user_metadata?.picture ||
-    `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
 
   const ADMIN_EMAIL = 'nguyenducmanh.ovaltine@gmail.com';
   const isAdmin = email.toLowerCase().trim() === ADMIN_EMAIL;
+
+  const fallbackAvatar = getCleanFallbackAvatar(name || username, isAdmin);
+  const avatarUrl =
+    user.user_metadata?.avatar_url ||
+    user.user_metadata?.picture ||
+    fallbackAvatar;
 
   return {
     id: user.id,

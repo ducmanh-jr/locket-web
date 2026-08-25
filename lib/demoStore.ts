@@ -6,6 +6,14 @@ const AVATAR_DM = "/user-photos/1785829393992_567716528849713056_g27692985236758
 const AVATAR_SYSTEM32 = "/user-photos/1785829394118_567716528849713056_g276929852367586455_b564766841f8f840f3191c21c6d0f07a.jpg";
 const AVATAR_ADMIN = "/user-photos/1785829394223_567716528849713056_g276929852367586455_abb069d5016bbb90f6a167b2e53545da.jpg";
 
+export const ADMIN_AVATAR_URL = AVATAR_DM;
+
+export function getCleanFallbackAvatar(nameOrUsername?: string, isAdmin?: boolean): string {
+  if (isAdmin) return ADMIN_AVATAR_URL;
+  const cleanName = (nameOrUsername || 'Locket User').trim();
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=D9266E&color=fff&size=256&bold=true`;
+}
+
 // Fallback Current User
 export const DEMO_CURRENT_USER: Profile = {
   id: "user-me",
