@@ -691,8 +691,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* Message Input Bar + Emoji Reactions + Standalone Share Button */}
-      <div className="w-full px-3 pb-2.5 pointer-events-auto flex-shrink-0 z-10 flex items-center space-x-2">
+      {/* Unified Message Input Bar + Emoji Reactions + Share Icon */}
+      <div className="w-full px-3 pb-2.5 pointer-events-auto flex-shrink-0 z-10">
         <div
           onClick={(e) => {
             e.stopPropagation();
@@ -700,7 +700,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               router.push('/login');
             }
           }}
-          className="flex-1 flex items-center space-x-2 px-3.5 py-2.5 rounded-full backdrop-blur-2xl cursor-pointer min-w-0"
+          className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-full backdrop-blur-2xl cursor-pointer"
           style={{
             background: 'rgba(255,255,255,0.06)',
             border: '1px solid rgba(255,255,255,0.10)',
@@ -708,7 +708,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
           }}
         >
           <span className="flex-1 text-white/35 text-xs sm:text-sm select-none font-medium truncate">Gửi tin nhắn...</span>
-          <div className="flex items-center space-x-2 flex-shrink-0">
+          <div className="flex items-center space-x-2.5 flex-shrink-0">
             {['❤️', '😂'].map((emoji) => (
               <motion.button
                 key={emoji}
@@ -726,24 +726,18 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                 {emoji}
               </motion.button>
             ))}
+
+            {/* Clean Share Icon inside the unified pill */}
+            <motion.button
+              whileTap={{ scale: 1.25 }}
+              onClick={handleShareMoment}
+              className="text-white/70 hover:text-white p-1 transition-colors flex items-center justify-center cursor-pointer ml-0.5"
+              title="Chia sẻ khoảnh khắc"
+            >
+              <Share2 className="w-4 h-4 stroke-[2.2] text-white/80 hover:text-white" />
+            </motion.button>
           </div>
         </div>
-
-        {/* Standalone Circular Share Button */}
-        <motion.button
-          whileTap={{ scale: 0.88 }}
-          whileHover={{ scale: 1.05 }}
-          onClick={handleShareMoment}
-          className="w-10 h-10 rounded-full flex items-center justify-center text-white/80 hover:text-white flex-shrink-0 backdrop-blur-2xl transition-all shadow-lg active:scale-90 cursor-pointer"
-          style={{
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12)',
-          }}
-          title="Chia sẻ khoảnh khắc"
-        >
-          <Share2 className="w-4 h-4 stroke-[2.2] text-white" />
-        </motion.button>
       </div>
 
       {/* Options Modal Sheet — Portaled directly to document.body at z-[999] */}
