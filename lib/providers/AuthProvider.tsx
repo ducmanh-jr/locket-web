@@ -50,7 +50,7 @@ function clearCachedProfile(): void {
   } catch (e) {}
 }
 
-import { getCleanFallbackAvatar, getGoogleAvatarUrl, removeDeletedMemberId, isMemberDeleted } from '@/lib/demoStore';
+import { getCleanFallbackAvatar, getGoogleAvatarUrl, removeDeletedMemberId, clearAllDeletedMemberIds } from '@/lib/demoStore';
 
 function buildProfileFromSupabaseUser(user: any): Profile {
   const email = user.email || user.user_metadata?.email || '';
@@ -150,7 +150,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (user) {
           const profile = await fetchMergedProfile(user);
-          removeDeletedMemberId(profile.id);
+
+          // CHECK: Is this user deleted by admin? If yes, force sign out immediately.
+          try {
+            const syncRes = await fetch('/api/sync', { cache: 'no-store' });
+            if (syncRes.ok) {
+              const syncData = await syncRes.json();
+              if (Array.isArray(syncData.deleted_member_ids)) {
+                const deletedSet = new Set(syncData.deleted_member_ids);
+                if (deletedSet.has(user.id) || deletedSet.has(profile.id) || deletedSet.has(profile.email)) {
+                  // User was deleted by admin - force sign out, do NOT let them in
+                  console.log('[AuthProvider] User is deleted by admin. Forcing sign out.');
+                  await supabase.auth.signOut();
+                  clearCachedProfile();
+                  if (mounted) {
+                    setUserProfile(null);
+                    setLoading(false);
+                  }
+                  return;
+                }
+              }
+            }
+          } catch (e) {}
+
+          // Not deleted - proceed normally
           if (mounted) {
             setUserProfile(profile);
           }
@@ -187,11 +210,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!mounted) return;
 
         if (session?.user) {
-          removeDeletedMemberId(session.user.id);
           const profile = await fetchMergedProfile(session.user);
-          if (profile?.id) {
-            removeDeletedMemberId(profile.id);
+          const isFreshOAuth = _event === 'SIGNED_IN';
+
+          if (isFreshOAuth) {
+            // Fresh Google OAuth login - clear all deletion markers
+            clearAllDeletedMemberIds();
+            removeDeletedMemberId(session.user.id);
+            if (profile?.id) removeDeletedMemberId(profile.id);
           }
+
           if (mounted) {
             setUserProfile(profile);
           }
@@ -200,7 +228,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             username: profile.username,
             display_name: profile.display_name,
             avatar_url: profile.avatar_url || '',
-          }).catch(() => {});
+          }, isFreshOAuth).catch(() => {});
         } else if (_event === 'SIGNED_OUT') {
           clearCachedProfile();
           setUserProfile(null);

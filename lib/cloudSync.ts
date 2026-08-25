@@ -189,16 +189,19 @@ export function compressImageForCloudSync(dataUrl: string): Promise<string> {
   });
 }
 
-export async function pushProfileToGlobalCloud(profile: CloudProfile): Promise<boolean> {
+export async function pushProfileToGlobalCloud(profile: CloudProfile, isFreshLogin: boolean = false): Promise<boolean> {
   try {
     if (!profile.id || !profile.username) return false;
-    removeDeletedMemberId(profile.id);
-    if ((profile as any).email) removeDeletedMemberId((profile as any).email);
+
+    if (isFreshLogin) {
+      removeDeletedMemberId(profile.id);
+      if ((profile as any).email) removeDeletedMemberId((profile as any).email);
+    }
 
     const res = await fetch('/api/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'push_profile', profile }),
+      body: JSON.stringify({ action: 'push_profile', profile, is_fresh_login: isFreshLogin }),
     });
 
     if (res.ok) {

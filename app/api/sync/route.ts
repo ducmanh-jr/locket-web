@@ -194,31 +194,36 @@ export async function POST(request: Request) {
       const pid = String(profile.id).toLowerCase();
       const pemail = String(profile.email || '').toLowerCase();
       const puser = String(profile.username || '').toLowerCase();
+      const isFreshLogin = body.is_fresh_login === true;
 
-      // Returning user re-login: Unblock from deletedMemberIds across all ID/email/username variants
-      Array.from(deletedMemberIds).forEach((id) => {
-        const lower = id.toLowerCase();
-        if (
-          lower === pid ||
-          (pemail && lower.includes(pemail)) ||
-          (puser && lower.includes(puser)) ||
-          (pid && lower.includes(pid))
-        ) {
-          deletedMemberIds.delete(id);
-        }
-      });
+      if (isFreshLogin) {
+        // Fresh OAuth re-login: Unblock from deletedMemberIds across all ID/email/username variants
+        Array.from(deletedMemberIds).forEach((id) => {
+          const lower = id.toLowerCase();
+          if (
+            lower === pid ||
+            (pemail && lower.includes(pemail)) ||
+            (puser && lower.includes(puser)) ||
+            (pid && lower.includes(pid))
+          ) {
+            deletedMemberIds.delete(id);
+          }
+        });
+      }
 
       globalSharedProfiles = [profile, ...globalSharedProfiles.filter((p) => p.id !== profile.id)];
 
       if (isSupabaseConfigured()) {
         try {
-          // Remove ALL forms of DB deletion markers for this user
-          await supabase
-            .from('profiles')
-            .delete()
-            .or(`id.eq.del_marker_${profile.id},avatar_url.eq.${profile.id},id.eq.${profile.id}`);
+          if (isFreshLogin) {
+            // Remove ALL forms of DB deletion markers for this user
+            await supabase
+              .from('profiles')
+              .delete()
+              .or(`id.eq.del_marker_${profile.id},avatar_url.eq.${profile.id}`);
+          }
 
-          // Now upsert the clean profile (this replaces any __DELETED__ row with the real profile)
+          // Upsert the profile
           await supabase.from('profiles').upsert({
             id: profile.id,
             username: profile.username || `user_${profile.id.substring(0, 6)}`,
