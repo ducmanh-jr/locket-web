@@ -31,14 +31,14 @@ export const LocketDock: React.FC<LocketDockProps> = ({
   };
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-40 px-4 pb-4 pt-1 flex flex-col items-center bg-transparent pointer-events-none">
+    <div className="absolute bottom-2.5 sm:bottom-4 left-0 right-0 z-40 px-4 pb-[env(safe-area-inset-bottom,0px)] flex flex-col items-center bg-transparent pointer-events-none">
       {/* Translucent Compact Glassmorphism Pill Dock */}
       <div
-        className="w-[88%] max-w-[320px] rounded-full py-2 px-5 flex items-center justify-between backdrop-blur-2xl pointer-events-auto"
+        className="w-[88%] max-w-[320px] rounded-full py-1.5 px-4 sm:py-2 sm:px-5 flex items-center justify-between backdrop-blur-2xl pointer-events-auto"
         style={{
-          background: 'rgba(20, 10, 18, 0.78)',
-          border: '1px solid rgba(217, 38, 110, 0.20)',
-          boxShadow: '0 10px 30px 0 rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.12)',
+          background: 'rgba(20, 10, 18, 0.88)',
+          border: '1px solid rgba(217, 38, 110, 0.30)',
+          boxShadow: '0 12px 35px 0 rgba(0, 0, 0, 0.75), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)',
         }}
       >
         {/* Left: Grid3x3 Icon */}
