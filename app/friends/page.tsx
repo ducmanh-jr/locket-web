@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/providers/AuthProvider';
-import { ArrowLeft, Users, Search, Sparkles, Loader2 } from 'lucide-react';
-import { fetchGlobalCloudProfiles, CloudProfile } from '@/lib/cloudSync';
+import { ArrowLeft, Users, Search, Sparkles, Loader2, Trash2 } from 'lucide-react';
+import { fetchGlobalCloudProfiles, deleteMemberFromGlobalCloud, CloudProfile } from '@/lib/cloudSync';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function FriendsPage() {
   const router = useRouter();
@@ -12,6 +13,12 @@ export default function FriendsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [members, setMembers] = useState<CloudProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMemberForDeletion, setSelectedMemberForDeletion] = useState<CloudProfile | null>(null);
+  const [isDeletingMember, setIsDeletingMember] = useState<boolean>(false);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const ADMIN_EMAIL = 'nguyenducmanh.ovaltine@gmail.com';
+  const isAdmin = userProfile?.isAdmin || userProfile?.email?.toLowerCase().trim() === ADMIN_EMAIL;
 
   // Fetch all real registered users from Supabase profiles table
   useEffect(() => {
@@ -36,6 +43,38 @@ export default function FriendsPage() {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [router]);
+
+  // Long press handler for Admin
+  const startPress = (member: CloudProfile) => {
+    if (!isAdmin) return;
+    longPressTimerRef.current = setTimeout(() => {
+      if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+        try { navigator.vibrate(40); } catch (e) {}
+      }
+      setSelectedMemberForDeletion(member);
+    }, 500);
+  };
+
+  const cancelPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedMemberForDeletion || !isAdmin) return;
+    setIsDeletingMember(true);
+    try {
+      await deleteMemberFromGlobalCloud(selectedMemberForDeletion.id);
+      setMembers((prev) => prev.filter((m) => m.id !== selectedMemberForDeletion.id));
+      setSelectedMemberForDeletion(null);
+    } catch (e) {
+      console.error('Failed to delete member:', e);
+    } finally {
+      setIsDeletingMember(false);
+    }
+  };
 
   // Filter: exclude yourself + apply search query
   const filteredMembers = members
@@ -103,9 +142,14 @@ export default function FriendsPage() {
 
         {/* Members List */}
         <div className="space-y-3">
-          <div className="flex items-center space-x-1.5 text-xs font-extrabold text-zinc-400 uppercase tracking-wider px-1">
-            <Sparkles className="w-3.5 h-3.5 text-[#FF2A85]" />
-            <span>Thành viên khác trong căn phòng ({filteredMembers.length})</span>
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center space-x-1.5 text-xs font-extrabold text-zinc-400 uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-[#FF2A85]" />
+              <span>Thành viên khác ({filteredMembers.length})</span>
+            </div>
+            {isAdmin && (
+              <span className="text-[10px] text-zinc-500 font-medium">Nhấn giữ để xóa</span>
+            )}
           </div>
 
           {loading ? (
@@ -131,7 +175,13 @@ export default function FriendsPage() {
             filteredMembers.map((member) => (
               <div
                 key={member.id}
-                className="w-full bg-[#18181C] border border-zinc-800/80 rounded-2xl p-3.5 flex items-center justify-between"
+                onTouchStart={() => startPress(member)}
+                onTouchEnd={cancelPress}
+                onTouchMove={cancelPress}
+                onMouseDown={() => startPress(member)}
+                onMouseUp={cancelPress}
+                onMouseLeave={cancelPress}
+                className="w-full bg-[#18181C] hover:bg-[#222228] border border-zinc-800/80 rounded-2xl p-3.5 flex items-center justify-between transition-all select-none cursor-pointer active:scale-98"
               >
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-zinc-700 bg-zinc-800 flex-shrink-0">
@@ -154,6 +204,65 @@ export default function FriendsPage() {
           )}
         </div>
       </div>
+
+      {/* Admin Member Deletion Confirmation Modal */}
+      <AnimatePresence>
+        {selectedMemberForDeletion && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setSelectedMemberForDeletion(null)}
+            className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 select-none"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-xs bg-[#160a12]/95 backdrop-blur-2xl border border-red-500/30 rounded-3xl p-6 text-center space-y-4 shadow-[0_15px_50px_rgba(255,0,0,0.3)]"
+            >
+              <div className="w-14 h-14 rounded-full bg-red-500/20 text-red-500 border border-red-500/40 flex items-center justify-center mx-auto shadow-lg">
+                <Trash2 className="w-7 h-7 stroke-[2.2]" />
+              </div>
+
+              <div>
+                <h3 className="text-white text-base font-extrabold mb-1">Xóa thành viên căn phòng?</h3>
+                <p className="text-zinc-300 text-xs leading-relaxed">
+                  Bạn có chắc muốn xóa <span className="text-white font-bold">{selectedMemberForDeletion.display_name}</span> (@{selectedMemberForDeletion.username}) không?
+                </p>
+                <p className="text-red-400/90 text-[11px] mt-1.5 font-semibold">
+                  ⚠️ Toàn bộ khoảnh khắc & dữ liệu do thành viên này đăng sẽ bị xóa vĩnh viễn khỏi căn phòng.
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setSelectedMemberForDeletion(null)}
+                  className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold rounded-2xl active:scale-95 transition-all"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeletingMember}
+                  onClick={handleConfirmDelete}
+                  className="flex-1 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white text-xs font-extrabold rounded-2xl flex items-center justify-center space-x-1.5 active:scale-95 transition-all shadow-[0_0_20px_rgba(225,29,72,0.5)] disabled:opacity-50"
+                >
+                  {isDeletingMember ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <span>Xóa thành viên</span>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

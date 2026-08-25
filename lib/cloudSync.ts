@@ -417,3 +417,24 @@ export async function pushMomentToGlobalCloudWithRetry(
   await new Promise((resolve) => setTimeout(resolve, 1500));
   return await pushMomentToGlobalCloud(moment);
 }
+
+export async function deleteMemberFromGlobalCloud(memberId: string): Promise<boolean> {
+  if (!memberId) return false;
+
+  if (isSupabaseConfigured()) {
+    try {
+      // 1. Delete reactions created by this member
+      await supabase.from('reactions').delete().eq('user_id', memberId);
+      // 2. Delete moments uploaded by this member
+      await supabase.from('moments').delete().eq('sender_id', memberId);
+      // 3. Delete profile from profiles table
+      const { error } = await supabase.from('profiles').delete().eq('id', memberId);
+      return !error;
+    } catch (e) {
+      console.error('[CloudSync] Member deletion error:', e);
+      return false;
+    }
+  }
+
+  return false;
+}
