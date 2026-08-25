@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { Profile } from '@/lib/types';
-import { Users, ChevronDown, Check, X, Megaphone } from 'lucide-react';
+import { Users, ChevronDown, Check, X, Megaphone, LogIn } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 const springSheet = { type: 'spring' as const, stiffness: 340, damping: 30, mass: 0.85 };
 
@@ -17,6 +18,7 @@ export interface MemberFilterOption {
 
 interface LocketHeaderProps {
   currentUser: Profile;
+  isGuest?: boolean;
   onOpenProfile: () => void;
   onOpenChat?: () => void;
   selectedFilterId: string;
@@ -27,6 +29,7 @@ interface LocketHeaderProps {
 
 export const LocketHeader: React.FC<LocketHeaderProps> = ({
   currentUser,
+  isGuest = false,
   onOpenProfile,
   onOpenChat,
   selectedFilterId,
@@ -34,12 +37,13 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
   members,
   isDragging = false,
 }) => {
+  const router = useRouter();
   const [showFilterModal, setShowFilterModal] = useState<boolean>(false);
 
   const avatarSrc =
     currentUser.avatar_url && currentUser.avatar_url.trim() !== ''
       ? currentUser.avatar_url
-      : `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
+      : `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'guest'}`;
 
   const friendCount = members.filter((m) => m.id !== 'all').length;
   const currentFilterMember = members.find((m) => m.id === selectedFilterId);
@@ -52,21 +56,25 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
     <>
       <div className="absolute top-0 left-0 right-0 z-40 px-4 pt-3 sm:pt-4 pb-2 flex items-center justify-between bg-transparent pointer-events-none">
 
-        {/* Left: Speaker / Announcement Icon Button (Exact Screenshot) */}
+        {/* Left: Speaker / Announcement Icon Button */}
         <motion.button
           whileTap={{ scale: 0.88 }}
           onClick={() => {
+            if (isGuest) {
+              router.push('/login');
+              return;
+            }
             if (typeof window !== 'undefined' && 'vibrate' in navigator) {
               try { navigator.vibrate(20); } catch (e) { }
             }
           }}
           className="w-9 h-9 flex items-center justify-center text-white/70 hover:text-white transition-colors rounded-full hover:bg-white/5 pointer-events-auto"
-          title="Thông báo Locket"
+          title={isGuest ? 'Đăng nhập để xem thông báo' : 'Thông báo Locket'}
         >
           <Megaphone className="w-5 h-5 stroke-[2]" />
         </motion.button>
 
-        {/* Center: "👥 18 người bạn" Black Pill Button (Exact Screenshot) */}
+        {/* Center: "👥 18 người bạn" Black Pill Button */}
         <motion.button
           whileTap={{ scale: 0.93 }}
           onClick={() => setShowFilterModal(true)}
@@ -82,25 +90,37 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
           <ChevronDown className="w-3.5 h-3.5 text-zinc-400 stroke-[2.2]" />
         </motion.button>
 
-        {/* Right: Circular User Avatar */}
-        <button
-          onClick={onOpenProfile}
-          className="relative flex-shrink-0 active:scale-95 transition-transform pointer-events-auto"
-          title="Trang cá nhân của bạn"
-        >
-          <div className="w-9 h-9 rounded-full border-2 border-[#D9266E] p-0.5 bg-zinc-900 shadow-md">
-            <div className="w-full h-full rounded-full overflow-hidden">
-              <img
-                src={avatarSrc}
-                alt={currentUser.display_name}
-                onError={(e) => {
-                  e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
-                }}
-                className="w-full h-full object-cover rounded-full"
-              />
+        {/* Right: Circular User Avatar or Login Pill */}
+        {isGuest ? (
+          <motion.button
+            whileTap={{ scale: 0.92 }}
+            onClick={onOpenProfile}
+            className="flex items-center space-x-1.5 bg-[#D9266E] hover:bg-[#be185d] text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg pointer-events-auto active:scale-95 transition-all"
+            title="Đăng nhập Locket"
+          >
+            <LogIn className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>Đăng nhập</span>
+          </motion.button>
+        ) : (
+          <button
+            onClick={onOpenProfile}
+            className="relative flex-shrink-0 active:scale-95 transition-transform pointer-events-auto"
+            title="Trang cá nhân của bạn"
+          >
+            <div className="w-9 h-9 rounded-full border-2 border-[#D9266E] p-0.5 bg-zinc-900 shadow-md">
+              <div className="w-full h-full rounded-full overflow-hidden">
+                <img
+                  src={avatarSrc}
+                  alt={currentUser.display_name}
+                  onError={(e) => {
+                    e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'user'}`;
+                  }}
+                  className="w-full h-full object-cover rounded-full"
+                />
+              </div>
             </div>
-          </div>
-        </button>
+          </button>
+        )}
       </div>
 
       {/* Friend Filter Selector Sheet Modal */}

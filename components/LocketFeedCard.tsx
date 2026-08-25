@@ -7,10 +7,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Download, Trash2, MoreVertical, Volume2, VolumeX } from 'lucide-react';
 import { killGlobalAudio, playGlobalAudio } from '@/lib/audioPlayer';
 import { getSafeMediaUrl } from '@/lib/media';
+import { useRouter } from 'next/navigation';
 
 interface LocketFeedCardProps {
   moment: Moment;
   currentUser: Profile;
+  isGuest?: boolean;
   onNext?: () => void;
   onPrev?: () => void;
   hasPrev?: boolean;
@@ -27,6 +29,7 @@ interface LocketFeedCardProps {
 export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   moment,
   currentUser,
+  isGuest = false,
   onNext,
   onPrev,
   hasPrev = false,
@@ -39,6 +42,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   activeReaction,
   onDragChange,
 }) => {
+  const router = useRouter();
   const touchStartY = useRef<number | null>(null);
   const mouseStartY = useRef<number | null>(null);
   const wheelCooldown = useRef<boolean>(false);
@@ -129,6 +133,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
 
   const toggleAudio = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isGuest) {
+      router.push('/login');
+      return;
+    }
     if (isPlayingAudio) {
       killGlobalAudio();
       setIsPlayingAudio(false);
@@ -140,7 +148,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
         }
       });
     }
-  }, [isPlayingAudio, moment.id, moment.music?.preview_url]);
+  }, [isGuest, isPlayingAudio, moment.id, moment.music?.preview_url, router]);
 
   useEffect(() => {
     if (activeReaction?.emoji) {
@@ -303,6 +311,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   };
 
   const handleDoubleTap = () => {
+    if (isGuest) {
+      router.push('/login');
+      return;
+    }
     const now = Date.now();
     const emojisPool = ['💖', '✨', '🔥', '🥰', '💕', '⭐', '❤️'];
     const burst = Array.from({ length: 6 }).map((_, i) => ({
@@ -588,6 +600,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (isGuest) {
+                    router.push('/login');
+                    return;
+                  }
                   setShowOptionsModal(true);
                 }}
                 className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md text-white/80 hover:text-white flex items-center justify-center border border-white/15 opacity-90 hover:opacity-100 transition-all active:scale-90 z-20 shadow-md"
@@ -647,7 +663,13 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       {/* Message Input Bar + Emoji Reactions — Premium Glassmorphism */}
       <div className="w-full px-3 pb-2.5 pointer-events-auto flex-shrink-0 z-10">
         <div
-          className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-full backdrop-blur-2xl"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isGuest) {
+              router.push('/login');
+            }
+          }}
+          className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-full backdrop-blur-2xl cursor-pointer"
           style={{
             background: 'rgba(255,255,255,0.06)',
             border: '1px solid rgba(255,255,255,0.10)',
@@ -662,6 +684,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                 whileTap={{ scale: 1.35 }}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (isGuest) {
+                    router.push('/login');
+                    return;
+                  }
                   handleDoubleTap();
                 }}
                 className="text-xl transition-transform hover:scale-110"

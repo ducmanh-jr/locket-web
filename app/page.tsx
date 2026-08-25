@@ -38,18 +38,14 @@ export default function HomePage() {
   const [lastReaction, setLastReaction] = useState<{ emoji: string; timestamp: number } | null>(null);
   const [isFeedDragging, setIsFeedDragging] = useState<boolean>(false);
 
-  const currentUser = userProfile || {
-    id: 'user-me',
-    username: 'manh_locket',
-    display_name: 'Đức Mạnh',
-    avatar_url: '/user-photos/1785829393992_567716528849713056_g276929852367586455_e887fb48d4d113fc528e29488435b6f7.jpg',
-  };
+  const isGuest = !userProfile;
 
-  useEffect(() => {
-    if (!authLoading && !userProfile) {
-      router.replace('/login');
-    }
-  }, [authLoading, userProfile, router]);
+  const currentUser = userProfile || {
+    id: 'guest',
+    username: 'khach',
+    display_name: 'Khách',
+    avatar_url: '',
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -72,24 +68,6 @@ export default function HomePage() {
 
   if (authLoading) {
     return <LoadingScreen message="Đang kết nối khoảnh khắc..." />;
-  }
-
-  if (!userProfile) {
-    return (
-      <div className="w-full h-full min-h-full flex flex-col items-center justify-center bg-[#10091D] text-white space-y-4 p-4 text-center">
-        <div className="w-12 h-12 rounded-2xl bg-[#FF2A85]/20 text-[#FF2A85] flex items-center justify-center mb-2 border border-[#FF2A85]/40">
-          <Camera className="w-6 h-6" />
-        </div>
-        <p className="text-sm font-bold text-white">Yêu cầu Đăng nhập Google</p>
-        <p className="text-xs text-zinc-400 max-w-xs">Chuyển hướng đến màn hình đăng nhập...</p>
-        <button
-          onClick={() => router.push('/login')}
-          className="mt-2 px-4 py-2 bg-[#FF2A85] text-white font-bold text-xs rounded-xl shadow-[0_0_20px_rgba(255,42,133,0.5)]"
-        >
-          Đăng nhập bằng Google 🚀
-        </button>
-      </div>
-    );
   }
 
   const roomMoments = filteredMoments;
@@ -121,11 +99,19 @@ export default function HomePage() {
   };
 
   const handleReact = (momentId: string, emoji: string) => {
+    if (isGuest) {
+      router.push('/login');
+      return;
+    }
     setLastReaction({ emoji, timestamp: Date.now() });
     addReaction(momentId, emoji);
   };
 
   const handleSendDirectMessage = (_text: string) => {
+    if (isGuest) {
+      router.push('/login');
+      return;
+    }
     if (currentMoment) {
       handleReact(currentMoment.id, '💬');
     }
@@ -138,6 +124,10 @@ export default function HomePage() {
     music?: MusicTrack,
     audioOption?: 'mute' | 'original' | 'music'
   ) => {
+    if (isGuest) {
+      router.push('/login');
+      return;
+    }
     const newMoment = await addMoment(media, caption, recipientIds, music, audioOption);
     if (newMoment?.id) {
       setSelectedMomentId(newMoment.id);
@@ -153,12 +143,23 @@ export default function HomePage() {
   return (
     <div className="h-full flex flex-col justify-between bg-gradient-to-b from-[#180e2d] via-[#10091D] to-[#0b0515] selection:bg-[#D9266E] selection:text-white overflow-hidden relative">
       {/* Shared Room Header */}
-
-      {/* Shared Room Header */}
       <LocketHeader
         currentUser={currentUser}
-        onOpenProfile={() => router.push('/profile')}
-        onOpenChat={() => setShowChatSheet(true)}
+        isGuest={isGuest}
+        onOpenProfile={() => {
+          if (isGuest) {
+            router.push('/login');
+          } else {
+            router.push('/profile');
+          }
+        }}
+        onOpenChat={() => {
+          if (isGuest) {
+            router.push('/login');
+          } else {
+            setShowChatSheet(true);
+          }
+        }}
         selectedFilterId={selectedFriendFilter}
         onSelectFilter={setSelectedFriendFilter}
         members={membersFilterOptions}
@@ -179,11 +180,18 @@ export default function HomePage() {
             >
               <LocketHistoryGrid
                 moments={roomMoments}
+                isGuest={isGuest}
                 onSelectMoment={(moment) => {
                   setSelectedMomentId(moment.id);
                   setCurrentView('feed');
                 }}
-                onOpenCamera={() => setShowCamera(true)}
+                onOpenCamera={() => {
+                  if (isGuest) {
+                    router.push('/login');
+                  } else {
+                    setShowCamera(true);
+                  }
+                }}
               />
             </motion.div>
           ) : (
@@ -207,6 +215,7 @@ export default function HomePage() {
                 <LocketFeedCard
                   moment={currentMoment}
                   currentUser={currentUser}
+                  isGuest={isGuest}
                   onNext={handleNext}
                   onPrev={handlePrev}
                   hasPrev={safeIndex > 0}
@@ -229,7 +238,13 @@ export default function HomePage() {
                     Bấm nút chụp bên dưới để đặt ảnh đầu tiên vào tệp ảnh chung!
                   </p>
                   <button
-                    onClick={() => setShowCamera(true)}
+                    onClick={() => {
+                      if (isGuest) {
+                        router.push('/login');
+                      } else {
+                        setShowCamera(true);
+                      }
+                    }}
                     className="py-2.5 px-5 bg-gradient-to-r from-[#D9266E] via-[#BE185D] to-[#9F1239] text-white font-bold text-xs rounded-xl shadow-[0_0_20px_rgba(217,38,110,0.5)] active:scale-95 transition-transform"
                   >
                     Chụp ảnh ngay 📸
@@ -244,15 +259,28 @@ export default function HomePage() {
       {/* Bottom Dock */}
       <LocketDock
         currentView={currentView}
+        isGuest={isGuest}
         onToggleView={(view) => setCurrentView(view)}
-        onOpenCamera={() => setShowCamera(true)}
-        onOpenMenu={() => setShowChatSheet(true)}
+        onOpenCamera={() => {
+          if (isGuest) {
+            router.push('/login');
+          } else {
+            setShowCamera(true);
+          }
+        }}
+        onOpenMenu={() => {
+          if (isGuest) {
+            router.push('/login');
+          } else {
+            setShowChatSheet(true);
+          }
+        }}
         onSendDirectMessage={handleSendDirectMessage}
         onReactEmoji={(emoji) => {
           if (currentMoment) handleReact(currentMoment.id, emoji);
         }}
         isMyMoment={
-          currentMoment
+          currentMoment && !isGuest
             ? (currentMoment.sender_id === currentUser.id) ||
               (currentMoment.sender?.id === currentUser.id) ||
               (currentMoment.sender?.username === currentUser.username)

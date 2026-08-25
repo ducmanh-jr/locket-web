@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 
 interface LocketDockProps {
   currentView: 'feed' | 'grid';
+  isGuest?: boolean;
   onToggleView: (view: 'feed' | 'grid') => void;
   onOpenCamera: () => void;
   onOpenMenu: () => void;
@@ -17,6 +18,7 @@ interface LocketDockProps {
 
 export const LocketDock: React.FC<LocketDockProps> = ({
   currentView,
+  isGuest = false,
   onToggleView,
   onOpenCamera,
   onOpenMenu,

@@ -8,12 +8,14 @@ import { motion } from 'framer-motion';
 
 interface LocketHistoryGridProps {
   moments: Moment[];
+  isGuest?: boolean;
   onSelectMoment: (moment: Moment) => void;
   onOpenCamera: () => void;
 }
 
 export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
   moments,
+  isGuest = false,
   onSelectMoment,
   onOpenCamera,
 }) => {
