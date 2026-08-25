@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 interface LocketDockProps {
   currentView: 'feed' | 'grid';
   isGuest?: boolean;
+  unreadCount?: number;
   onToggleView: (view: 'feed' | 'grid') => void;
   onOpenCamera: () => void;
   onOpenMenu: () => void;
@@ -19,6 +20,7 @@ interface LocketDockProps {
 export const LocketDock: React.FC<LocketDockProps> = ({
   currentView,
   isGuest = false,
+  unreadCount = 0,
   onToggleView,
   onOpenCamera,
   onOpenMenu,
@@ -82,9 +84,11 @@ export const LocketDock: React.FC<LocketDockProps> = ({
           title="Trò chuyện Locket"
         >
           <MessageCircle className="w-5 h-5 stroke-[2]" />
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#D9266E] text-white text-[9px] font-black flex items-center justify-center shadow-md">
-            1
-          </span>
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#D9266E] text-white text-[9px] font-black flex items-center justify-center shadow-md animate-pulse">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
         </motion.button>
       </div>
     </div>
