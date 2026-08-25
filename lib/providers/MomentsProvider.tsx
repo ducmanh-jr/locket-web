@@ -140,7 +140,7 @@ function removeLocalMomentsByMember(memberId: string): string[] {
 }
 
 export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { userProfile } = useAuth();
+  const { userProfile, signOut } = useAuth();
   const [moments, setMoments] = useState<Moment[]>(() => readLocalMoments());
   const [loading, setLoading] = useState(true);
   const [selectedFriendFilter, setSelectedFriendFilter] = useState<string>('all');
@@ -181,6 +181,20 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const loadMoments = useCallback(async () => {
     try {
       const deletedMembers = new Set(getDeletedMemberIds());
+
+      // Auto-logout deleted user: If current logged-in user was deleted by Admin, sign them out immediately!
+      if (userProfile?.id && deletedMembers.has(userProfile.id)) {
+        console.log('[MomentsProvider] Current user was deleted by Admin. Executing auto-logout...');
+        signOut();
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.removeItem(LOCAL_MOMENTS_KEY);
+          } catch (e) {}
+          window.location.href = '/login';
+        }
+        return;
+      }
+
       fetchGlobalCloudProfiles().then((profs) => {
         if (profs && Array.isArray(profs)) {
           setAllProfiles(profs.filter((p) => p && p.id && !deletedMembers.has(p.id)));
@@ -262,7 +276,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } finally {
       setLoading(false);
     }
-  }, [currentUser]);
+  }, [currentUser, signOut, userProfile?.id]);
 
   useEffect(() => {
     loadMoments();
