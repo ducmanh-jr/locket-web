@@ -180,6 +180,13 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Pure Shared Room Fetch: All accounts fetch from the EXACT same DB source
   const loadMoments = useCallback(async () => {
     try {
+      const deletedMembers = new Set(getDeletedMemberIds());
+      fetchGlobalCloudProfiles().then((profs) => {
+        if (profs && Array.isArray(profs)) {
+          setAllProfiles(profs.filter((p) => p && p.id && !deletedMembers.has(p.id)));
+        }
+      }).catch(() => {});
+
       const cloudMoments = await fetchGlobalCloudMoments();
       const sanitized = sanitizeMoments(cloudMoments);
       const cloudIds = new Set(sanitized.map((m) => m.id));
@@ -533,6 +540,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   const membersFilterOptions: MemberFilterOption[] = useMemo(() => {
+    const deletedMembers = new Set(getDeletedMemberIds());
     const list: MemberFilterOption[] = [
       { id: 'all', name: 'Tất cả bạn bè', count: moments.length },
     ];
@@ -542,7 +550,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
     
     // First, populate registered profiles in the room
     allProfiles.forEach((p) => {
-      if (p?.id) {
+      if (p?.id && !deletedMembers.has(p.id)) {
         sendersMap.set(p.id, {
           id: p.id,
           name: p.display_name || p.username || 'Thành viên Locket',
@@ -555,7 +563,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // Accumulate moment count per unique user ID
     moments.forEach((m) => {
       const sid = m.sender?.id || m.sender_id;
-      if (!sid) return;
+      if (!sid || deletedMembers.has(sid)) return;
 
       const sname =
         m.sender?.display_name ||
@@ -619,11 +627,15 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
         deleteMemberMoments: (memberId: string) => {
           addDeletedMemberId(memberId);
           removeLocalMomentsByMember(memberId);
+          setAllProfiles((prev) => prev.filter((p) => p.id !== memberId));
           setMoments((prev) =>
             prev.filter(
               (m) => m.sender_id !== memberId && m.sender?.id !== memberId
             )
           );
+          if (selectedFriendFilter === memberId) {
+            setSelectedFriendFilter('all');
+          }
         },
         addReaction,
         refreshMoments: loadMoments,
