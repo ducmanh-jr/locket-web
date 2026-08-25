@@ -35,6 +35,7 @@ const LEGACY_CACHE_KEYS = [
 const ACTIVE_CACHE_KEY = 'locket_moments_shared_cache_v9';
 const ACCOUNT_CACHE_PREFIX = 'locket_moments_account_v1_';
 const DELETED_CACHE_KEY = 'locket_deleted_moments_v1';
+const DELETED_MEMBERS_KEY = 'locket_deleted_members_v1';
 
 export function getDeletedMomentIds(): string[] {
   if (typeof window === 'undefined') return [];
@@ -64,6 +65,34 @@ export function addDeletedMomentId(momentId: string): void {
       localStorage.setItem(DELETED_CACHE_KEY, JSON.stringify(updated));
     }
   } catch (e) {}
+}
+
+export function getDeletedMemberIds(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(DELETED_MEMBERS_KEY);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function addDeletedMemberId(memberId: string): void {
+  if (typeof window === 'undefined' || !memberId) return;
+  try {
+    const deleted = getDeletedMemberIds();
+    if (!deleted.includes(memberId)) {
+      const updated = [...deleted, memberId];
+      localStorage.setItem(DELETED_MEMBERS_KEY, JSON.stringify(updated));
+    }
+  } catch (e) {}
+}
+
+export function isMemberDeleted(memberId: string): boolean {
+  if (!memberId) return false;
+  return getDeletedMemberIds().includes(memberId);
 }
 
 function getAccountCacheKey(userId?: string): string | null {

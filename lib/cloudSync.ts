@@ -1,6 +1,7 @@
 import { Moment } from './types';
 import { hasRenderableMedia, sanitizeMoments } from './media';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { getDeletedMemberIds, addDeletedMemberId } from './demoStore';
 
 export interface CloudProfile {
   id: string;
@@ -203,14 +204,18 @@ export async function pushProfileToGlobalCloud(profile: CloudProfile): Promise<b
 }
 
 export async function fetchGlobalCloudProfiles(): Promise<CloudProfile[]> {
+  const deletedSet = new Set(getDeletedMemberIds());
   try {
     const res = await fetch('/api/sync', { cache: 'no-store' });
     if (res.ok) {
       const contentType = res.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {
         const data = await res.json();
+        if (Array.isArray(data.deleted_member_ids)) {
+          data.deleted_member_ids.forEach((id: string) => deletedSet.add(id));
+        }
         if (Array.isArray(data.profiles)) {
-          return data.profiles;
+          return data.profiles.filter((p: any) => p && p.id && !deletedSet.has(p.id));
         }
       }
     }
@@ -220,7 +225,9 @@ export async function fetchGlobalCloudProfiles(): Promise<CloudProfile[]> {
   if (isSupabaseConfigured()) {
     try {
       const { data: profs } = await supabase.from('profiles').select('*').limit(100);
-      if (profs && profs.length > 0) return profs as CloudProfile[];
+      if (profs && profs.length > 0) {
+        return (profs as CloudProfile[]).filter((p) => p && p.id && !deletedSet.has(p.id));
+      }
     } catch (e) {}
   }
 
@@ -427,6 +434,9 @@ export async function pushMomentToGlobalCloudWithRetry(
 
 export async function deleteMemberFromGlobalCloud(memberId: string): Promise<boolean> {
   if (!memberId) return false;
+
+  // Add to client persistent deleted members registry immediately
+  addDeletedMemberId(memberId);
 
   let apiSuccess = false;
   try {

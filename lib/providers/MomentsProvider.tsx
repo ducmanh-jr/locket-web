@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { Moment, MusicTrack } from '@/lib/types';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { useAuth } from './AuthProvider';
-import { addDeletedMomentId, clearDeletedMomentIds, getDeletedMomentIds, getStoredDemoMoments } from '@/lib/demoStore';
+import { addDeletedMomentId, getDeletedMomentIds, getDeletedMemberIds, addDeletedMemberId, getStoredDemoMoments } from '@/lib/demoStore';
 import {
   fetchGlobalCloudMoments,
   fetchGlobalCloudProfiles,
@@ -57,11 +57,20 @@ const LOCAL_MOMENTS_KEY = 'locket_local_moments_v1';
 function readLocalMoments(): Moment[] {
   if (typeof window === 'undefined') return [];
   try {
+    const deletedMembers = new Set(getDeletedMemberIds());
     const stored = localStorage.getItem(LOCAL_MOMENTS_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed)) {
-        return sanitizeMoments(parsed.filter((m) => m && m.id));
+        return sanitizeMoments(
+          parsed.filter(
+            (m) =>
+              m &&
+              m.id &&
+              !deletedMembers.has(m.sender_id) &&
+              !deletedMembers.has(m.sender?.id)
+          )
+        );
       }
     }
   } catch (e) {}
@@ -166,10 +175,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
     );
   }, [currentUser]);
 
-  // Clear stale deleted IDs cache on mount to restore any accidentally hidden moments
-  useEffect(() => {
-    clearDeletedMomentIds();
-  }, []);
+  // Keep deleted IDs persistent across mounts (clearDeletedMomentIds disabled)
 
   // Pure Shared Room Fetch: All accounts fetch from the EXACT same DB source
   const loadMoments = useCallback(async () => {
@@ -210,22 +216,36 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
         });
 
         const deletedIds = new Set(getDeletedMomentIds());
-        const validLocalMoments = localMoments.filter((m) => m && m.id && !deletedIds.has(m.id));
+        const deletedMembers = new Set(getDeletedMemberIds());
+        const validLocalMoments = localMoments.filter(
+          (m) =>
+            m &&
+            m.id &&
+            !deletedIds.has(m.id) &&
+            !(m.sender_id && deletedMembers.has(m.sender_id)) &&
+            !(m.sender?.id && deletedMembers.has(m.sender.id))
+        );
 
         // Render Cloud Shared Room moments + local device moments + active optimistic uploads.
-        const merged = [...sanitized, ...validLocalMoments, ...pendingOptimistic].map((m) => {
-          const isMyMoment = m.sender_id === currentUser.id || m.sender?.id === currentUser.id;
-          if (isMyMoment && currentUser.avatar_url) {
-            return {
-              ...m,
-              sender: {
-                ...(m.sender || {}),
-                ...currentUser,
-              },
-            };
-          }
-          return m;
-        });
+        const merged = [...sanitized, ...validLocalMoments, ...pendingOptimistic]
+          .filter(
+            (m) =>
+              !(m.sender_id && deletedMembers.has(m.sender_id)) &&
+              !(m.sender?.id && deletedMembers.has(m.sender.id))
+          )
+          .map((m) => {
+            const isMyMoment = m.sender_id === currentUser.id || m.sender?.id === currentUser.id;
+            if (isMyMoment && currentUser.avatar_url) {
+              return {
+                ...m,
+                sender: {
+                  ...(m.sender || {}),
+                  ...currentUser,
+                },
+              };
+            }
+            return m;
+          });
 
         const sorted = sortMoments(merged) as Moment[];
         return sorted.filter((m, i, self) => i === self.findIndex((x) => x.id === m.id));
@@ -597,10 +617,13 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
         addMoment,
         deleteMoment,
         deleteMemberMoments: (memberId: string) => {
+          addDeletedMemberId(memberId);
           removeLocalMomentsByMember(memberId);
-          setMoments((prev) => prev.filter(
-            (m) => m.sender_id !== memberId && m.sender?.id !== memberId
-          ));
+          setMoments((prev) =>
+            prev.filter(
+              (m) => m.sender_id !== memberId && m.sender?.id !== memberId
+            )
+          );
         },
         addReaction,
         refreshMoments: loadMoments,
