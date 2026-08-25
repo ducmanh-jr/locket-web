@@ -303,16 +303,32 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
   });
 
   // Get last message for a specific thread
-  const getLastMessage = (friendId: string) => {
-    const threadMsgs = messages.filter((m) => {
-      return (
-        (m.sender_id === currentUser.id && m.recipient_id === friendId) ||
-        (m.sender_id === friendId && m.recipient_id === currentUser.id)
-      );
+  const getLastMessage = useCallback(
+    (friendId: string) => {
+      const threadMsgs = messages.filter((m) => {
+        return (
+          (m.sender_id === currentUser.id && m.recipient_id === friendId) ||
+          (m.sender_id === friendId && m.recipient_id === currentUser.id)
+        );
+      });
+      if (threadMsgs.length === 0) return null;
+      return threadMsgs[threadMsgs.length - 1];
+    },
+    [messages, currentUser.id]
+  );
+
+  // Sort Friends by Latest Message Timestamp (Most Recent Conversation First!)
+  const sortedFriends = React.useMemo(() => {
+    const list = [...filteredFriends];
+    list.sort((a, b) => {
+      const msgA = getLastMessage(a.id);
+      const msgB = getLastMessage(b.id);
+      const timeA = msgA ? new Date(msgA.created_at || 0).getTime() : 0;
+      const timeB = msgB ? new Date(msgB.created_at || 0).getTime() : 0;
+      return timeB - timeA; // Descending: Most recent first!
     });
-    if (threadMsgs.length === 0) return null;
-    return threadMsgs[threadMsgs.length - 1];
-  };
+    return list;
+  }, [filteredFriends, getLastMessage]);
 
   const formatChatTime = (dateStr?: string) => {
     if (!dateStr) return '';
@@ -485,9 +501,9 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
             </div>
           </div>
 
-          {/* Friends Horizontal Row (Without Online Dots or Group Room) */}
+          {/* Friends Horizontal Row (Sorted by Most Recent Conversation First) */}
           <div className="px-4 py-2.5 flex items-center space-x-4 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden border-b border-zinc-100">
-            {sanitizedFriends.map((friend) => (
+            {sortedFriends.map((friend) => (
               <button
                 key={friend.id}
                 onClick={() => openThread(friend.id)}
@@ -507,14 +523,14 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
             ))}
           </div>
 
-          {/* Individual Friend Chat List */}
+          {/* Individual Friend Chat List (Sorted by Most Recent Conversation First) */}
           <div className="flex-1 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-            {filteredFriends.length === 0 ? (
+            {sortedFriends.length === 0 ? (
               <div className="p-8 text-center text-xs text-zinc-400">
                 Không tìm thấy cuộc trò chuyện nào
               </div>
             ) : (
-              filteredFriends.map((friend) => {
+              sortedFriends.map((friend) => {
                 const lastMsg = getLastMessage(friend.id);
                 return (
                   <button
