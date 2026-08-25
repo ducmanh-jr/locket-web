@@ -50,6 +50,15 @@ export default function ProfilePage() {
     }
   }, [authLoading, userProfile, router]);
 
+  // Mobile edge swipe-back gesture: return to Home
+  useEffect(() => {
+    const handlePopState = () => {
+      router.push('/');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [router]);
+
   // Handle Avatar Image File Selection
   const handleAvatarFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

@@ -11,7 +11,7 @@ import { SupabaseConfigNotice } from '@/components/SupabaseConfigNotice';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { useAuth } from '@/lib/providers/AuthProvider';
 import { useMoments } from '@/lib/providers/MomentsProvider';
-import { Camera } from 'lucide-react';
+import { Camera, LogOut } from 'lucide-react';
 import { CapturedMedia } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,6 +35,7 @@ export default function HomePage() {
   const [currentView, setCurrentView] = useState<'feed' | 'grid'>('feed');
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [showChatSheet, setShowChatSheet] = useState<boolean>(false);
+  const [showExitModal, setShowExitModal] = useState<boolean>(false);
   const [lastReaction, setLastReaction] = useState<{ emoji: string; timestamp: number } | null>(null);
   const [isFeedDragging, setIsFeedDragging] = useState<boolean>(false);
   const hasParsedDeepLinkRef = useRef<boolean>(false);
@@ -48,13 +49,52 @@ export default function HomePage() {
     avatar_url: '',
   };
 
+  const openSubView = (action: () => void, name: string) => {
+    if (typeof window !== 'undefined') {
+      window.history.pushState({ modal: name }, '');
+    }
+    action();
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.scrollTo(0, 0);
       document.body.scrollTop = 0;
       document.documentElement.scrollTop = 0;
+      if (!window.history.state || !window.history.state.app) {
+        window.history.replaceState({ app: 'locket_root' }, '');
+      }
     }
   }, []);
+
+  // Mobile edge swipe-back gesture & popstate backstack listener
+  useEffect(() => {
+    const handlePopState = () => {
+      if (showCamera) {
+        setShowCamera(false);
+        return;
+      }
+      if (showChatSheet) {
+        setShowChatSheet(false);
+        return;
+      }
+      if (currentView === 'grid') {
+        setCurrentView('feed');
+        return;
+      }
+
+      // Root Feed back action: intercept & show Exit Confirmation Modal
+      if (typeof window !== 'undefined') {
+        window.history.pushState({ app: 'locket_root' }, '');
+      }
+      setShowExitModal(true);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [showCamera, showChatSheet, currentView]);
 
   // Unregister old Service Workers to clear stale cache in normal browser tabs
   useEffect(() => {
@@ -277,19 +317,25 @@ export default function HomePage() {
       <LocketDock
         currentView={currentView}
         isGuest={isGuest}
-        onToggleView={(view) => setCurrentView(view)}
+        onToggleView={(view) => {
+          if (view === 'grid') {
+            openSubView(() => setCurrentView('grid'), 'grid');
+          } else {
+            setCurrentView('feed');
+          }
+        }}
         onOpenCamera={() => {
           if (isGuest) {
             router.push('/login');
           } else {
-            setShowCamera(true);
+            openSubView(() => setShowCamera(true), 'camera');
           }
         }}
         onOpenMenu={() => {
           if (isGuest) {
             router.push('/login');
           } else {
-            setShowChatSheet(true);
+            openSubView(() => setShowChatSheet(true), 'chat');
           }
         }}
         onSendDirectMessage={handleSendDirectMessage}
@@ -323,6 +369,62 @@ export default function HomePage() {
             friends={membersFilterOptions}
             onClose={() => setShowChatSheet(false)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Exit App Confirmation Modal Sheet */}
+      <AnimatePresence>
+        {showExitModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setShowExitModal(false)}
+            className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 select-none"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-xs bg-[#160a12]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 text-center space-y-4 shadow-[0_15px_50px_rgba(0,0,0,0.9)]"
+            >
+              <div className="w-14 h-14 rounded-full bg-[#D9266E]/20 text-[#D9266E] border border-[#D9266E]/40 flex items-center justify-center mx-auto shadow-lg">
+                <LogOut className="w-7 h-7 stroke-[2.2]" />
+              </div>
+
+              <div>
+                <h3 className="text-white text-base font-extrabold mb-1">Thoát ứng dụng?</h3>
+                <p className="text-zinc-400 text-xs">
+                  Bạn có chắc chắn muốn thoát khỏi LocketWeb không?
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-2.5 pt-1">
+                <button
+                  onClick={() => setShowExitModal(false)}
+                  className="flex-1 py-3 bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-300 text-xs font-extrabold rounded-2xl active:scale-95 transition-all"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={() => {
+                    setShowExitModal(false);
+                    try {
+                      window.history.go(-2);
+                    } catch (e) {
+                      window.close();
+                    }
+                  }}
+                  className="flex-1 py-3 bg-[#D9266E] hover:bg-[#be185d] text-white text-xs font-extrabold rounded-2xl active:scale-95 transition-all shadow-[0_0_20px_rgba(217,38,110,0.5)]"
+                >
+                  Thoát
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

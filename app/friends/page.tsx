@@ -28,6 +28,15 @@ export default function FriendsPage() {
     loadMembers();
   }, []);
 
+  // Mobile edge swipe-back gesture: return to Home
+  useEffect(() => {
+    const handlePopState = () => {
+      router.push('/');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [router]);
+
   // Filter: exclude yourself + apply search query
   const filteredMembers = members
     .filter((m) => m.id !== userProfile?.id)

@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMoments } from '@/lib/providers/MomentsProvider';
 import { LocketHistoryGrid } from '@/components/LocketHistoryGrid';
@@ -9,6 +9,15 @@ import { ArrowLeft } from 'lucide-react';
 export default function HistoryPage() {
   const router = useRouter();
   const { filteredMoments } = useMoments();
+
+  // Mobile edge swipe-back gesture: return to Home
+  useEffect(() => {
+    const handlePopState = () => {
+      router.push('/');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [router]);
 
   return (
     <div className="h-full flex flex-col justify-between bg-[#10091D] text-white px-4 pt-3 pb-4 select-none">

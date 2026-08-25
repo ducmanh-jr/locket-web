@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { Camera, Sparkles, ShieldCheck, Zap, Users, Info, X, Heart } from 'lucide-react';
@@ -11,6 +11,15 @@ export default function LoginPage() {
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showChangelogModal, setShowChangelogModal] = useState<boolean>(false);
+
+  // Mobile edge swipe-back gesture: return to Home
+  useEffect(() => {
+    const handlePopState = () => {
+      router.push('/');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [router]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
