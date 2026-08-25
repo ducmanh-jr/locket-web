@@ -33,6 +33,7 @@ interface MomentsContextValue {
     audioOption?: 'mute' | 'original' | 'music'
   ) => Promise<Moment>;
   deleteMoment: (momentId: string) => Promise<void>;
+  deleteMemberMoments: (memberId: string) => void;
   addReaction: (momentId: string, emoji: string) => Promise<void>;
   refreshMoments: () => Promise<void>;
 }
@@ -46,6 +47,7 @@ const MomentsContext = createContext<MomentsContextValue>({
   membersFilterOptions: [],
   addMoment: async () => ({} as Moment),
   deleteMoment: async () => {},
+  deleteMemberMoments: () => {},
   addReaction: async () => {},
   refreshMoments: async () => {},
 });
@@ -106,6 +108,26 @@ function removeLocalMoment(momentId: string): void {
     const updated = existing.filter((m) => m.id !== momentId);
     localStorage.setItem(LOCAL_MOMENTS_KEY, JSON.stringify(updated));
   } catch (e) {}
+}
+
+function removeLocalMomentsByMember(memberId: string): string[] {
+  if (typeof window === 'undefined' || !memberId) return [];
+  const removedIds: string[] = [];
+  try {
+    const existing = readLocalMoments();
+    const toRemove = existing.filter(
+      (m) => m.sender_id === memberId || m.sender?.id === memberId
+    );
+    toRemove.forEach((m) => {
+      addDeletedMomentId(m.id);
+      removedIds.push(m.id);
+    });
+    const updated = existing.filter(
+      (m) => m.sender_id !== memberId && m.sender?.id !== memberId
+    );
+    localStorage.setItem(LOCAL_MOMENTS_KEY, JSON.stringify(updated));
+  } catch (e) {}
+  return removedIds;
 }
 
 export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -568,6 +590,12 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
         membersFilterOptions,
         addMoment,
         deleteMoment,
+        deleteMemberMoments: (memberId: string) => {
+          removeLocalMomentsByMember(memberId);
+          setMoments((prev) => prev.filter(
+            (m) => m.sender_id !== memberId && m.sender?.id !== memberId
+          ));
+        },
         addReaction,
         refreshMoments: loadMoments,
       }}

@@ -210,6 +210,48 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
+    if (action === 'delete_member' && (body.member_id || body.profile_id)) {
+      const targetId = body.member_id || body.profile_id;
+
+      // 1. Purge from in-memory server arrays
+      globalSharedProfiles = globalSharedProfiles.filter((p) => p && p.id !== targetId);
+      globalSharedMoments = globalSharedMoments.filter(
+        (m) => m && m.sender_id !== targetId && m.sender?.id !== targetId
+      );
+
+      // 2. Purge from Supabase DB tables & Storage
+      if (isSupabaseConfigured()) {
+        try {
+          await supabase.from('reactions').delete().eq('user_id', targetId);
+
+          const { data: userMoments } = await supabase
+            .from('moments')
+            .select('id, media_url')
+            .eq('sender_id', targetId);
+
+          if (userMoments && userMoments.length > 0) {
+            const storagePaths: string[] = [];
+            userMoments.forEach((um: any) => {
+              if (um.media_url?.includes('/moments/')) {
+                const parts = um.media_url.split('/moments/');
+                if (parts[1]) storagePaths.push(parts[1]);
+              }
+            });
+            if (storagePaths.length > 0) {
+              await supabase.storage.from('moments').remove(storagePaths);
+            }
+          }
+
+          await supabase.from('moments').delete().eq('sender_id', targetId);
+          await supabase.from('profiles').delete().eq('id', targetId);
+        } catch (e) {
+          console.error('[API Sync] Delete member error:', e);
+        }
+      }
+
+      return NextResponse.json({ success: true });
+    }
+
     return NextResponse.json({ error: 'Hành động không hợp lệ' }, { status: 400 });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Server Error' }, { status: 500 });

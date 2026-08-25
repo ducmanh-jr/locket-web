@@ -421,20 +421,26 @@ export async function pushMomentToGlobalCloudWithRetry(
 export async function deleteMemberFromGlobalCloud(memberId: string): Promise<boolean> {
   if (!memberId) return false;
 
+  let apiSuccess = false;
+  try {
+    const res = await fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete_member', member_id: memberId }),
+    });
+    if (res.ok) apiSuccess = true;
+  } catch (e) {}
+
   if (isSupabaseConfigured()) {
     try {
-      // 1. Delete reactions created by this member
       await supabase.from('reactions').delete().eq('user_id', memberId);
-      // 2. Delete moments uploaded by this member
       await supabase.from('moments').delete().eq('sender_id', memberId);
-      // 3. Delete profile from profiles table
-      const { error } = await supabase.from('profiles').delete().eq('id', memberId);
-      return !error;
+      await supabase.from('profiles').delete().eq('id', memberId);
+      return true;
     } catch (e) {
-      console.error('[CloudSync] Member deletion error:', e);
-      return false;
+      console.error('[CloudSync] Direct DB member deletion fallback error:', e);
     }
   }
 
-  return false;
+  return apiSuccess;
 }

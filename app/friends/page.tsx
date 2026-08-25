@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/providers/AuthProvider';
 import { ArrowLeft, Users, Search, Sparkles, Loader2, Trash2 } from 'lucide-react';
 import { fetchGlobalCloudProfiles, deleteMemberFromGlobalCloud, CloudProfile } from '@/lib/cloudSync';
+import { useMoments } from '@/lib/providers/MomentsProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function FriendsPage() {
   const router = useRouter();
   const { userProfile } = useAuth();
+  const { deleteMemberMoments } = useMoments();
   const [searchQuery, setSearchQuery] = useState('');
   const [members, setMembers] = useState<CloudProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,6 +69,7 @@ export default function FriendsPage() {
     setIsDeletingMember(true);
     try {
       await deleteMemberFromGlobalCloud(selectedMemberForDeletion.id);
+      deleteMemberMoments(selectedMemberForDeletion.id);
       setMembers((prev) => prev.filter((m) => m.id !== selectedMemberForDeletion.id));
       setSelectedMemberForDeletion(null);
     } catch (e) {
