@@ -153,9 +153,14 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
 
   // Fetch messages from Cloud API
   const fetchMessages = useCallback(async () => {
-    if (!selectedFriendId) return;
+    if (!currentUser?.id) return;
     try {
-      const res = await fetch(`/api/chat?friend_id=${selectedFriendId}`);
+      const url =
+        activeView === 'thread' && selectedFriendId
+          ? `/api/chat?user_id=${currentUser.id}&friend_id=${selectedFriendId}`
+          : `/api/chat?user_id=${currentUser.id}`;
+
+      const res = await fetch(url, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.messages)) {
@@ -169,11 +174,11 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
         }
       }
     } catch (e) {}
-  }, [selectedFriendId]);
+  }, [currentUser?.id, selectedFriendId, activeView]);
 
   useEffect(() => {
     fetchMessages();
-    const interval = setInterval(fetchMessages, 3000);
+    const interval = setInterval(fetchMessages, 1500);
     return () => clearInterval(interval);
   }, [fetchMessages]);
 

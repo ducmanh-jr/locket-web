@@ -4,7 +4,7 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 export interface ChatMessage {
   id: string;
   sender_id: string;
-  recipient_id: string; // 'all' for room chat or specific user_id
+  recipient_id: string;
   content: string;
   media_url?: string;
   created_at: string;
@@ -16,19 +16,19 @@ let globalSharedMessages: ChatMessage[] = [];
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('user_id');
     const friendId = searchParams.get('friend_id');
 
     let dbMessages: ChatMessage[] = [];
 
     if (isSupabaseConfigured()) {
       try {
-        let query = supabase.from('messages').select('*').order('created_at', { ascending: true }).limit(200);
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*')
+          .order('created_at', { ascending: true })
+          .limit(300);
 
-        if (friendId && friendId !== 'all') {
-          query = query.or(`and(sender_id.eq.${friendId}),and(recipient_id.eq.${friendId})`);
-        }
-
-        const { data, error } = await query;
         if (!error && Array.isArray(data)) {
           dbMessages = data;
         }
@@ -40,12 +40,24 @@ export async function GET(request: Request) {
     const unique = merged.filter((m, i, self) => m && m.id && i === self.findIndex((x) => x?.id === m?.id));
     unique.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
 
-    // Filter for requested conversation
     let filtered = unique;
-    if (friendId && friendId !== 'all') {
+
+    if (userId && friendId) {
+      // 1-on-1 thread between userId and friendId
       filtered = unique.filter(
         (m) =>
-          (m.sender_id === friendId || m.recipient_id === friendId)
+          (m.sender_id === userId && m.recipient_id === friendId) ||
+          (m.sender_id === friendId && m.recipient_id === userId)
+      );
+    } else if (userId) {
+      // All messages involving userId
+      filtered = unique.filter(
+        (m) => m.sender_id === userId || m.recipient_id === userId
+      );
+    } else if (friendId) {
+      // Fallback: all messages involving friendId
+      filtered = unique.filter(
+        (m) => m.sender_id === friendId || m.recipient_id === friendId
       );
     }
 
@@ -73,7 +85,7 @@ export async function POST(request: Request) {
     const newMsg: ChatMessage = {
       id: messageId,
       sender_id,
-      recipient_id: recipient_id || 'all',
+      recipient_id: recipient_id || '',
       content: content || '',
       media_url: media_url || undefined,
       created_at: createdAt,
@@ -96,7 +108,7 @@ export async function POST(request: Request) {
         await supabase.from('messages').insert({
           id: messageId,
           sender_id,
-          recipient_id: recipient_id || 'all',
+          recipient_id: recipient_id || '',
           content: content || '',
           media_url: media_url || null,
           created_at: createdAt,
