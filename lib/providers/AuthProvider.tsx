@@ -10,6 +10,7 @@ interface AuthContextValue {
   loading: boolean;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => void;
+  loginWithProfile: (profile: Profile) => void;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthContextValue>({
   loading: true,
   signOut: async () => {},
   updateProfile: () => {},
+  loginWithProfile: () => {},
 });
 
 const STORAGE_KEY = 'locket_google_user_v1';
@@ -249,8 +251,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   }, []);
 
+  const loginWithProfile = useCallback((profile: Profile) => {
+    setUserProfile(profile);
+    saveCachedProfile(profile);
+    pushProfileToGlobalCloud({
+      id: profile.id,
+      username: profile.username,
+      display_name: profile.display_name,
+      avatar_url: profile.avatar_url || '',
+    }).catch(() => {});
+    if (isSupabaseConfigured() && profile.id) {
+      (async () => {
+        try {
+          await supabase.from('profiles').upsert({
+            id: profile.id,
+            username: profile.username,
+            display_name: profile.display_name,
+            avatar_url: profile.avatar_url || '',
+          });
+        } catch (e) {}
+      })();
+    }
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ userProfile, loading, signOut, updateProfile }}>
+    <AuthContext.Provider value={{ userProfile, loading, signOut, updateProfile, loginWithProfile }}>
       {children}
     </AuthContext.Provider>
   );

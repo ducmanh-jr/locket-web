@@ -3,14 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
-import { Camera, Sparkles, ShieldCheck, Zap, Users, Info, X, Heart } from 'lucide-react';
+import { Camera, Sparkles, ShieldCheck, Zap, Users, Info, X, Heart, Mail, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/lib/providers/AuthProvider';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { loginWithProfile } = useAuth();
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showChangelogModal, setShowChangelogModal] = useState<boolean>(false);
+  const [gmailInput, setGmailInput] = useState<string>('');
+  const [gmailLoading, setGmailLoading] = useState<boolean>(false);
 
   // Mobile edge swipe-back gesture: return to Home
   useEffect(() => {
@@ -45,6 +49,53 @@ export default function LoginPage() {
     } else {
       setErrorMessage('Dịch vụ đăng nhập chưa sẵn sàng (Chưa cấu hình Supabase)');
       setLoading(false);
+    }
+  };
+
+  const handleGmailQuickLogin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = gmailInput.trim().toLowerCase();
+    if (!trimmed) {
+      setErrorMessage('Vui lòng nhập địa chỉ Gmail của bạn');
+      return;
+    }
+
+    let email = trimmed;
+    if (!email.includes('@')) {
+      email = `${email}@gmail.com`;
+    }
+
+    setGmailLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const emailPrefix = email.split('@')[0] || 'user';
+      const cleanUsername = emailPrefix.replace(/[^a-z0-9_]/g, '').toLowerCase() || 'locket_user';
+      const rawDisplayName = emailPrefix
+        .split('.')[0]
+        .replace(/[^a-zA-Z0-9]/g, ' ')
+        .replace(/\b\w/g, (l) => l.toUpperCase());
+
+      const ADMIN_EMAIL = 'nguyenducmanh.ovaltine@gmail.com';
+      const isAdmin = email.trim().toLowerCase() === ADMIN_EMAIL;
+
+      const safeId = `user-gmail-${cleanUsername}-${btoa(email).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8)}`;
+
+      const profile = {
+        id: safeId,
+        username: cleanUsername,
+        display_name: rawDisplayName || 'Thành viên Locket',
+        avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${cleanUsername}`,
+        email: email,
+        isAdmin: isAdmin,
+      };
+
+      loginWithProfile(profile);
+      router.push('/');
+    } catch (err: any) {
+      setErrorMessage('Không thể đăng nhập bằng Gmail. Vui lòng thử lại.');
+    } finally {
+      setGmailLoading(false);
     }
   };
 
@@ -156,6 +207,38 @@ export default function LoginPage() {
               1-Chạm
             </span>
           </button>
+
+          {/* Divider */}
+          <div className="flex items-center my-3 w-full">
+            <div className="flex-1 border-t border-zinc-800" />
+            <span className="px-3 text-[10px] font-extrabold text-zinc-500 uppercase tracking-wider">
+              Hoặc đăng nhập nhanh bằng Gmail
+            </span>
+            <div className="flex-1 border-t border-zinc-800" />
+          </div>
+
+          {/* Passwordless Gmail Quick Login Form */}
+          <form onSubmit={handleGmailQuickLogin} className="w-full space-y-2.5">
+            <div className="relative">
+              <input
+                type="email"
+                value={gmailInput}
+                onChange={(e) => setGmailInput(e.target.value)}
+                placeholder="Nhập địa chỉ Gmail (vd: abc@gmail.com)..."
+                className="w-full bg-[#18181C] border border-zinc-800 focus:border-[#D9266E] text-white text-xs font-semibold rounded-2xl pl-10 pr-4 py-3.5 placeholder-zinc-500 focus:outline-none transition-all shadow-inner"
+              />
+              <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
+            </div>
+
+            <button
+              type="submit"
+              disabled={gmailLoading || !gmailInput.trim()}
+              className="w-full py-3.5 px-4 bg-gradient-to-r from-[#D9266E] via-[#BE185D] to-[#9F1239] hover:from-[#be185d] hover:to-[#881337] text-white font-extrabold text-xs rounded-2xl shadow-[0_0_25px_rgba(217,38,110,0.4)] flex items-center justify-center space-x-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Send className="w-3.5 h-3.5 text-white" />
+              <span>{gmailLoading ? 'Đang vào...' : 'Vào ngay bằng Gmail'}</span>
+            </button>
+          </form>
 
           {errorMessage && (
             <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs font-semibold text-center animate-in fade-in">
