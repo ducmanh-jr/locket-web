@@ -1,114 +1,51 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
-import { Camera, Sparkles, ShieldCheck, Zap, Users, Info, X, Heart, Mail, CheckCircle2, UserCheck, ArrowRight } from 'lucide-react';
+import { Camera, Sparkles, ShieldCheck, Zap, Users, Info, X, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/providers/AuthProvider';
-import {
-  getCleanFallbackAvatar,
-  ADMIN_AVATAR_URL,
-  removeDeletedMemberId,
-  clearAllDeletedMemberIds,
-  syncDeletedMemberIdsWithServer,
-} from '@/lib/demoStore';
+import { clearAllDeletedMemberIds } from '@/lib/demoStore';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { loginWithProfile } = useAuth();
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showChangelogModal, setShowChangelogModal] = useState<boolean>(false);
-  const [showGoogleModal, setShowGoogleModal] = useState<boolean>(false);
-  const [customGoogleEmail, setCustomGoogleEmail] = useState<string>('');
 
-  const handleGoogleLogin = () => {
-    setErrorMessage(null);
-    setLoading(false);
-    setShowGoogleModal(true);
-  };
-
-  const executeGoogleSignIn = async (emailInput: string) => {
-    const trimmed = emailInput.trim().toLowerCase();
-    if (!trimmed) return;
-
-    let email = trimmed;
-    if (!email.includes('@')) {
-      email = `${email}@gmail.com`;
-    }
-
+  const handleGoogleLogin = async () => {
     setLoading(true);
-    setShowGoogleModal(false);
+    setErrorMessage(null);
+    clearAllDeletedMemberIds();
 
-    try {
-      const emailPrefix = email.split('@')[0] || 'user';
-      const cleanUsername = emailPrefix.replace(/[^a-z0-9_]/g, '').toLowerCase() || 'locket_user';
-      const rawDisplayName = emailPrefix
-        .split('.')[0]
-        .replace(/[^a-zA-Z0-9]/g, ' ')
-        .replace(/\b\w/g, (l) => l.toUpperCase());
-
-      const ADMIN_EMAIL = 'nguyenducmanh.ovaltine@gmail.com';
-      const isAdmin = email.trim().toLowerCase() === ADMIN_EMAIL;
-
-      // 1. Account Unification: Check if profile already exists in Supabase DB
-      let existingDbProfile: any = null;
-      if (isSupabaseConfigured()) {
-        try {
-          const { data } = await supabase
-            .from('profiles')
-            .select('*')
-            .or(`email.eq.${email},username.eq.${cleanUsername}`)
-            .maybeSingle();
-          if (data) existingDbProfile = data;
-        } catch (e) {}
-      }
-
-      const safeId = existingDbProfile?.id || `user-google-${cleanUsername}-${btoa(email).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8)}`;
-      const finalUsername = existingDbProfile?.username || cleanUsername;
-      const finalDisplayName = existingDbProfile?.display_name || rawDisplayName || 'Thành viên Locket';
-      const finalAvatarUrl = isAdmin
-        ? ADMIN_AVATAR_URL
-        : existingDbProfile?.avatar_url && existingDbProfile.avatar_url.trim() !== ''
-        ? existingDbProfile.avatar_url
-        : getCleanFallbackAvatar(finalDisplayName, isAdmin);
-
-      const profile = {
-        id: safeId,
-        username: finalUsername,
-        display_name: finalDisplayName,
-        avatar_url: finalAvatarUrl,
-        email: email,
-        isAdmin: isAdmin,
-      };
-
-      // 2. Wipe local deletion blocklist & register Profile on Server API
-      clearAllDeletedMemberIds();
-      removeDeletedMemberId(safeId);
-      if (email) removeDeletedMemberId(email);
-      if (cleanUsername) removeDeletedMemberId(cleanUsername);
-
+    if (isSupabaseConfigured()) {
       try {
-        const res = await fetch('/api/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'push_profile', profile }),
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/`,
+          },
         });
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data.deleted_member_ids)) {
-            syncDeletedMemberIdsWithServer(data.deleted_member_ids);
-          }
-        }
-      } catch (err) {}
 
-      clearAllDeletedMemberIds();
-      loginWithProfile(profile);
-      router.push('/');
-    } catch (err: any) {
-      setErrorMessage('Không thể hoàn tất đăng nhập bằng Google. Vui lòng thử lại.');
-    } finally {
+        if (error) {
+          console.error('Google OAuth error:', error);
+          setErrorMessage(error.message || 'Đăng nhập bằng Google không thành công');
+          setLoading(false);
+          return;
+        }
+
+        if (data?.url) {
+          window.location.href = data.url;
+          return;
+        }
+      } catch (e: any) {
+        console.error('Exception during Google OAuth:', e);
+        setErrorMessage(e?.message || 'Không thể kết nối đến máy chủ đăng nhập Google');
+        setLoading(false);
+      }
+    } else {
+      setErrorMessage('Dịch vụ đăng nhập chưa sẵn sàng (Chưa cấu hình Supabase)');
       setLoading(false);
     }
   };
@@ -249,118 +186,6 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-
-      {/* 1-Tap Google Account Picker Modal */}
-      <AnimatePresence>
-        {showGoogleModal && (
-          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-sm bg-[#18181C] border border-zinc-800 rounded-3xl p-6 shadow-2xl text-left space-y-5 relative overflow-hidden"
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-                <div className="flex items-center space-x-2.5">
-                  <div className="w-6 h-6 rounded-full bg-white p-1 flex items-center justify-center shadow-sm border border-zinc-200">
-                    <svg className="w-full h-full" viewBox="0 0 24 24">
-                      <path
-                        fill="#4285F4"
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                      />
-                      <path
-                        fill="#34A853"
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      />
-                      <path
-                        fill="#FBBC05"
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                      />
-                      <path
-                        fill="#EA4335"
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                      />
-                    </svg>
-                  </div>
-                  <h3 className="text-white text-base font-extrabold">Chọn tài khoản Google</h3>
-                </div>
-                <button
-                  onClick={() => setShowGoogleModal(false)}
-                  className="p-1 text-zinc-400 hover:text-white rounded-full bg-zinc-800"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                Đăng nhập 1-chạm tức thì bằng tài khoản Google của bạn để vào LocketWeb:
-              </p>
-
-              {/* Account Preset List */}
-              <div className="space-y-2.5">
-                {/* Admin Quick Select */}
-                <button
-                  onClick={() => executeGoogleSignIn('nguyenducmanh.ovaltine@gmail.com')}
-                  className="w-full p-3.5 bg-zinc-900/90 hover:bg-zinc-800/90 border border-zinc-700/60 rounded-2xl flex items-center justify-between transition-all active:scale-95 text-left group"
-                >
-                  <div className="flex items-center space-x-3">
-                    <img
-                      src={ADMIN_AVATAR_URL}
-                      alt="Admin Avatar"
-                      className="w-9 h-9 rounded-full object-cover border-2 border-[#D9266E]"
-                    />
-                    <div>
-                      <div className="flex items-center space-x-1.5">
-                        <span className="text-white font-bold text-xs">Nguyenducmanh</span>
-                        <span className="text-[9px] font-extrabold bg-[#D9266E] text-white px-1.5 py-0.2 rounded-full">
-                          Admin
-                        </span>
-                      </div>
-                      <span className="text-[11px] text-zinc-400 font-mono">
-                        nguyenducmanh.ovaltine@gmail.com
-                      </span>
-                    </div>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" />
-                </button>
-
-                {/* Custom Email Input */}
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    executeGoogleSignIn(customGoogleEmail);
-                  }}
-                  className="space-y-2 pt-2 border-t border-zinc-800/80"
-                >
-                  <label className="text-[11px] font-bold text-zinc-400 block">
-                    Hoặc nhập Gmail khác của bạn:
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      value={customGoogleEmail}
-                      onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                      placeholder="vd: abc@gmail.com..."
-                      className="w-full bg-[#121215] border border-zinc-800 focus:border-[#D9266E] text-white text-xs font-semibold rounded-2xl pl-10 pr-4 py-3 placeholder-zinc-500 focus:outline-none transition-all shadow-inner"
-                    />
-                    <Mail className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3" />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={!customGoogleEmail.trim()}
-                    className="w-full py-3 bg-gradient-to-r from-[#D9266E] via-[#BE185D] to-[#9F1239] hover:from-[#be185d] hover:to-[#881337] text-white font-extrabold text-xs rounded-2xl shadow-[0_0_20px_rgba(217,38,110,0.4)] flex items-center justify-center space-x-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <UserCheck className="w-4 h-4 text-white" />
-                    <span>Tiếp tục đăng nhập Google</span>
-                  </button>
-                </form>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* Interactive Version Changelog Modal */}
       <AnimatePresence>
