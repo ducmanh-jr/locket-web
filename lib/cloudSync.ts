@@ -1,7 +1,15 @@
 import { Moment } from './types';
 import { hasRenderableMedia, sanitizeMoments } from './media';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
-import { getDeletedMemberIds, addDeletedMemberId, removeDeletedMemberId, syncDeletedMemberIdsWithServer } from './demoStore';
+import {
+  getDeletedMemberIds,
+  addDeletedMemberId,
+  removeDeletedMemberId,
+  syncDeletedMemberIdsWithServer,
+  getDeletedMomentIds,
+  addDeletedMomentId,
+  syncDeletedMomentIdsWithServer,
+} from './demoStore';
 
 export interface CloudProfile {
   id: string;
@@ -274,9 +282,13 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
 
     if (!hasRenderableMedia(moment)) return false;
 
-    // ANTI-RESURRECTION: Block push if sender is a deleted member
+    // ANTI-RESURRECTION: Block push if sender is a deleted member or if moment is deleted
     const senderId = moment.sender_id || moment.sender?.id;
     const deletedSet = new Set(getDeletedMemberIds());
+    const deletedMomentsSet = new Set(getDeletedMomentIds());
+    if (deletedMomentsSet.has(moment.id) || String(moment.id).startsWith('del_moment_')) {
+      return false;
+    }
     if (senderId && deletedSet.has(senderId)) {
       return false;
     }
@@ -289,21 +301,25 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
         body: JSON.stringify({ action: 'push_moment', moment }),
       });
       if (res.ok) return true;
-      // If server returns 403 (deleted member), save the deletion locally
-      if (res.status === 403 && senderId) {
+      // If server returns 403 (deleted member or deleted moment), save deletion locally
+      if (res.status === 403) {
         try {
           const data = await res.json();
           if (Array.isArray(data.deleted_member_ids)) {
             data.deleted_member_ids.forEach((id: string) => addDeletedMemberId(id));
           }
+          if (Array.isArray(data.deleted_moment_ids)) {
+            data.deleted_moment_ids.forEach((id: string) => addDeletedMomentId(id));
+          }
         } catch (e) {}
-        addDeletedMemberId(senderId);
+        addDeletedMomentId(moment.id);
+        if (senderId) addDeletedMemberId(senderId);
         return false;
       }
     } catch (apiErr) {}
 
-    // 2. Direct Supabase JS Client Fallback (only if sender is NOT deleted)
-    if (isSupabaseConfigured() && senderId && !deletedSet.has(senderId)) {
+    // 2. Direct Supabase JS Client Fallback (only if sender is NOT deleted and moment is NOT deleted)
+    if (isSupabaseConfigured() && senderId && !deletedSet.has(senderId) && !deletedMomentsSet.has(moment.id)) {
       const senderObj: any = moment.sender || {};
       await supabase.from('profiles').upsert({
         id: senderId,
@@ -342,14 +358,24 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
         const data = await res.json();
         let momentsList = Array.isArray(data.moments) ? data.moments : [];
         if (Array.isArray(data.deleted_member_ids)) {
-          // SYNC (replace) local list with server's authoritative list — so if server
-          // removed a user from the deleted list (after re-login), the client follows.
           syncDeletedMemberIdsWithServer(data.deleted_member_ids);
           const deletedSet = new Set(data.deleted_member_ids as string[]);
           momentsList = momentsList.filter(
             (m: any) => !deletedSet.has(m.sender_id) && !deletedSet.has(m.sender?.id)
           );
         }
+        if (Array.isArray(data.deleted_moment_ids)) {
+          syncDeletedMomentIdsWithServer(data.deleted_moment_ids);
+          const deletedMomentSet = new Set(data.deleted_moment_ids as string[]);
+          momentsList = momentsList.filter(
+            (m: any) => !deletedMomentSet.has(m.id) && !String(m.id).startsWith('del_moment_')
+          );
+        }
+
+        // Also filter out any locally deleted moment IDs
+        const localDeletedMoments = new Set(getDeletedMomentIds());
+        momentsList = momentsList.filter((m: any) => !localDeletedMoments.has(m.id));
+
         if (momentsList.length > 0) {
           console.log('[CloudSync] API route returned', momentsList.length, 'moments');
           return sanitizeMoments(momentsList);
@@ -377,18 +403,21 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
         .limit(200);
 
       if (rawMoments && rawMoments.length > 0) {
-        const enriched = rawMoments.map((m: any) => {
-          const senderProfile = profilesMap.get(m.sender_id);
-          return {
-            ...m,
-            sender: senderProfile || {
-              id: m.sender_id || 'unknown',
-              username: m.sender_id ? `user_${m.sender_id.substring(0, 6)}` : 'locket_user',
-              display_name: 'Thành viên Locket',
-              avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${m.sender_id || 'locket'}`,
-            },
-          };
-        });
+        const localDeletedMoments = new Set(getDeletedMomentIds());
+        const enriched = rawMoments
+          .filter((m: any) => !localDeletedMoments.has(m.id) && !String(m.id).startsWith('del_moment_') && m.caption !== '__DELETED_MOMENT__')
+          .map((m: any) => {
+            const senderProfile = profilesMap.get(m.sender_id);
+            return {
+              ...m,
+              sender: senderProfile || {
+                id: m.sender_id || 'unknown',
+                username: m.sender_id ? `user_${m.sender_id.substring(0, 6)}` : 'locket_user',
+                display_name: 'Thành viên Locket',
+                avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${m.sender_id || 'locket'}`,
+              },
+            };
+          });
         console.log('[CloudSync] Direct Supabase fallback returned', enriched.length, 'moments');
         return sanitizeMoments(enriched);
       }
@@ -401,6 +430,9 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
 }
 
 export async function deleteMomentFromGlobalCloud(momentId: string): Promise<boolean> {
+  // Purge locally immediately!
+  addDeletedMomentId(momentId);
+
   let apiSuccess = false;
   try {
     const res = await fetch('/api/sync', {
@@ -415,14 +447,21 @@ export async function deleteMomentFromGlobalCloud(momentId: string): Promise<boo
 
   if (isSupabaseConfigured()) {
     try {
-      const { error } = await supabase.from('moments').delete().eq('id', momentId);
-      return !error;
+      await supabase.from('moments').delete().eq('id', momentId);
+      await supabase.from('moments').upsert({
+        id: `del_moment_${momentId}`,
+        sender_id: 'deleted',
+        caption: '__DELETED_MOMENT__',
+        media_url: 'https://deleted.invalid/placeholder.png',
+        created_at: new Date().toISOString(),
+      });
+      return true;
     } catch (e) {
       return false;
     }
   }
 
-  return false;
+  return true;
 }
 
 export async function pushMomentToGlobalCloudWithRetry(

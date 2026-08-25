@@ -6,6 +6,8 @@ let globalSharedMoments: any[] = [];
 let globalSharedProfiles: any[] = [];
 // Blocklist: IDs of members permanently deleted by Admin — prevents auto-sync re-push resurrection
 const deletedMemberIds: Set<string> = new Set();
+// Blocklist: IDs of moments permanently deleted — prevents auto-sync re-push resurrection
+const deletedMomentIds: Set<string> = new Set();
 
 function isVideoMoment(moment: any): boolean {
   if (!moment) return false;
@@ -36,6 +38,7 @@ function hasRenderableMedia(moment: any): boolean {
 function sanitizeMoments(moments: any[]): any[] {
   const unique = moments
     .filter(hasRenderableMedia)
+    .filter((m) => m && m.id && !deletedMomentIds.has(m.id) && !m.id?.startsWith('del_moment_'))
     .filter((m, i, self) => i === self.findIndex((x) => x?.id === m?.id));
 
   unique.sort((a, b) => {
@@ -47,16 +50,9 @@ function sanitizeMoments(moments: any[]): any[] {
   return unique.slice(0, 300);
 }
 
-// ──────────────────────────────────────────────────────
-// Helper: Load deletion markers from Supabase DB into in-memory Set.
-// This is called on EVERY GET and push_moment to survive cold starts.
-// Uses a dedicated 'deleted_members' table if it exists, otherwise
-// falls back to scanning profiles for '__DELETED__' display_name markers.
-// ──────────────────────────────────────────────────────
 async function loadDeletedMembersFromDB(): Promise<void> {
   if (!isSupabaseConfigured()) return;
   try {
-    // CLEAR and rebuild from DB so that push_profile deletions are respected
     const freshSet = new Set<string>();
     const { data: profs } = await supabase.from('profiles').select('id, display_name, avatar_url').limit(500);
     if (profs && profs.length > 0) {
@@ -72,18 +68,35 @@ async function loadDeletedMembersFromDB(): Promise<void> {
         }
       });
     }
-    // Replace the global set with fresh DB state
     deletedMemberIds.clear();
     freshSet.forEach((id) => deletedMemberIds.add(id));
-  } catch (e) {
-    // Silent fallback — keep existing in-memory set
-  }
+  } catch (e) {}
+}
+
+async function loadDeletedMomentsFromDB(): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  try {
+    const freshSet = new Set<string>();
+    const { data: moments } = await supabase.from('moments').select('id, caption').limit(1000);
+    if (moments && moments.length > 0) {
+      moments.forEach((m: any) => {
+        if (m?.caption === '__DELETED_MOMENT__') {
+          freshSet.add(m.id);
+        }
+        if (m?.id?.startsWith('del_moment_')) {
+          freshSet.add(m.id.replace('del_moment_', ''));
+        }
+      });
+    }
+    deletedMomentIds.clear();
+    freshSet.forEach((id) => deletedMomentIds.add(id));
+  } catch (e) {}
 }
 
 export async function GET() {
   try {
-    // CRITICAL: Reload deletion markers from DB on every request to survive Vercel cold starts
     await loadDeletedMembersFromDB();
+    await loadDeletedMomentsFromDB();
 
     let dbMoments: any[] = [];
     let dbProfiles: any[] = [];
@@ -102,128 +115,114 @@ export async function GET() {
               !deletedMemberIds.has(p.id)
           );
         }
+      } catch (e) {}
 
-        const { data: joinMoments, error: joinErr } = await supabase
+      try {
+        const { data: mms } = await supabase
           .from('moments')
-          .select('*, sender:profiles(*)')
+          .select('*')
           .order('created_at', { ascending: false })
-          .limit(200);
+          .limit(300);
 
-        if (!joinErr && joinMoments && joinMoments.length > 0) {
-          dbMoments = joinMoments.filter(
-            (m: any) => m && !deletedMemberIds.has(m.sender_id)
+        if (mms && mms.length > 0) {
+          dbMoments = mms.filter(
+            (m: any) =>
+              m &&
+              m.id &&
+              !m.id.startsWith('del_moment_') &&
+              m.caption !== '__DELETED_MOMENT__' &&
+              !deletedMomentIds.has(m.id) &&
+              !deletedMemberIds.has(m.sender_id)
           );
-        } else {
-          const { data: rawMoments } = await supabase
-            .from('moments')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(200);
-          if (rawMoments) {
-            dbMoments = rawMoments.filter(
-              (m: any) => m && !deletedMemberIds.has(m.sender_id)
-            );
-          }
         }
-      } catch (err) {}
+      } catch (e) {}
     }
 
-    // Merge DB profiles with In-Memory profiles (excluding deleted member IDs)
-    const allProfiles = [...dbProfiles, ...globalSharedProfiles].filter(
-      (p, i, self) =>
-        p &&
-        p.id &&
-        !deletedMemberIds.has(p.id) &&
-        !p.id.startsWith('del_marker_') &&
-        p.display_name !== '__DELETED_MEMBER__' &&
-        p.display_name !== '__DELETED__' &&
-        i === self.findIndex((x) => x && x.id === p.id)
-    );
-    const profilesMap = new Map(allProfiles.map((p) => [p.id, p]));
+    // Merge in-memory and DB data, excluding deleted ones
+    const profilesMap = new Map();
+    dbProfiles.forEach((p) => {
+      if (p && p.id && !deletedMemberIds.has(p.id)) profilesMap.set(p.id, p);
+    });
+    globalSharedProfiles.forEach((p) => {
+      if (p && p.id && !deletedMemberIds.has(p.id)) profilesMap.set(p.id, p);
+    });
+    const mergedProfiles = Array.from(profilesMap.values());
 
-    // Merge DB moments with In-Memory moments (excluding deleted members)
-    const allRawMoments = [...dbMoments, ...globalSharedMoments]
-      .filter(
-        (m: any) =>
-          m &&
-          m.sender_id &&
-          !deletedMemberIds.has(m.sender_id) &&
-          !deletedMemberIds.has(m.sender?.id)
-      )
-      .map((m: any) => {
+    const rawMoments = [...dbMoments, ...globalSharedMoments].filter(
+      (m) =>
+        m &&
+        m.id &&
+        !deletedMomentIds.has(m.id) &&
+        !m.id.startsWith('del_moment_') &&
+        !deletedMemberIds.has(m.sender_id) &&
+        !deletedMemberIds.has(m.sender?.id)
+    );
+
+    const mergedMoments = sanitizeMoments(
+      rawMoments.map((m: any) => {
         const senderObj =
           m.sender ||
           profilesMap.get(m.sender_id) || {
-            id: m.sender_id || 'unknown',
-            username: m.sender_id ? `user_${m.sender_id.substring(0, 6)}` : 'locket_user',
+            id: m.sender_id,
+            username: `user_${String(m.sender_id).substring(0, 6)}`,
             display_name: 'Thành viên Locket',
-            avatar_url: '',
+            avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${m.sender_id}`,
           };
         return { ...m, sender: senderObj };
-      });
-
-    const sanitized = sanitizeMoments(allRawMoments);
+      })
+    );
 
     return NextResponse.json(
-      { profiles: allProfiles, moments: sanitized, deleted_member_ids: Array.from(deletedMemberIds) },
       {
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
+        moments: mergedMoments,
+        profiles: mergedProfiles,
+        deleted_member_ids: Array.from(deletedMemberIds),
+        deleted_moment_ids: Array.from(deletedMomentIds),
+      },
+      { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
     );
   } catch (e: any) {
-    const sanitized = sanitizeMoments(globalSharedMoments);
-    return NextResponse.json(
-      { profiles: globalSharedProfiles, moments: sanitized },
-      { headers: { 'Cache-Control': 'no-store' } }
-    );
+    return NextResponse.json({
+      moments: sanitizeMoments(globalSharedMoments),
+      profiles: globalSharedProfiles,
+      deleted_member_ids: Array.from(deletedMemberIds),
+      deleted_moment_ids: Array.from(deletedMomentIds),
+    });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { action, profile, moment, moment_id } = body;
-
-    // CRITICAL: Reload deletion markers from DB on every POST to survive cold starts
     await loadDeletedMembersFromDB();
+    await loadDeletedMomentsFromDB();
 
-    if (action === 'push_profile' && profile?.id) {
-      const pid = String(profile.id).toLowerCase();
-      const pemail = String(profile.email || '').toLowerCase();
-      const puser = String(profile.username || '').toLowerCase();
-      const isFreshLogin = body.is_fresh_login === true;
+    const body = await request.json();
+    const { action, moment, profile, is_fresh_login, moment_id } = body;
 
-      if (isFreshLogin) {
-        // Fresh OAuth re-login: Unblock from deletedMemberIds across all ID/email/username variants
-        Array.from(deletedMemberIds).forEach((id) => {
-          const lower = id.toLowerCase();
-          if (
-            lower === pid ||
-            (pemail && lower.includes(pemail)) ||
-            (puser && lower.includes(puser)) ||
-            (pid && lower.includes(pid))
-          ) {
-            deletedMemberIds.delete(id);
+    if (action === 'push_profile' && profile) {
+      const targetId = profile.id;
+
+      if (deletedMemberIds.has(targetId)) {
+        if (is_fresh_login === true) {
+          deletedMemberIds.delete(targetId);
+          if (isSupabaseConfigured()) {
+            try {
+              await supabase.from('profiles').delete().eq('id', `del_marker_${targetId}`);
+              await supabase.from('profiles').delete().eq('id', targetId);
+            } catch (e) {}
           }
-        });
+        } else {
+          return NextResponse.json(
+            { error: 'Thành viên đã bị xóa khỏi căn phòng', deleted_member_ids: Array.from(deletedMemberIds) },
+            { status: 403 }
+          );
+        }
       }
 
       globalSharedProfiles = [profile, ...globalSharedProfiles.filter((p) => p.id !== profile.id)];
 
       if (isSupabaseConfigured()) {
         try {
-          if (isFreshLogin) {
-            // Remove ALL forms of DB deletion markers for this user
-            await supabase
-              .from('profiles')
-              .delete()
-              .or(`id.eq.del_marker_${profile.id},avatar_url.eq.${profile.id}`);
-          }
-
-          // Upsert the profile
           await supabase.from('profiles').upsert({
             id: profile.id,
             username: profile.username || `user_${profile.id.substring(0, 6)}`,
@@ -232,20 +231,20 @@ export async function POST(request: Request) {
           });
         } catch (e) {}
       }
+
       return NextResponse.json({ success: true, deleted_member_ids: Array.from(deletedMemberIds) });
     }
 
-    if (action === 'push_moment' && moment?.id && moment?.media_url) {
-      if (!hasRenderableMedia(moment)) {
+    if (action === 'push_moment' && moment) {
+      const senderId = moment.sender_id || moment.sender?.id;
+
+      if (deletedMomentIds.has(moment.id) || String(moment.id).startsWith('del_moment_')) {
         return NextResponse.json(
-          { error: 'Đường dẫn media không hợp lệ' },
-          { status: 422 }
+          { error: 'Khoảnh khắc đã bị xóa', deleted_moment_ids: Array.from(deletedMomentIds) },
+          { status: 403 }
         );
       }
 
-      const senderId = moment.sender_id || moment.sender?.id;
-
-      // Block re-push of moments from deleted members
       if (senderId && deletedMemberIds.has(senderId)) {
         return NextResponse.json(
           { error: 'Thành viên đã bị xóa khỏi căn phòng', deleted_member_ids: Array.from(deletedMemberIds) },
@@ -265,20 +264,16 @@ export async function POST(request: Request) {
 
       if (isSupabaseConfigured()) {
         try {
-          if (senderId) {
-            // ANTI-RESURRECTION CHECK: Only upsert profile if NOT deleted
-            if (!deletedMemberIds.has(senderId)) {
-              const senderObj = moment.sender || {};
-              await supabase.from('profiles').upsert({
-                id: senderId,
-                username: senderObj.username || `user_${senderId.substring(0, 6)}`,
-                display_name: senderObj.display_name || 'Thành viên Locket',
-                avatar_url: senderObj.avatar_url || '',
-              });
-            }
+          if (senderId && !deletedMemberIds.has(senderId)) {
+            const senderObj = moment.sender || {};
+            await supabase.from('profiles').upsert({
+              id: senderId,
+              username: senderObj.username || `user_${senderId.substring(0, 6)}`,
+              display_name: senderObj.display_name || 'Thành viên Locket',
+              avatar_url: senderObj.avatar_url || '',
+            });
           }
 
-          // Only insert moment if sender is not deleted
           if (!senderId || !deletedMemberIds.has(senderId)) {
             await supabase.from('moments').upsert({
               id: moment.id,
@@ -299,11 +294,11 @@ export async function POST(request: Request) {
     }
 
     if (action === 'delete_moment' && moment_id) {
+      deletedMomentIds.add(moment_id);
       globalSharedMoments = globalSharedMoments.filter((m) => m.id !== moment_id);
 
       if (isSupabaseConfigured()) {
         try {
-          // Delete file from Storage bucket if exists
           const { data: targetM } = await supabase
             .from('moments')
             .select('media_url')
@@ -317,72 +312,50 @@ export async function POST(request: Request) {
             }
           }
 
+          // Delete original row from moments table
           await supabase.from('moments').delete().eq('id', moment_id);
+
+          // Upsert persistent deletion marker so cold starts remember
+          await supabase.from('moments').upsert({
+            id: `del_moment_${moment_id}`,
+            sender_id: 'deleted',
+            caption: '__DELETED_MOMENT__',
+            media_url: 'https://deleted.invalid/placeholder.png',
+            created_at: new Date().toISOString(),
+          });
         } catch (e) {}
       }
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, deleted_moment_ids: Array.from(deletedMomentIds) });
     }
 
     if (action === 'delete_member' && (body.member_id || body.profile_id)) {
       const targetId = body.member_id || body.profile_id;
 
-      // 0. Add to permanent blocklist to prevent auto-sync re-push resurrection
       deletedMemberIds.add(targetId);
-
-      // 1. Purge from in-memory server arrays
       globalSharedProfiles = globalSharedProfiles.filter((p) => p && p.id !== targetId);
       globalSharedMoments = globalSharedMoments.filter(
         (m) => m && m.sender_id !== targetId && m.sender?.id !== targetId
       );
 
-      // 2. Write PERSISTENT DB deletion marker + purge data from Supabase
       if (isSupabaseConfigured()) {
         try {
-          // STEP A: Write permanent deletion marker row FIRST (this survives cold starts)
-          // Use upsert so it's idempotent
           await supabase.from('profiles').upsert({
             id: `del_marker_${targetId}`,
-            username: `__del_${Date.now()}`,
+            username: `del_${targetId.substring(0, 6)}`,
             display_name: '__DELETED_MEMBER__',
             avatar_url: targetId,
           });
 
-          // STEP B: Delete all reactions by this member
-          await supabase.from('reactions').delete().eq('user_id', targetId);
-
-          // STEP C: Delete all moments by this member (+ storage files)
-          const { data: userMoments } = await supabase
-            .from('moments')
-            .select('id, media_url')
-            .eq('sender_id', targetId);
-
-          if (userMoments && userMoments.length > 0) {
-            const storagePaths: string[] = [];
-            userMoments.forEach((um: any) => {
-              if (um.media_url?.includes('/moments/')) {
-                const parts = um.media_url.split('/moments/');
-                if (parts[1]) storagePaths.push(parts[1]);
-              }
-            });
-            if (storagePaths.length > 0) {
-              await supabase.storage.from('moments').remove(storagePaths);
-            }
-          }
-
           await supabase.from('moments').delete().eq('sender_id', targetId);
-
-          // STEP D: Delete the member's profile row (marker row stays!)
           await supabase.from('profiles').delete().eq('id', targetId);
-        } catch (e) {
-          console.error('[API Sync] Delete member error:', e);
-        }
+        } catch (e) {}
       }
 
       return NextResponse.json({ success: true, deleted_member_ids: Array.from(deletedMemberIds) });
     }
 
-    return NextResponse.json({ error: 'Hành động không hợp lệ' }, { status: 400 });
+    return NextResponse.json({ error: 'Action không hợp lệ' }, { status: 400 });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Server Error' }, { status: 500 });
+    return NextResponse.json({ error: e?.message || 'Server error' }, { status: 500 });
   }
 }

@@ -211,11 +211,15 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
           saveLocalMoment(cloudM);
         }
       });
-
+      const deletedMomentsSet = new Set(getDeletedMomentIds());
       const localMoments = readLocalMoments();
 
       // AUTO-SYNC: Push any local moments not yet on the server up to global cloud so ALL accounts receive them
       localMoments.forEach((lm) => {
+        if (deletedMomentsSet.has(lm.id) || String(lm.id).startsWith('del_moment_')) {
+          removeLocalMoment(lm.id);
+          return;
+        }
         if (!cloudIds.has(lm.id) && lm.media_url && !lm.media_url.startsWith('blob:')) {
           pushMomentToGlobalCloud(lm)
             .then((success) => {
@@ -228,45 +232,37 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
       });
 
       setMoments((prevMoments) => {
+        const freshDeletedSet = new Set(getDeletedMomentIds());
+        const deletedMembers = new Set(getDeletedMemberIds());
         const now = Date.now();
         const pendingOptimistic = prevMoments.filter((m) => {
+          if (freshDeletedSet.has(m.id) || String(m.id).startsWith('del_moment_')) return false;
           const createdAtTime = new Date(m.created_at || 0).getTime();
           const isRecent = now - createdAtTime < 180000;
           const existsInCloud = cloudIds.has(m.id);
-          return isRecent && !existsInCloud;
+          return !existsInCloud && isRecent;
         });
 
-        const deletedIds = new Set(getDeletedMomentIds());
-        const deletedMembers = new Set(getDeletedMemberIds());
         const validLocalMoments = localMoments.filter(
           (m) =>
             m &&
             m.id &&
-            !deletedIds.has(m.id) &&
+            !freshDeletedSet.has(m.id) &&
+            !String(m.id).startsWith('del_moment_') &&
             !(m.sender_id && deletedMembers.has(m.sender_id)) &&
             !(m.sender?.id && deletedMembers.has(m.sender.id))
         );
 
-        // Render Cloud Shared Room moments + local device moments + active optimistic uploads.
         const merged = [...sanitized, ...validLocalMoments, ...pendingOptimistic]
           .filter(
             (m) =>
+              m &&
+              m.id &&
+              !freshDeletedSet.has(m.id) &&
+              !String(m.id).startsWith('del_moment_') &&
               !(m.sender_id && deletedMembers.has(m.sender_id)) &&
               !(m.sender?.id && deletedMembers.has(m.sender.id))
-          )
-          .map((m) => {
-            const isMyMoment = m.sender_id === currentUser.id || m.sender?.id === currentUser.id;
-            if (isMyMoment && currentUser.avatar_url) {
-              return {
-                ...m,
-                sender: {
-                  ...(m.sender || {}),
-                  ...currentUser,
-                },
-              };
-            }
-            return m;
-          });
+          );
 
         const sorted = sortMoments(merged) as Moment[];
         return sorted.filter((m, i, self) => i === self.findIndex((x) => x.id === m.id));

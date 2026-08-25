@@ -76,6 +76,34 @@ export function addDeletedMomentId(momentId: string): void {
       const updated = [...deleted, momentId];
       localStorage.setItem(DELETED_CACHE_KEY, JSON.stringify(updated));
     }
+
+    // Purge deleted moment from active localStorage caches so it can NEVER be re-pushed
+    ['locket_moments_v1', ACTIVE_CACHE_KEY].forEach((key) => {
+      try {
+        const stored = localStorage.getItem(key);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            const filtered = parsed.filter((m: any) => m && m.id !== momentId);
+            localStorage.setItem(key, JSON.stringify(filtered));
+          }
+        }
+      } catch (e) {}
+    });
+  } catch (e) {}
+}
+
+export function syncDeletedMomentIdsWithServer(serverList: string[]): void {
+  if (typeof window === 'undefined' || !Array.isArray(serverList)) return;
+  try {
+    const existing = new Set(getDeletedMomentIds());
+    serverList.forEach((id) => {
+      if (id) {
+        existing.add(id);
+        addDeletedMomentId(id);
+      }
+    });
+    localStorage.setItem(DELETED_CACHE_KEY, JSON.stringify(Array.from(existing)));
   } catch (e) {}
 }
 
