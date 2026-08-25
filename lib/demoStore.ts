@@ -15,12 +15,7 @@ export function getCleanFallbackAvatar(nameOrUsername?: string, isAdmin?: boolea
 }
 
 export function getGoogleAvatarUrl(email?: string, nameOrUsername?: string, isAdmin?: boolean): string {
-  if (isAdmin) return ADMIN_AVATAR_URL;
-  if (!email || !email.includes('@')) {
-    return getCleanFallbackAvatar(nameOrUsername, isAdmin);
-  }
-  const cleanEmail = email.trim().toLowerCase();
-  return `https://profiles.google.com/s2/photos/profile/${encodeURIComponent(cleanEmail)}?sz=256`;
+  return getCleanFallbackAvatar(nameOrUsername, isAdmin);
 }
 
 // Fallback Current User
