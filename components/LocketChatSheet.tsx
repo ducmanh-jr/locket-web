@@ -408,7 +408,8 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: '100%' }}
       transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
-      className="absolute inset-0 z-50 bg-white text-zinc-900 flex flex-col justify-between overflow-hidden rounded-[2.5rem] select-none font-sans shadow-2xl"
+      className="absolute inset-0 z-50 bg-white text-zinc-900 flex flex-col overflow-hidden rounded-t-[1.5rem] sm:rounded-[2rem] select-none font-sans shadow-2xl"
+      style={{ height: '100dvh' }}
     >
       {/* Hidden File Input for Image Attachment */}
       <input
@@ -652,46 +653,40 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
           </div>
         </div>
       ) : (
-        /* ==================== CLEAN LIGHT THREAD VIEW ==================== */
-        <div className="flex-1 flex flex-col h-full bg-white">
-          {/* Thread Header */}
-          <div className="px-4 py-3 bg-white border-b border-zinc-100 flex items-center justify-between shadow-xs">
-            <div className="flex items-center space-x-2.5">
+        /* ==================== MOBILE-OPTIMIZED THREAD VIEW ==================== */
+        <div className="flex-1 flex flex-col min-h-0 bg-white">
+          {/* Compact Thread Header */}
+          <div className="px-3 py-2.5 bg-white border-b border-zinc-100 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center space-x-2.5 min-w-0">
               <button
                 onClick={() => setActiveView('inbox')}
-                className="p-1 rounded-full text-zinc-600 hover:bg-zinc-100 active:scale-95 transition-all"
+                className="p-1 rounded-full text-zinc-600 hover:bg-zinc-100 active:scale-95 transition-all flex-shrink-0"
                 title="Quay lại"
               >
-                <ChevronLeft className="w-6 h-6" />
+                <ChevronLeft className="w-5 h-5" />
               </button>
-              <div className="w-9 h-9 rounded-full overflow-hidden bg-zinc-100 border border-zinc-200">
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-zinc-100 border border-zinc-200 flex-shrink-0">
                 <img
                   src={selectedFriend?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedFriendId}`}
                   alt=""
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div>
-                <h3 className="text-xs font-bold text-zinc-900 truncate max-w-[150px]">
-                  {selectedFriend?.name || 'Bạn bè'}
-                </h3>
-              </div>
+              <h3 className="text-sm font-bold text-zinc-900 truncate">
+                {selectedFriend?.name || 'Bạn bè'}
+              </h3>
             </div>
-
-            {/* Actions: Close button */}
-            <div className="flex items-center text-zinc-600">
-              <button onClick={onClose} className="p-2 rounded-full hover:bg-zinc-100 text-zinc-500 hover:text-zinc-800 transition-colors" title="Đóng">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+            <button onClick={onClose} className="p-1.5 rounded-full hover:bg-zinc-100 text-zinc-400 flex-shrink-0" title="Đóng">
+              <X className="w-4.5 h-4.5" />
+            </button>
           </div>
 
-          {/* Messages Stream */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-[#FAFAFA] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          {/* Messages Stream — flex-1 + min-h-0 ensures proper shrinking on mobile */}
+          <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-2.5 bg-[#FAFAFA] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             {activeConversationMessages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-400">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#D9266E] to-rose-500 flex items-center justify-center text-white mb-3 shadow-md">
-                  <Send className="w-6 h-6" />
+                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#D9266E] to-rose-500 flex items-center justify-center text-white mb-3 shadow-md">
+                  <Send className="w-5 h-5" />
                 </div>
                 <p className="text-sm font-semibold text-zinc-800">Bắt đầu trò chuyện</p>
                 <p className="text-xs text-zinc-500 mt-1">
@@ -716,10 +711,10 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                 return (
                   <div
                     key={msg.id}
-                    className={`flex items-end space-x-2 ${isMe ? 'justify-end' : 'justify-start'}`}
+                    className={`flex items-end space-x-1.5 ${isMe ? 'justify-end' : 'justify-start'}`}
                   >
                     {!isMe && (
-                      <div className="w-7 h-7 rounded-full overflow-hidden bg-zinc-200 flex-shrink-0 mb-0.5 border border-zinc-300">
+                      <div className="w-6 h-6 rounded-full overflow-hidden bg-zinc-200 flex-shrink-0 mb-0.5 border border-zinc-300">
                         <img
                           src={avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.sender_id}`}
                           alt=""
@@ -728,27 +723,27 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                       </div>
                     )}
 
-                    <div className={`max-w-[78%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                    <div className={`max-w-[75%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                       {!isMe && index === 0 && (
                         <span className="text-[10px] text-zinc-500 font-normal mb-0.5 ml-1">
                           {senderName}
                         </span>
                       )}
 
-                      {/* Image Attachment Bubble */}
+                      {/* Image Attachment */}
                       {msg.media_url && (
-                        <div className="mb-1 rounded-2xl overflow-hidden border border-zinc-200 shadow-sm max-w-xs">
-                          <img src={msg.media_url} alt="Attachment" className="w-full h-auto max-h-60 object-cover" />
+                        <div className="mb-1 rounded-2xl overflow-hidden border border-zinc-200 shadow-sm max-w-[200px]">
+                          <img src={msg.media_url} alt="Attachment" className="w-full h-auto max-h-48 object-cover" />
                         </div>
                       )}
 
                       {/* Text Bubble */}
                       {msg.content && (
                         <div
-                          className={`px-3.5 py-2 rounded-2xl text-xs leading-relaxed break-words shadow-xs ${
+                          className={`px-3 py-2 rounded-2xl text-[13px] leading-relaxed break-words shadow-xs ${
                             isMe
-                              ? 'bg-[#D9266E] text-white font-normal rounded-br-xs'
-                              : 'bg-white border border-zinc-200/80 text-zinc-900 font-normal rounded-bl-xs'
+                              ? 'bg-[#D9266E] text-white rounded-br-sm'
+                              : 'bg-white border border-zinc-200/80 text-zinc-900 rounded-bl-sm'
                           }`}
                         >
                           {msg.content}
@@ -775,13 +770,13 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Emoji Reaction Pill */}
-          <div className="px-3 py-1.5 bg-white border-t border-zinc-100 flex items-center justify-around">
+          {/* Quick Emoji Row — compact, flex-shrink-0 */}
+          <div className="px-2 py-1 bg-white border-t border-zinc-100 flex items-center justify-around flex-shrink-0">
             {['❤️', '🔥', '😍', '👍', '😂', '🥰', '☕'].map((emoji) => (
               <button
                 key={emoji}
                 onClick={() => handleSend(emoji)}
-                className="text-base hover:scale-125 active:scale-95 transition-transform p-1"
+                className="text-lg hover:scale-110 active:scale-90 transition-transform p-0.5"
                 title={`Gửi ${emoji}`}
               >
                 {emoji}
@@ -789,28 +784,28 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
             ))}
           </div>
 
-          {/* Input Bar */}
-          <div className="p-2.5 bg-white border-t border-zinc-100 flex items-center space-x-2">
-            {/* Attachment Button */}
+          {/* Input Bar — sticky bottom, safe-area aware */}
+          <div className="px-2 py-2 bg-white border-t border-zinc-100 flex items-center space-x-1.5 flex-shrink-0" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+            {/* Attachment */}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="p-2 rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-[#D9266E] active:scale-95 transition-all"
+              className="p-2 rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-[#D9266E] active:scale-95 transition-all flex-shrink-0"
               title="Đính kèm hình ảnh"
             >
               <ImageIcon className="w-5 h-5" />
             </button>
 
-            {/* Like Button */}
+            {/* Like */}
             <button
               onClick={() => handleSend('👍')}
-              className="p-1.5 rounded-full text-[#D9266E] hover:bg-rose-50 active:scale-95 transition-all"
+              className="p-1.5 rounded-full text-[#D9266E] hover:bg-rose-50 active:scale-95 transition-all flex-shrink-0"
               title="Gửi Like 👍"
             >
               <ThumbsUp className="w-5 h-5 fill-current" />
             </button>
 
             {/* Input Field */}
-            <div className="flex-1 flex items-center bg-zinc-100 rounded-full px-4 py-2 border border-zinc-200/80 focus-within:border-[#D9266E]">
+            <div className="flex-1 min-w-0 flex items-center bg-zinc-100 rounded-full px-3 py-1.5 border border-zinc-200/80 focus-within:border-[#D9266E] transition-colors">
               <input
                 type="text"
                 value={inputText}
@@ -818,15 +813,15 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Nhắn tin..."
                 maxLength={300}
-                className="w-full bg-transparent text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none font-normal"
+                className="w-full bg-transparent text-[13px] text-zinc-900 placeholder-zinc-400 focus:outline-none"
               />
             </div>
 
-            {/* Send Button */}
+            {/* Send */}
             <button
               onClick={() => handleSend()}
               disabled={!inputText.trim() || isSubmitting}
-              className="p-2.5 rounded-full bg-[#D9266E] hover:bg-rose-600 text-white disabled:opacity-40 active:scale-95 transition-all shadow-sm flex-shrink-0"
+              className="p-2 rounded-full bg-[#D9266E] hover:bg-rose-600 text-white disabled:opacity-40 active:scale-95 transition-all shadow-sm flex-shrink-0"
               title="Gửi"
             >
               <Send className="w-4 h-4 fill-white" />
