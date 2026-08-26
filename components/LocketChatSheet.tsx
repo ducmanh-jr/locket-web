@@ -426,7 +426,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: '100%' }}
       transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
-      className="fixed inset-0 z-50 bg-white text-zinc-900 flex flex-col overflow-hidden select-none font-sans shadow-2xl"
+      className="fixed sm:absolute inset-0 z-50 bg-white text-zinc-900 flex flex-col overflow-hidden rounded-t-[1.5rem] sm:rounded-[2.5rem] select-none font-sans shadow-2xl"
     >
       {/* Hidden File Input for Image Attachment */}
       <input
@@ -444,17 +444,27 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="absolute inset-0 z-50 bg-zinc-950 text-white flex flex-col items-center justify-between p-6 rounded-[2.5rem]"
+            className="absolute inset-0 z-50 bg-zinc-950 text-white flex flex-col justify-between p-6 overflow-hidden"
           >
-            {/* Call Header */}
-            <div className="flex flex-col items-center text-center pt-8 space-y-2">
-              <span className="text-xs text-zinc-400 font-semibold tracking-wider uppercase bg-white/10 px-3 py-1 rounded-full border border-white/10">
-                {activeCallType === 'video' ? 'Cuộc gọi Video HD' : 'Cuộc gọi thoại'}
+            {/* Call Top Bar */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold tracking-wider uppercase text-zinc-400">
+                Locket Audio / Video Call
               </span>
-              <h3 className="text-xl font-bold text-white">
+              <button
+                onClick={() => setActiveCallType(null)}
+                className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Calling User Info */}
+            <div className="flex flex-col items-center justify-center space-y-2 text-center mt-6">
+              <h3 className="text-xl font-bold tracking-tight">
                 {selectedFriend?.name || 'Bạn bè'}
               </h3>
-              <p className="text-xs text-zinc-400 font-mono font-medium">
+              <p className="text-xs text-rose-400 font-medium">
                 {formatCallTimer(callDurationSeconds)}
               </p>
             </div>
@@ -561,16 +571,16 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
           {/* Search Bar */}
           <div className="px-4 py-2.5">
             <div className="h-9 px-3 flex items-center space-x-2 bg-zinc-100 rounded-xl border border-zinc-200/60 focus-within:border-[#D9266E] text-zinc-600 transition-colors">
-              <Search className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+              <Search className="w-4 h-4 text-zinc-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm kiếm..."
-                className="bg-transparent text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none w-full font-normal"
+                placeholder="Tìm kiếm bạn bè..."
+                className="w-full bg-transparent text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none"
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="text-zinc-400 hover:text-zinc-700">
+                <button onClick={() => setSearchQuery('')} className="text-zinc-400 hover:text-zinc-600">
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -672,8 +682,8 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
       ) : (
         /* ==================== MOBILE-OPTIMIZED THREAD VIEW ==================== */
         <div className="flex-1 flex flex-col min-h-0 bg-white">
-          {/* Compact Thread Header */}
-          <div className="px-3 py-2.5 bg-white border-b border-zinc-100 flex items-center justify-between flex-shrink-0">
+          {/* Thread Header with Proper Top Padding */}
+          <div className="px-4 pt-4 pb-3 bg-white border-b border-zinc-100 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center space-x-2.5 min-w-0">
               <button
                 onClick={() => setActiveView('inbox')}
