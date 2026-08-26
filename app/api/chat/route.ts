@@ -111,6 +111,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
+    // Action: Edit message
+    if (action === 'edit_message' && message_id) {
+      globalSharedMessages.forEach((m) => {
+        if (m.id === message_id) {
+          m.content = content || '';
+        }
+      });
+      if (isSupabaseConfigured()) {
+        try {
+          await supabase.from('messages').update({ content: content || '' }).eq('id', message_id);
+        } catch (e) {}
+      }
+      return NextResponse.json({ success: true });
+    }
+
+    // Action: Delete message
+    if (action === 'delete_message' && message_id) {
+      globalSharedMessages = globalSharedMessages.filter((m) => m.id !== message_id);
+      if (isSupabaseConfigured()) {
+        try {
+          await supabase.from('messages').delete().eq('id', message_id);
+        } catch (e) {}
+      }
+      return NextResponse.json({ success: true });
+    }
+
     if (!sender_id || (!content && !media_url)) {
       return NextResponse.json({ error: 'Thiếu thông tin người gửi hoặc nội dung' }, { status: 400 });
     }

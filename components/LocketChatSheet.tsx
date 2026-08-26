@@ -19,6 +19,11 @@ import {
   PhoneOff,
   Check,
   CheckCheck,
+  Plus,
+  FileText,
+  Pencil,
+  Trash2,
+  MoreVertical,
 } from 'lucide-react';
 
 export interface ChatMessage {
@@ -99,6 +104,82 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
   const [isKeyboardOpen, setIsKeyboardOpen] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const docInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [showPlusMenu, setShowPlusMenu] = useState<boolean>(false);
+  const [actionMessage, setActionMessage] = useState<ChatMessage | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState<string>('');
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Document / File Upload Handler
+  const handleDocumentPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Data = event.target?.result as string;
+      if (base64Data) {
+        handleSend(`📄 [Tệp] ${file.name}`, base64Data);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+    setShowPlusMenu(false);
+  };
+
+  // Delete Message Handler
+  const handleDeleteMessage = async (msgId: string) => {
+    setMessages((prev) => {
+      const next = prev.filter((m) => m.id !== msgId);
+      saveLocalMessages(next);
+      return next;
+    });
+    setActionMessage(null);
+    try {
+      await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete_message', message_id: msgId }),
+      });
+    } catch (e) {}
+  };
+
+  // Start Edit Message Handler
+  const handleStartEdit = (msg: ChatMessage) => {
+    setEditingMessageId(msg.id);
+    setEditingText(msg.content);
+    setActionMessage(null);
+  };
+
+  // Save Edit Message Handler
+  const handleSaveEdit = async () => {
+    if (!editingMessageId || !editingText.trim()) return;
+    const msgId = editingMessageId;
+    const newContent = editingText.trim();
+
+    setMessages((prev) => {
+      const next = prev.map((m) => (m.id === msgId ? { ...m, content: newContent } : m));
+      saveLocalMessages(next);
+      return next;
+    });
+
+    setEditingMessageId(null);
+    setEditingText('');
+
+    try {
+      await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'edit_message',
+          message_id: msgId,
+          content: newContent,
+        }),
+      });
+    } catch (e) {}
+  };
 
   // Call System Overlay States
   const [activeCallType, setActiveCallType] = useState<'audio' | 'video' | null>(null);
@@ -437,6 +518,15 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
         className="hidden"
       />
 
+      {/* Hidden File Input for Document Attachment */}
+      <input
+        type="file"
+        ref={docInputRef}
+        onChange={handleDocumentPick}
+        accept="*"
+        className="hidden"
+      />
+
       {/* ==================== REAL CALL OVERLAY ==================== */}
       <AnimatePresence>
         {activeCallType && (
@@ -540,6 +630,45 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ==================== MESSAGE ACTION MODAL (EDIT & DELETE) ==================== */}
+      {actionMessage && (
+        <div className="absolute inset-0 z-[100] bg-black/40 backdrop-blur-xs flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-xs bg-white rounded-2xl shadow-2xl p-3 flex flex-col space-y-2 border border-zinc-100">
+            <div className="px-2 py-1 border-b border-zinc-100 flex items-center justify-between">
+              <span className="text-xs font-bold text-zinc-500 truncate">Quản lý tin nhắn</span>
+              <button onClick={() => setActionMessage(null)} className="p-1 text-zinc-400 hover:text-zinc-600">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {actionMessage.sender_id === currentUser.id && (
+              <button
+                onClick={() => handleStartEdit(actionMessage)}
+                className="w-full px-3 py-2.5 rounded-xl hover:bg-zinc-100 flex items-center space-x-3 text-zinc-800 text-xs font-semibold text-left transition-colors"
+              >
+                <Pencil className="w-4 h-4 text-[#D9266E]" />
+                <span>Chỉnh sửa tin nhắn</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => handleDeleteMessage(actionMessage.id)}
+              className="w-full px-3 py-2.5 rounded-xl hover:bg-rose-50 flex items-center space-x-3 text-rose-600 text-xs font-semibold text-left transition-colors"
+            >
+              <Trash2 className="w-4 h-4 text-rose-600" />
+              <span>Xóa tin nhắn</span>
+            </button>
+
+            <button
+              onClick={() => setActionMessage(null)}
+              className="w-full px-3 py-2 rounded-xl bg-zinc-100 text-zinc-600 text-xs font-semibold text-center transition-colors"
+            >
+              Hủy
+            </button>
+          </div>
+        </div>
+      )}
 
       {activeView === 'inbox' ? (
         /* ==================== CLEAN LIGHT INBOX VIEW ==================== */
@@ -735,10 +864,27 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                   minute: '2-digit',
                 });
 
+                const isEditing = editingMessageId === msg.id;
+
                 return (
                   <div
                     key={msg.id}
-                    className={`flex items-end space-x-1.5 ${isMe ? 'justify-end' : 'justify-start'}`}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setActionMessage(msg);
+                    }}
+                    onTouchStart={() => {
+                      longPressTimerRef.current = setTimeout(() => {
+                        setActionMessage(msg);
+                      }, 450);
+                    }}
+                    onTouchEnd={() => {
+                      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+                    }}
+                    onTouchMove={() => {
+                      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+                    }}
+                    className={`flex items-end space-x-1.5 group relative ${isMe ? 'justify-end' : 'justify-start'}`}
                   >
                     {!isMe && (
                       <div className="w-6 h-6 rounded-full overflow-hidden bg-zinc-200 flex-shrink-0 mb-0.5 border border-zinc-300">
@@ -750,7 +896,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                       </div>
                     )}
 
-                    <div className={`max-w-[75%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                    <div className={`max-w-[78%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                       {!isMe && index === 0 && (
                         <span className="text-[10px] text-zinc-500 font-normal mb-0.5 ml-1">
                           {senderName}
@@ -764,17 +910,55 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                         </div>
                       )}
 
-                      {/* Text Bubble */}
-                      {msg.content && (
-                        <div
-                          className={`px-3 py-2 rounded-2xl text-[13px] leading-relaxed break-words shadow-xs ${
-                            isMe
-                              ? 'bg-[#D9266E] text-white rounded-br-sm'
-                              : 'bg-white border border-zinc-200/80 text-zinc-900 rounded-bl-sm'
-                          }`}
-                        >
-                          {msg.content}
+                      {/* Inline Editing vs Text Bubble */}
+                      {isEditing ? (
+                        <div className="flex flex-col space-y-1.5 w-full my-1 bg-white p-2 rounded-2xl border border-[#D9266E] shadow-sm">
+                          <textarea
+                            value={editingText}
+                            onChange={(e) => setEditingText(e.target.value)}
+                            className="w-full bg-transparent text-xs text-zinc-900 focus:outline-none resize-none"
+                            rows={2}
+                          />
+                          <div className="flex items-center justify-end space-x-1.5">
+                            <button
+                              onClick={() => setEditingMessageId(null)}
+                              className="px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 text-[10px] font-semibold"
+                            >
+                              Hủy
+                            </button>
+                            <button
+                              onClick={handleSaveEdit}
+                              className="px-2 py-0.5 rounded-md bg-[#D9266E] text-white text-[10px] font-semibold"
+                            >
+                              Lưu
+                            </button>
+                          </div>
                         </div>
+                      ) : (
+                        msg.content && (
+                          <div className="relative group/bubble flex items-center">
+                            {/* Message Bubble Options Button */}
+                            <button
+                              onClick={() => setActionMessage(msg)}
+                              className={`opacity-0 group-hover/bubble:opacity-100 transition-opacity p-1 text-zinc-400 hover:text-zinc-600 ${
+                                isMe ? '-left-6 absolute' : '-right-6 absolute'
+                              }`}
+                              title="Tùy chọn tin nhắn"
+                            >
+                              <MoreVertical className="w-3.5 h-3.5" />
+                            </button>
+
+                            <div
+                              className={`px-3 py-2 rounded-2xl text-[13px] leading-relaxed break-words shadow-xs select-text ${
+                                isMe
+                                  ? 'bg-[#D9266E] text-white rounded-br-sm'
+                                  : 'bg-white border border-zinc-200/80 text-zinc-900 rounded-bl-sm'
+                              }`}
+                            >
+                              {msg.content}
+                            </div>
+                          </div>
+                        )
                       )}
 
                       <span className="text-[9px] text-zinc-400 mt-0.5 px-1 font-normal flex items-center space-x-1">
@@ -797,40 +981,44 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Emoji Row — auto-hide when keyboard is open */}
-          {!isKeyboardOpen && (
-            <div className="px-2 py-1 bg-white border-t border-zinc-100 flex items-center justify-around flex-shrink-0">
-              {['❤️', '🔥', '😍', '👍', '😂', '🥰', '☕'].map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => handleSend(emoji)}
-                  className="text-lg hover:scale-110 active:scale-90 transition-transform p-0.5"
-                  title={`Gửi ${emoji}`}
-                >
-                  {emoji}
-                </button>
-              ))}
+          {/* Plus Menu Floating Bar (Image & Document Attachments) */}
+          {showPlusMenu && (
+            <div className="px-3 py-2 bg-white border-t border-zinc-100 flex items-center space-x-3 flex-shrink-0 animate-in fade-in duration-150">
+              <button
+                onClick={() => {
+                  setShowPlusMenu(false);
+                  fileInputRef.current?.click();
+                }}
+                className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-[#D9266E] text-xs font-semibold transition-colors"
+              >
+                <ImageIcon className="w-4 h-4" />
+                <span>Gửi ảnh</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowPlusMenu(false);
+                  docInputRef.current?.click();
+                }}
+                className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-semibold transition-colors"
+              >
+                <FileText className="w-4 h-4" />
+                <span>Gửi tệp</span>
+              </button>
             </div>
           )}
 
           {/* Input Bar — sticky bottom, safe-area aware */}
           <div className="px-2 py-2 bg-white border-t border-zinc-100 flex items-center space-x-1.5 flex-shrink-0" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
-            {/* Attachment */}
+            {/* Plus (+) Options Toggle Button */}
             <button
-              onClick={() => fileInputRef.current?.click()}
-              className="p-2 rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-[#D9266E] active:scale-95 transition-all flex-shrink-0"
-              title="Đính kèm hình ảnh"
+              onClick={() => setShowPlusMenu((prev) => !prev)}
+              className={`p-2 rounded-full text-zinc-600 hover:bg-zinc-100 hover:text-[#D9266E] active:scale-95 transition-all flex-shrink-0 ${
+                showPlusMenu ? 'bg-rose-50 text-[#D9266E] rotate-45' : ''
+              }`}
+              title="Thêm tùy chọn đính kèm"
             >
-              <ImageIcon className="w-5 h-5" />
-            </button>
-
-            {/* Like */}
-            <button
-              onClick={() => handleSend('👍')}
-              className="p-1.5 rounded-full text-[#D9266E] hover:bg-rose-50 active:scale-95 transition-all flex-shrink-0"
-              title="Gửi Like 👍"
-            >
-              <ThumbsUp className="w-5 h-5 fill-current" />
+              <Plus className="w-5 h-5 transition-transform" />
             </button>
 
             {/* Chat Input Field (textarea completely bypasses Android autofill/password bar) */}
@@ -859,7 +1047,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
               />
             </div>
 
-            {/* Send */}
+            {/* Send Button */}
             <button
               onClick={() => handleSend()}
               disabled={!inputText.trim() || isSubmitting}
