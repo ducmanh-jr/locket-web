@@ -837,6 +837,14 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
             <div className="flex-1 min-w-0 flex items-center bg-zinc-100 rounded-full px-3 py-1.5 border border-zinc-200/80 focus-within:border-[#D9266E] transition-colors">
               <input
                 type="text"
+                name="chat-message-text"
+                id="locket-chat-input"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="sentences"
+                spellCheck={false}
+                data-lpignore="true"
+                data-form-type="other"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
