@@ -96,6 +96,8 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
   const [inputText, setInputText] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState<boolean>(false);
+  const [viewportHeight, setViewportHeight] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -253,6 +255,28 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
     }
   }, [messages, activeView, scrollToBottom]);
 
+  // Detect mobile keyboard open/close via visualViewport API
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+    const vv = window.visualViewport;
+    const onResize = () => {
+      const fullH = window.innerHeight;
+      const visibleH = vv.height;
+      // If visible viewport is significantly smaller than window, keyboard is open
+      const kbOpen = fullH - visibleH > 120;
+      setIsKeyboardOpen(kbOpen);
+      setViewportHeight(visibleH);
+      if (kbOpen) {
+        // Auto scroll to bottom when keyboard opens
+        setTimeout(() => scrollToBottom(), 80);
+      }
+    };
+    vv.addEventListener('resize', onResize);
+    // Initial
+    onResize();
+    return () => vv.removeEventListener('resize', onResize);
+  }, [scrollToBottom]);
+
   // Open a specific conversation thread
   const openThread = (friendId: string) => {
     setSelectedFriendId(friendId);
@@ -409,7 +433,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
       exit={{ opacity: 0, y: '100%' }}
       transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
       className="absolute inset-0 z-50 bg-white text-zinc-900 flex flex-col overflow-hidden rounded-t-[1.5rem] sm:rounded-[2rem] select-none font-sans shadow-2xl"
-      style={{ height: '100dvh' }}
+      style={{ height: viewportHeight ? `${viewportHeight}px` : '100dvh' }}
     >
       {/* Hidden File Input for Image Attachment */}
       <input
@@ -770,19 +794,21 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Emoji Row — compact, flex-shrink-0 */}
-          <div className="px-2 py-1 bg-white border-t border-zinc-100 flex items-center justify-around flex-shrink-0">
-            {['❤️', '🔥', '😍', '👍', '😂', '🥰', '☕'].map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => handleSend(emoji)}
-                className="text-lg hover:scale-110 active:scale-90 transition-transform p-0.5"
-                title={`Gửi ${emoji}`}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
+          {/* Quick Emoji Row — auto-hide when keyboard is open */}
+          {!isKeyboardOpen && (
+            <div className="px-2 py-1 bg-white border-t border-zinc-100 flex items-center justify-around flex-shrink-0">
+              {['❤️', '🔥', '😍', '👍', '😂', '🥰', '☕'].map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => handleSend(emoji)}
+                  className="text-lg hover:scale-110 active:scale-90 transition-transform p-0.5"
+                  title={`Gửi ${emoji}`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Input Bar — sticky bottom, safe-area aware */}
           <div className="px-2 py-2 bg-white border-t border-zinc-100 flex items-center space-x-1.5 flex-shrink-0" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
