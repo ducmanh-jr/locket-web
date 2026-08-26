@@ -833,12 +833,12 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
               <ThumbsUp className="w-5 h-5 fill-current" />
             </button>
 
-            {/* Input Field */}
-            <div className="flex-1 min-w-0 flex items-center bg-zinc-100 rounded-full px-3 py-1.5 border border-zinc-200/80 focus-within:border-[#D9266E] transition-colors">
-              <input
-                type="text"
-                name="chat-message-text"
-                id="locket-chat-input"
+            {/* Chat Input Field (textarea completely bypasses Android autofill/password bar) */}
+            <div className="flex-1 min-w-0 flex items-center bg-zinc-100 rounded-2xl px-3 py-1 border border-zinc-200/80 focus-within:border-[#D9266E] transition-colors">
+              <textarea
+                rows={1}
+                name="chat-message-area"
+                id="locket-chat-textarea"
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="sentences"
@@ -847,10 +847,15 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                 data-form-type="other"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
                 placeholder="Nhắn tin..."
-                maxLength={300}
-                className="w-full bg-transparent text-[13px] text-zinc-900 placeholder-zinc-400 focus:outline-none"
+                maxLength={500}
+                className="w-full bg-transparent text-[13px] text-zinc-900 placeholder-zinc-400 focus:outline-none resize-none py-1 leading-normal max-h-20 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               />
             </div>
 
