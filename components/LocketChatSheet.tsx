@@ -254,10 +254,20 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
 
   const selectedFriend = sanitizedFriends.find((f) => f.id === selectedFriendId);
 
-  // Auto scroll to bottom of chat
-  const scrollToBottom = useCallback(() => {
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const isUserScrolledUpRef = useRef<boolean>(false);
+
+  // Auto scroll to bottom of chat (only force scroll on send/open, respect manual scroll-up)
+  const scrollToBottom = useCallback((force: boolean = false) => {
+    if (!force && isUserScrolledUpRef.current) return;
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
+
+  const handleScrollStream = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+    isUserScrolledUpRef.current = !isNearBottom;
+  };
 
   // Fetch messages from Cloud API
   const fetchMessages = useCallback(async () => {
@@ -356,6 +366,8 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
   const openThread = (friendId: string) => {
     setSelectedFriendId(friendId);
     setActiveView('thread');
+    isUserScrolledUpRef.current = false;
+    setTimeout(() => scrollToBottom(true), 60);
 
     // Immediately mark unread messages from this friend as read locally
     setMessages((prev) => {
@@ -406,7 +418,8 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
     setMessages((prev) => [...prev, newMsg]);
     if (textToSend === undefined) setInputText('');
     setIsSubmitting(false);
-    scrollToBottom();
+    isUserScrolledUpRef.current = false;
+    setTimeout(() => scrollToBottom(true), 60);
 
     // Instant Cross-Tab Broadcast Channel Sync
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
@@ -807,7 +820,11 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
           </div>
 
           {/* Messages Stream — flex-1 + min-h-0 ensures proper shrinking on mobile */}
-          <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-2.5 bg-[#FAFAFA] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div
+            ref={messagesContainerRef}
+            onScroll={handleScrollStream}
+            className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-2.5 bg-[#FAFAFA] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          >
             {activeConversationMessages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-400">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#D9266E] to-rose-500 flex items-center justify-center text-white mb-3 shadow-md">
