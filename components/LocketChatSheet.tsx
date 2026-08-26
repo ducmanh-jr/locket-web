@@ -97,7 +97,6 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState<boolean>(false);
-  const [viewportH, setViewportH] = useState<string>('100dvh');
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -255,24 +254,20 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
     }
   }, [messages, activeView, scrollToBottom]);
 
-  // Detect mobile keyboard open/close via visualViewport API
+  // Detect mobile keyboard open/close via visualViewport API to auto-hide quick emojis
   useEffect(() => {
     if (typeof window === 'undefined' || !window.visualViewport) return;
     const vv = window.visualViewport;
     const onResize = () => {
       const kbOpen = window.innerHeight - vv.height > 120;
       setIsKeyboardOpen(kbOpen);
-      // Dynamically set container height to match visible viewport
-      setViewportH(`${vv.height}px`);
       if (kbOpen) {
         setTimeout(() => scrollToBottom(), 80);
       }
     };
     vv.addEventListener('resize', onResize);
-    vv.addEventListener('scroll', onResize);
     return () => {
       vv.removeEventListener('resize', onResize);
-      vv.removeEventListener('scroll', onResize);
     };
   }, [scrollToBottom]);
 
@@ -431,8 +426,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: '100%' }}
       transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
-      className="fixed top-0 left-0 w-full z-50 bg-white text-zinc-900 flex flex-col overflow-hidden select-none font-sans shadow-2xl"
-      style={{ height: viewportH }}
+      className="fixed inset-0 z-50 bg-white text-zinc-900 flex flex-col overflow-hidden select-none font-sans shadow-2xl"
     >
       {/* Hidden File Input for Image Attachment */}
       <input
