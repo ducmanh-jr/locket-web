@@ -631,43 +631,12 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
         )}
       </AnimatePresence>
 
-      {/* ==================== MESSAGE ACTION MODAL (EDIT & DELETE) ==================== */}
+      {/* Backdrop overlay to dismiss floating message action menu */}
       {actionMessage && (
-        <div className="absolute inset-0 z-[100] bg-black/40 backdrop-blur-xs flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="w-full max-w-xs bg-white rounded-2xl shadow-2xl p-3 flex flex-col space-y-2 border border-zinc-100">
-            <div className="px-2 py-1 border-b border-zinc-100 flex items-center justify-between">
-              <span className="text-xs font-bold text-zinc-500 truncate">Quản lý tin nhắn</span>
-              <button onClick={() => setActionMessage(null)} className="p-1 text-zinc-400 hover:text-zinc-600">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {actionMessage.sender_id === currentUser.id && (
-              <button
-                onClick={() => handleStartEdit(actionMessage)}
-                className="w-full px-3 py-2.5 rounded-xl hover:bg-zinc-100 flex items-center space-x-3 text-zinc-800 text-xs font-semibold text-left transition-colors"
-              >
-                <Pencil className="w-4 h-4 text-[#D9266E]" />
-                <span>Chỉnh sửa tin nhắn</span>
-              </button>
-            )}
-
-            <button
-              onClick={() => handleDeleteMessage(actionMessage.id)}
-              className="w-full px-3 py-2.5 rounded-xl hover:bg-rose-50 flex items-center space-x-3 text-rose-600 text-xs font-semibold text-left transition-colors"
-            >
-              <Trash2 className="w-4 h-4 text-rose-600" />
-              <span>Xóa tin nhắn</span>
-            </button>
-
-            <button
-              onClick={() => setActionMessage(null)}
-              className="w-full px-3 py-2 rounded-xl bg-zinc-100 text-zinc-600 text-xs font-semibold text-center transition-colors"
-            >
-              Hủy
-            </button>
-          </div>
-        </div>
+        <div
+          onClick={() => setActionMessage(null)}
+          className="absolute inset-0 z-30 bg-black/20 backdrop-blur-[1px] animate-in fade-in duration-150"
+        />
       )}
 
       {activeView === 'inbox' ? (
@@ -873,10 +842,11 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                       e.preventDefault();
                       setActionMessage(msg);
                     }}
-                    onTouchStart={() => {
+                    onTouchStart={(e) => {
                       longPressTimerRef.current = setTimeout(() => {
+                        if ('vibrate' in navigator) navigator.vibrate(30);
                         setActionMessage(msg);
-                      }, 450);
+                      }, 380);
                     }}
                     onTouchEnd={() => {
                       if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
@@ -884,7 +854,9 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                     onTouchMove={() => {
                       if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
                     }}
-                    className={`flex items-end space-x-1.5 group relative ${isMe ? 'justify-end' : 'justify-start'}`}
+                    className={`flex items-end space-x-1.5 group relative select-none ${
+                      isMe ? 'justify-end' : 'justify-start'
+                    } ${actionMessage?.id === msg.id ? 'z-40' : ''}`}
                   >
                     {!isMe && (
                       <div className="w-6 h-6 rounded-full overflow-hidden bg-zinc-200 flex-shrink-0 mb-0.5 border border-zinc-300">
@@ -896,7 +868,39 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                       </div>
                     )}
 
-                    <div className={`max-w-[78%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                    <div className={`max-w-[78%] flex flex-col relative ${isMe ? 'items-end' : 'items-start'}`}>
+                      {/* Floating Messenger-Style Action Popover Directly Above Message */}
+                      {actionMessage?.id === msg.id && (
+                        <div
+                          className={`absolute -top-9 ${
+                            isMe ? 'right-0' : 'left-0'
+                          } z-50 flex items-center bg-zinc-900 text-white rounded-full px-2 py-1 shadow-2xl border border-white/20 space-x-1 animate-in fade-in zoom-in-95 duration-150 select-none`}
+                        >
+                          {isMe && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStartEdit(msg);
+                              }}
+                              className="flex items-center space-x-1 px-2 py-0.5 rounded-full hover:bg-white/20 text-xs font-semibold text-white transition-colors"
+                            >
+                              <Pencil className="w-3.5 h-3.5 text-rose-400" />
+                              <span>Sửa</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteMessage(msg.id);
+                            }}
+                            className="flex items-center space-x-1 px-2 py-0.5 rounded-full hover:bg-white/20 text-xs font-semibold text-rose-400 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                            <span>Xóa</span>
+                          </button>
+                        </div>
+                      )}
+
                       {!isMe && index === 0 && (
                         <span className="text-[10px] text-zinc-500 font-normal mb-0.5 ml-1">
                           {senderName}
@@ -939,7 +943,10 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                           <div className="relative group/bubble flex items-center">
                             {/* Message Bubble Options Button */}
                             <button
-                              onClick={() => setActionMessage(msg)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActionMessage(msg);
+                              }}
                               className={`opacity-0 group-hover/bubble:opacity-100 transition-opacity p-1 text-zinc-400 hover:text-zinc-600 ${
                                 isMe ? '-left-6 absolute' : '-right-6 absolute'
                               }`}
@@ -949,7 +956,7 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
                             </button>
 
                             <div
-                              className={`px-3 py-2 rounded-2xl text-[13px] leading-relaxed break-words shadow-xs select-text ${
+                              className={`px-3 py-2 rounded-2xl text-[13px] leading-relaxed break-words shadow-xs select-none ${
                                 isMe
                                   ? 'bg-[#D9266E] text-white rounded-br-sm'
                                   : 'bg-white border border-zinc-200/80 text-zinc-900 rounded-bl-sm'
