@@ -205,6 +205,20 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const sanitized = sanitizeMoments(cloudMoments);
       const cloudIds = new Set(sanitized.map((m) => m.id));
 
+      // Auto-purge stale local deleted IDs if the server considers the moment active!
+      try {
+        const deletedIds = getDeletedMomentIds();
+        if (deletedIds.length > 0) {
+          const staleIds = deletedIds.filter((id) => cloudIds.has(id));
+          if (staleIds.length > 0) {
+            const activeDeleted = deletedIds.filter((id) => !cloudIds.has(id));
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('locket_deleted_moments_v1', JSON.stringify(activeDeleted));
+            }
+          }
+        }
+      } catch (e) {}
+
       // Auto-save Cloud public URLs to localStorage so uploader's cache is updated with working HTTPS URLs
       sanitized.forEach((cloudM) => {
         if (cloudM.media_url?.startsWith('http://') || cloudM.media_url?.startsWith('https://')) {
@@ -253,13 +267,14 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
             !(m.sender?.id && deletedMembers.has(m.sender.id))
         );
 
+        // Authoritative cloud moments must NOT be filtered out by stale local deleted IDs
         const merged = [...sanitized, ...validLocalMoments, ...pendingOptimistic]
           .filter(
             (m) =>
               m &&
               m.id &&
-              !freshDeletedSet.has(m.id) &&
               !String(m.id).startsWith('del_moment_') &&
+              m.caption !== '__DELETED_MOMENT__' &&
               !(m.sender_id && deletedMembers.has(m.sender_id)) &&
               !(m.sender?.id && deletedMembers.has(m.sender.id))
           );
