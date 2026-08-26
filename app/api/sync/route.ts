@@ -295,7 +295,15 @@ export async function POST(request: Request) {
 
     if (action === 'delete_moment' && moment_id) {
       deletedMomentIds.add(moment_id);
-      globalSharedMoments = globalSharedMoments.filter((m) => m.id !== moment_id);
+      deletedMomentIds.add(`del_moment_${moment_id}`);
+      globalSharedMoments = globalSharedMoments.filter(
+        (m) =>
+          m &&
+          m.id !== moment_id &&
+          m.id !== `del_moment_${moment_id}` &&
+          m.caption !== '__DELETED_MOMENT__' &&
+          !m.media_url?.includes('deleted.invalid')
+      );
 
       if (isSupabaseConfigured()) {
         try {

@@ -64,6 +64,17 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     setIsMounted(true);
   }, []);
 
+  // Return null if moment is deleted or tombstone marker to prevent __DELETED_MOMENT__ flash
+  if (
+    !moment ||
+    !moment.id ||
+    moment.caption === '__DELETED_MOMENT__' ||
+    moment.id.startsWith('del_moment_') ||
+    moment.media_url?.includes('deleted.invalid')
+  ) {
+    return null;
+  }
+
   useEffect(() => {
     if (showOptionsModal) {
       onDragChange?.(true);

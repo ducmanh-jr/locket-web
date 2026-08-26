@@ -432,6 +432,7 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
 export async function deleteMomentFromGlobalCloud(momentId: string): Promise<boolean> {
   // Purge locally immediately!
   addDeletedMomentId(momentId);
+  addDeletedMomentId(`del_moment_${momentId}`);
 
   let apiSuccess = false;
   try {
