@@ -841,8 +841,11 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                     <motion.button
                       whileTap={{ scale: 0.97 }}
                       onClick={() => {
-                        onDeleteMoment(moment.id);
                         setShowOptionsModal(false);
+                        const targetId = moment.id;
+                        setTimeout(() => {
+                          onDeleteMoment(targetId);
+                        }, 40);
                       }}
                       className="w-full p-3.5 bg-red-500/10 hover:bg-red-500/20 rounded-2xl text-red-400 text-xs font-semibold flex items-center space-x-3 transition-colors border border-red-500/20"
                     >

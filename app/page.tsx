@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { LocketHeader } from '@/components/LocketHeader';
 import { LocketDock } from '@/components/LocketDock';
 import { LocketFeedCard } from '@/components/LocketFeedCard';
@@ -190,6 +190,20 @@ export default function HomePage() {
 
 
 
+  const handleDeleteMomentInFeed = useCallback(
+    (momentId: string) => {
+      deleteMoment(momentId);
+      setSelectedMomentId((prevId) => {
+        if (prevId === momentId) {
+          const remaining = roomMoments.filter((m) => m.id !== momentId);
+          return remaining.length > 0 ? remaining[0].id : null;
+        }
+        return prevId;
+      });
+    },
+    [deleteMoment, roomMoments]
+  );
+
   return (
     <div className="h-full flex flex-col justify-between bg-gradient-to-b from-[#180e2d] via-[#10091D] to-[#0b0515] selection:bg-[#D9266E] selection:text-white overflow-hidden relative">
       {/* Shared Room Header */}
@@ -270,7 +284,7 @@ export default function HomePage() {
                   onPrev={handlePrev}
                   hasPrev={safeIndex > 0}
                   hasNext={safeIndex < roomMoments.length - 1}
-                  onDeleteMoment={deleteMoment}
+                  onDeleteMoment={handleDeleteMomentInFeed}
                   nextMoment={nextMoment}
                   prevMoment={prevMoment}
                   nextMomentUrl={nextMoment?.media_url}
