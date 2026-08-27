@@ -133,6 +133,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     setHasVideoError(false);
     setDragYOffset(0);
     if (videoRef.current) {
+      try {
+        videoRef.current.currentTime = 0;
+        videoRef.current.load();
+      } catch (e) {}
       videoRef.current.play().catch(() => {});
     }
   }, [moment.id, moment.media_url]);

@@ -61,12 +61,24 @@ export function sanitizeMoments(moments: Moment[]): Moment[] {
 }
 
 const blobUrlCache = new Map<string, string>();
+const MAX_BLOB_CACHE_SIZE = 40;
 
 export function getSafeMediaUrl(url?: string): string {
   if (!url) return '';
   if (url.startsWith('data:video/')) {
     if (blobUrlCache.has(url)) return blobUrlCache.get(url)!;
     try {
+      if (blobUrlCache.size >= MAX_BLOB_CACHE_SIZE) {
+        const firstKey = blobUrlCache.keys().next().value;
+        if (firstKey) {
+          const oldObjectUrl = blobUrlCache.get(firstKey);
+          if (oldObjectUrl && oldObjectUrl.startsWith('blob:')) {
+            try { URL.revokeObjectURL(oldObjectUrl); } catch (e) {}
+          }
+          blobUrlCache.delete(firstKey);
+        }
+      }
+
       const parts = url.split(',');
       const mimeMatch = parts[0].match(/:(.*?);/);
       const mime = mimeMatch ? mimeMatch[1] : 'video/mp4';
