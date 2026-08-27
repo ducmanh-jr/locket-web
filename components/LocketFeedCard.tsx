@@ -24,6 +24,7 @@ interface LocketFeedCardProps {
   prevMomentUrl?: string;
   activeReaction?: { emoji: string; timestamp: number } | null;
   onDragChange?: (isDragging: boolean) => void;
+  isOverlayOpen?: boolean;
 }
 
 export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
@@ -41,6 +42,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   prevMomentUrl,
   activeReaction,
   onDragChange,
+  isOverlayOpen = false,
 }) => {
   const router = useRouter();
   const touchStartY = useRef<number | null>(null);
@@ -141,6 +143,8 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     killGlobalAudio();
     setIsPlayingAudio(false);
 
+    if (isOverlayOpen) return;
+
     if (moment?.music?.preview_url) {
       setIsPlayingAudio(true);
       playGlobalAudio(moment.music.preview_url, () => {
@@ -154,7 +158,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       killGlobalAudio();
       setIsPlayingAudio(false);
     };
-  }, [moment?.id, moment?.music?.preview_url]);
+  }, [moment?.id, moment?.music?.preview_url, isOverlayOpen]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {

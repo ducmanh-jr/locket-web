@@ -310,6 +310,7 @@ function HomePage() {
                   prevMomentUrl={prevMoment?.media_url}
                   activeReaction={lastReaction}
                   onDragChange={setIsFeedDragging}
+                  isOverlayOpen={showChatSheet || showCamera}
                 />
               ) : (
                 <div className="w-[310px] h-[310px] my-auto rounded-[2.8rem] bg-black/40 p-8 flex flex-col items-center justify-center text-center border border-white/10">
