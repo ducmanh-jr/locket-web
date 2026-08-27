@@ -88,6 +88,9 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const currentMomentIdRef = useRef<string>(moment.id);
 
+  const safeMediaUrl = React.useMemo(() => getSafeMediaUrl(moment.media_url), [moment.media_url]);
+  const safePosterUrl = React.useMemo(() => getSafeMediaUrl(moment.thumbnail_url), [moment.thumbnail_url]);
+
   const isVideo =
     moment.media_type === 'video' ||
     moment.id?.includes('video') ||
@@ -96,6 +99,34 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     moment.media_url?.endsWith('.webm');
 
   currentMomentIdRef.current = moment.id;
+
+  // Background Preloader for Next and Previous Moments to eliminate swipe video lag
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const urlsToPreload: string[] = [];
+    if (nextMoment?.media_url) urlsToPreload.push(getSafeMediaUrl(nextMoment.media_url));
+    if (prevMoment?.media_url) urlsToPreload.push(getSafeMediaUrl(prevMoment.media_url));
+    if (nextMomentUrl) urlsToPreload.push(nextMomentUrl);
+    if (prevMomentUrl) urlsToPreload.push(prevMomentUrl);
+
+    urlsToPreload.forEach((url) => {
+      if (!url) return;
+      if (url.endsWith('.mp4') || url.endsWith('.webm') || url.startsWith('data:video/')) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'video';
+        link.href = url;
+        document.head.appendChild(link);
+        setTimeout(() => {
+          try { document.head.removeChild(link); } catch (e) {}
+        }, 8000);
+      } else {
+        const img = new Image();
+        img.src = url;
+      }
+    });
+  }, [nextMoment?.media_url, prevMoment?.media_url, nextMomentUrl, prevMomentUrl]);
 
   useEffect(() => {
     setIsMuted(true);
@@ -554,14 +585,19 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
                 <div className="relative w-full h-full">
                   <video
                     ref={videoRef}
-                    src={getSafeMediaUrl(moment.media_url)}
-                    poster={getSafeMediaUrl(moment.thumbnail_url)}
+                    src={safeMediaUrl}
+                    poster={safePosterUrl}
                     autoPlay
                     loop
                     playsInline
                     muted={true}
                     controls={false}
                     preload="auto"
+                    onCanPlay={() => {
+                      if (videoRef.current) {
+                        videoRef.current.play().catch(() => {});
+                      }
+                    }}
                     onLoadedData={() => {
                       if (videoRef.current) {
                         videoRef.current.play().catch(() => {});
