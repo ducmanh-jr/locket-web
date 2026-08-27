@@ -191,6 +191,21 @@ export async function GET() {
   }
 }
 
+async function verifyUserToken(request: Request) {
+  if (!isSupabaseConfigured()) return { user: null, error: null };
+  try {
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader) return { user: null, error: 'Missing Authorization header' };
+    const token = authHeader.replace('Bearer ', '').trim();
+    if (!token) return { user: null, error: 'Empty token' };
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data?.user) return { user: null, error: error?.message || 'Invalid token' };
+    return { user: data.user, error: null };
+  } catch (e: any) {
+    return { user: null, error: e?.message || 'Auth check error' };
+  }
+}
+
 export async function POST(request: Request) {
   try {
     await loadDeletedMembersFromDB();
@@ -198,6 +213,16 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const { action, moment, profile, is_fresh_login, moment_id } = body;
+
+    // Verify Auth JWT Token when Supabase is configured
+    let authedUser: any = null;
+    if (isSupabaseConfigured()) {
+      const { user, error: authErr } = await verifyUserToken(request);
+      if (authErr && action === 'delete_member') {
+        return NextResponse.json({ error: 'Xác thực không hợp lệ: ' + authErr }, { status: 401 });
+      }
+      authedUser = user;
+    }
 
     if (action === 'push_profile' && profile) {
       const targetId = profile.id;
@@ -337,6 +362,16 @@ export async function POST(request: Request) {
     }
 
     if (action === 'delete_member' && (body.member_id || body.profile_id)) {
+      const ADMIN_EMAIL = 'nguyenducmanh.ovaltine@gmail.com';
+      if (isSupabaseConfigured()) {
+        if (!authedUser || authedUser.email?.toLowerCase().trim() !== ADMIN_EMAIL) {
+          return NextResponse.json(
+            { error: 'Forbidden: Bạn không có quyền Admin để xóa thành viên khỏi căn phòng' },
+            { status: 403 }
+          );
+        }
+      }
+
       const targetId = body.member_id || body.profile_id;
 
       deletedMemberIds.add(targetId);

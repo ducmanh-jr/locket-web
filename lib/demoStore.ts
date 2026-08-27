@@ -1,12 +1,7 @@
 import { Profile, Moment, Reaction } from './types';
 import { sanitizeMoments } from './media';
 
-// Distinct Avatar Photos for Main Users (Zero overlap with feed moments)
-const AVATAR_DM = "/user-photos/1785829393992_567716528849713056_g276929852367586455_e887fb48d4d113fc528e29488435b6f7.jpg";
-const AVATAR_SYSTEM32 = "/user-photos/1785829394118_567716528849713056_g276929852367586455_b564766841f8f840f3191c21c6d0f07a.jpg";
-const AVATAR_ADMIN = "/user-photos/1785829394223_567716528849713056_g276929852367586455_abb069d5016bbb90f6a167b2e53545da.jpg";
-
-export const ADMIN_AVATAR_URL = AVATAR_DM;
+export const ADMIN_AVATAR_URL = "https://ui-avatars.com/api/?name=%C4%90%E1%BB%B1c+M%E1%BA%A1nh&background=D9266E&color=fff&size=256&bold=true";
 
 export function getCleanFallbackAvatar(nameOrUsername?: string, isAdmin?: boolean): string {
   if (isAdmin) return ADMIN_AVATAR_URL;
@@ -20,29 +15,14 @@ export function getGoogleAvatarUrl(email?: string, nameOrUsername?: string, isAd
 
 // Fallback Current User
 export const DEMO_CURRENT_USER: Profile = {
-  id: "user-me",
-  username: "manh_locket",
-  display_name: "Đức Mạnh",
-  avatar_url: AVATAR_DM,
+  id: "guest_user",
+  username: "locket_user",
+  display_name: "Thành viên Locket",
+  avatar_url: ADMIN_AVATAR_URL,
 };
 
-// 100% Real User Architecture: Zero fake demo accounts
-export const DEFAULT_3_FRIENDS: Profile[] = [];
-export const DEMO_FRIENDS: Profile[] = [];
-export const DEMO_SUGGESTED_USERS: Profile[] = [];
 
-// Clean 100% Real-User Architecture: Empty sample dataset
-const PHOTO_DATASET: { file: string; caption: string }[] = [];
-
-export const DEMO_50_MOMENTS: Moment[] = [];
-
-const LEGACY_CACHE_KEYS = [
-  'locket_demo_moments_v5',
-  'locket_demo_moments_v6',
-  'locket_demo_moments_v7',
-  'locket_demo_moments_v8',
-  'locket_user_moments_permanent_v1',
-];
+// Clean 100% Real-User Architecture
 
 const ACTIVE_CACHE_KEY = 'locket_moments_shared_cache_v9';
 const ACCOUNT_CACHE_PREFIX = 'locket_moments_account_v1_';

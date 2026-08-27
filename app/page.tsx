@@ -100,17 +100,6 @@ export default function HomePage() {
     };
   }, [showCamera, showChatSheet, currentView, userProfile]);
 
-  // Unregister old Service Workers to clear stale cache in normal browser tabs
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        for (let registration of registrations) {
-          registration.unregister().catch(() => {});
-        }
-      }).catch(() => {});
-    }
-  }, []);
-
   // Deep-linking: auto-select moment specified in ?m= or ?moment= query string ONCE on initial page load
   useEffect(() => {
     if (hasParsedDeepLinkRef.current) return;

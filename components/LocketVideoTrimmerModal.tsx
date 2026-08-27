@@ -155,6 +155,7 @@ export const LocketVideoTrimmerModal: React.FC<LocketVideoTrimmerModalProps> = (
     if (isExporting) return;
     setIsExporting(true);
     setExportProgress(10);
+    let audioContext: AudioContext | null = null;
 
     try {
       // If original video is already <= 5.5 seconds, use direct Blob
@@ -193,15 +194,16 @@ export const LocketVideoTrimmerModal: React.FC<LocketVideoTrimmerModalProps> = (
       
       // Capture audio track if present
       try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const source = audioContext.createMediaElementSource(renderVideo);
-        const destination = audioContext.createMediaStreamDestination();
-        source.connect(destination);
-        source.connect(audioContext.destination);
-
-        destination.stream.getAudioTracks().forEach((track) => {
-          stream.addTrack(track);
-        });
+        const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtxClass) {
+          audioContext = new AudioCtxClass();
+          const source = audioContext.createMediaElementSource(renderVideo);
+          const destination = audioContext.createMediaStreamDestination();
+          source.connect(destination);
+          destination.stream.getAudioTracks().forEach((track) => {
+            stream.addTrack(track);
+          });
+        }
       } catch (e) {}
 
       const candidateTypes = [
@@ -230,6 +232,9 @@ export const LocketVideoTrimmerModal: React.FC<LocketVideoTrimmerModalProps> = (
 
       const recordPromise = new Promise<CapturedMedia>((resolve, reject) => {
         recorder.onstop = () => {
+          if (audioContext && audioContext.state !== 'closed') {
+            audioContext.close().catch(() => {});
+          }
           const finalBlob = new Blob(chunks, { type: selectedMime });
           const finalUrl = URL.createObjectURL(finalBlob);
           resolve({
@@ -276,6 +281,9 @@ export const LocketVideoTrimmerModal: React.FC<LocketVideoTrimmerModalProps> = (
         blob: videoFile,
       });
     } finally {
+      if (audioContext && audioContext.state !== 'closed') {
+        audioContext.close().catch(() => {});
+      }
       setIsExporting(false);
     }
   };

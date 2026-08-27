@@ -18,6 +18,18 @@ export interface CloudProfile {
   avatar_url: string;
 }
 
+async function getAuthHeader(): Promise<Record<string, string>> {
+  if (isSupabaseConfigured()) {
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.access_token) {
+        return { Authorization: `Bearer ${data.session.access_token}` };
+      }
+    } catch (e) {}
+  }
+  return {};
+}
+
 function dataUrlToFile(dataUrl: string, fallbackName: string): File | null {
   try {
     const commaIdx = dataUrl.indexOf(',');
@@ -89,11 +101,12 @@ export async function uploadMediaToPublicUrl(mediaUrl: string, fallbackName: str
       } catch (sbErr) {}
     }
 
-    // 2. Server API Route Upload Fallback
     const formData = new FormData();
     formData.append('file', fileToUpload);
+    const authHeaders = await getAuthHeader();
     const res = await fetch('/api/upload', {
       method: 'POST',
+      headers: authHeaders,
       body: formData,
     });
 
@@ -141,11 +154,12 @@ export async function uploadBlobToPublicUrl(blob: Blob, fallbackName: string): P
       } catch (sbErr) {}
     }
 
-    // 2. Server API Route Upload Fallback
     const formData = new FormData();
     formData.append('file', file);
+    const authHeaders = await getAuthHeader();
     const res = await fetch('/api/upload', {
       method: 'POST',
+      headers: authHeaders,
       body: formData,
     });
 
@@ -183,8 +197,23 @@ export function compressImageForCloudSync(dataUrl: string): Promise<string> {
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
           ctx.drawImage(img, 0, 0, targetSize, targetSize);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.90);
-          resolve(compressedDataUrl);
+          // Use async toBlob instead of synchronous toDataURL to avoid blocking UI
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  resolve((reader.result as string) || dataUrl);
+                };
+                reader.onerror = () => resolve(dataUrl);
+                reader.readAsDataURL(blob);
+              } else {
+                resolve(dataUrl);
+              }
+            },
+            'image/jpeg',
+            0.90
+          );
         } else {
           resolve(dataUrl);
         }
@@ -206,9 +235,10 @@ export async function pushProfileToGlobalCloud(profile: CloudProfile, isFreshLog
       if ((profile as any).email) removeDeletedMemberId((profile as any).email);
     }
 
+    const authHeaders = await getAuthHeader();
     const res = await fetch('/api/sync', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({ action: 'push_profile', profile, is_fresh_login: isFreshLogin }),
     });
 
@@ -295,9 +325,10 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
 
     // 1. Primary: Try API Sync Endpoint
     try {
+      const authHeaders = await getAuthHeader();
       const res = await fetch('/api/sync', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({ action: 'push_moment', moment }),
       });
       if (res.ok) return true;
@@ -436,9 +467,10 @@ export async function deleteMomentFromGlobalCloud(momentId: string): Promise<boo
 
   let apiSuccess = false;
   try {
+    const authHeaders = await getAuthHeader();
     const res = await fetch('/api/sync', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({ action: 'delete_moment', moment_id: momentId }),
     });
     if (res.ok) apiSuccess = true;
@@ -485,9 +517,10 @@ export async function deleteMemberFromGlobalCloud(memberId: string): Promise<boo
 
   let apiSuccess = false;
   try {
+    const authHeaders = await getAuthHeader();
     const res = await fetch('/api/sync', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({ action: 'delete_member', member_id: memberId }),
     });
     if (res.ok) apiSuccess = true;

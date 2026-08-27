@@ -8,9 +8,25 @@ export const dynamic = 'force-dynamic';
  * Scans the Supabase Storage "moments" bucket for all uploaded files,
  * then re-creates the database records that were lost during migration.
  */
-export async function GET() {
+export async function GET(request: Request) {
   if (!isSupabaseConfigured()) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
+  }
+
+  // Admin-only: Verify JWT token and check admin email
+  const ADMIN_EMAIL = 'nguyenducmanh.ovaltine@gmail.com';
+  try {
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader) {
+      return NextResponse.json({ error: 'Unauthorized: Missing Authorization header' }, { status: 401 });
+    }
+    const token = authHeader.replace('Bearer ', '').trim();
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data?.user || data.user.email?.toLowerCase().trim() !== ADMIN_EMAIL) {
+      return NextResponse.json({ error: 'Forbidden: Admin privilege required' }, { status: 403 });
+    }
+  } catch (e) {
+    return NextResponse.json({ error: 'Auth verification failed' }, { status: 401 });
   }
 
   try {

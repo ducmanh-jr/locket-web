@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Profile } from '@/lib/types';
 import { MemberFilterOption } from './LocketHeader';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import {
   X,
   Send,
@@ -25,6 +26,18 @@ import {
   Trash2,
   MoreVertical,
 } from 'lucide-react';
+
+async function getChatAuthHeader(): Promise<Record<string, string>> {
+  if (isSupabaseConfigured()) {
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.access_token) {
+        return { Authorization: `Bearer ${data.session.access_token}` };
+      }
+    } catch (e) {}
+  }
+  return {};
+}
 
 export interface ChatMessage {
   id: string;
@@ -113,18 +126,41 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Document / File Upload Handler
-  const handleDocumentPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDocumentPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64Data = event.target?.result as string;
-      if (base64Data) {
-        handleSend(`📄 [Tệp] ${file.name}`, base64Data);
+    // Upload file to server to get a short HTTP URL instead of storing Base64 in localStorage
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url) {
+          handleSend(`📄 [Tệp] ${file.name}`, data.url);
+        }
+      } else {
+        // Fallback: use Base64 only for small files (< 500KB)
+        if (file.size < 500 * 1024) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const base64Data = event.target?.result as string;
+            if (base64Data) {
+              handleSend(`📄 [Tệp] ${file.name}`, base64Data);
+            }
+          };
+          reader.readAsDataURL(file);
+        } else {
+          console.warn('[Chat] File too large for localStorage fallback, upload failed');
+        }
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.warn('[Chat] File upload error:', err);
+    }
     e.target.value = '';
     setShowPlusMenu(false);
   };
@@ -138,9 +174,10 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
     });
     setActionMessage(null);
     try {
+      const authHeaders = await getChatAuthHeader();
       await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({ action: 'delete_message', message_id: msgId }),
       });
     } catch (e) {}
@@ -169,9 +206,10 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
     setEditingText('');
 
     try {
+      const authHeaders = await getChatAuthHeader();
       await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           action: 'edit_message',
           message_id: msgId,
@@ -206,25 +244,12 @@ export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // 1. Sanitize & Deduplicate Friends List (Filter out self and test/system users)
+  // 1. Sanitize & Deduplicate Friends List (Filter out self)
   const sanitizedFriends = React.useMemo(() => {
-    const isSystemUser = (id?: string, name?: string) => {
-      const checkStr = `${id || ''} ${name || ''}`.toLowerCase();
-      return (
-        checkStr.includes('system32') ||
-        checkStr.includes('admin') ||
-        checkStr.trim() === 'dm' ||
-        checkStr.includes('user-system32') ||
-        checkStr.includes('user-admin') ||
-        checkStr.includes('user-dm')
-      );
-    };
-
     const list = friends.filter((f) => {
       if (!f.id) return false;
       if (f.id === 'all' || f.name.toLowerCase().includes('tất cả')) return false;
       if (f.id === currentUser.id) return false;
-      if (isSystemUser(f.id, f.name)) return false;
       return true;
     });
 

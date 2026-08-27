@@ -101,6 +101,20 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { action, sender_id, recipient_id, content, media_url, sender_name, sender_avatar, message_id } = body;
 
+    let authedUserId: string | null = null;
+    if (isSupabaseConfigured()) {
+      try {
+        const authHeader = request.headers.get('Authorization');
+        if (authHeader) {
+          const token = authHeader.replace('Bearer ', '').trim();
+          if (token) {
+            const { data } = await supabase.auth.getUser(token);
+            if (data?.user) authedUserId = data.user.id;
+          }
+        }
+      } catch (e) {}
+    }
+
     // Action: Mark thread as read
     if (action === 'mark_read' && sender_id && recipient_id) {
       globalSharedMessages.forEach((m) => {
@@ -111,8 +125,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
-    // Action: Edit message
+    // Action: Edit message (Requires Auth & Ownership)
     if (action === 'edit_message' && message_id) {
+      if (isSupabaseConfigured()) {
+        if (!authedUserId) {
+          return NextResponse.json({ error: 'Unauthorized: Bạn cần đăng nhập để chỉnh sửa tin nhắn' }, { status: 401 });
+        }
+        const { data: targetMsg } = await supabase.from('messages').select('sender_id').eq('id', message_id).maybeSingle();
+        if (targetMsg && targetMsg.sender_id !== authedUserId) {
+          return NextResponse.json({ error: 'Forbidden: Bạn chỉ có thể sửa tin nhắn do chính mình gửi' }, { status: 403 });
+        }
+      }
+
       globalSharedMessages.forEach((m) => {
         if (m.id === message_id) {
           m.content = content || '';
@@ -126,8 +150,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
-    // Action: Delete message
+    // Action: Delete message (Requires Auth & Ownership)
     if (action === 'delete_message' && message_id) {
+      if (isSupabaseConfigured()) {
+        if (!authedUserId) {
+          return NextResponse.json({ error: 'Unauthorized: Bạn cần đăng nhập để xóa tin nhắn' }, { status: 401 });
+        }
+        const { data: targetMsg } = await supabase.from('messages').select('sender_id').eq('id', message_id).maybeSingle();
+        if (targetMsg && targetMsg.sender_id !== authedUserId) {
+          return NextResponse.json({ error: 'Forbidden: Bạn chỉ có thể xóa tin nhắn do chính mình gửi' }, { status: 403 });
+        }
+      }
+
       globalSharedMessages = globalSharedMessages.filter((m) => m.id !== message_id);
       if (isSupabaseConfigured()) {
         try {

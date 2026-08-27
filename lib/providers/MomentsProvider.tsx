@@ -146,7 +146,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [selectedFriendFilter, setSelectedFriendFilter] = useState<string>('all');
 
   const currentUser = userProfile || {
-    id: 'user-me',
+    id: 'guest_user',
     username: 'locket_user',
     display_name: 'Thành viên Locket',
     avatar_url: '',
@@ -292,11 +292,6 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     loadMoments();
 
-    // 5-second background sync interval to guarantee live delete sync across all devices
-    const pollInterval = setInterval(() => {
-      loadMoments();
-    }, 5000);
-
     // Instant Cross-Tab Broadcast Channel Sync
     let tabChannel: BroadcastChannel | null = null;
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
@@ -372,7 +367,6 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
 
     return () => {
-      clearInterval(pollInterval);
       if (tabChannel) tabChannel.close();
       if (dbChannel) supabase.removeChannel(dbChannel);
     };
