@@ -117,9 +117,7 @@ function HomePage() {
     }
   }, [filteredMoments]);
 
-  if (authLoading) {
-    return <LoadingScreen message="Đang kết nối khoảnh khắc..." />;
-  }
+
 
   const roomMoments = React.useMemo(() => {
     return (filteredMoments || []).filter(
@@ -214,6 +212,10 @@ function HomePage() {
     },
     [deleteMoment, roomMoments]
   );
+
+  if (authLoading) {
+    return <LoadingScreen message="Đang kết nối khoảnh khắc..." />;
+  }
 
   return (
     <div className="h-full flex flex-col justify-between bg-gradient-to-b from-[#180e2d] via-[#10091D] to-[#0b0515] selection:bg-[#D9266E] selection:text-white overflow-hidden relative">
