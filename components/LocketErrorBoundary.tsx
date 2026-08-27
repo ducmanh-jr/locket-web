@@ -46,9 +46,21 @@ export class LocketErrorBoundary extends Component<Props, State> {
             <AlertTriangle className="w-8 h-8" />
           </div>
           <h2 className="text-white text-lg font-bold mb-2">Đã xảy ra sự cố giao diện</h2>
-          <p className="text-zinc-400 text-xs max-w-xs mb-6 leading-relaxed">
+          <p className="text-zinc-400 text-xs max-w-xs mb-3 leading-relaxed">
             Hệ thống đã tự động khoanh vùng sự cố. Nhấn nút bên dưới để khôi phục khoảnh khắc và làm mới ứng dụng.
           </p>
+          {this.state.error && (
+            <div className="max-w-md w-full bg-red-950/40 border border-red-500/30 rounded-xl p-3 mb-5 text-left overflow-auto max-h-36">
+              <p className="text-red-300 font-mono text-[11px] font-semibold break-all">
+                {this.state.error.name}: {this.state.error.message}
+              </p>
+              {this.state.error.stack && (
+                <pre className="text-zinc-400 font-mono text-[9px] mt-1 whitespace-pre-wrap break-all">
+                  {this.state.error.stack.split('\n').slice(0, 4).join('\n')}
+                </pre>
+              )}
+            </div>
+          )}
           <button
             onClick={this.handleReset}
             className="flex items-center space-x-2 bg-gradient-to-r from-[#D9266E] to-[#BE185D] hover:from-[#BE185D] hover:to-[#9F1239] text-white text-xs font-bold px-6 py-3 rounded-full shadow-[0_8px_25px_rgba(217,38,110,0.5)] active:scale-95 transition-all"

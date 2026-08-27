@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { Profile } from '@/lib/types';
 import { pushProfileToGlobalCloud } from '@/lib/cloudSync';
+import { getCleanFallbackAvatar, getGoogleAvatarUrl, removeDeletedMemberId, clearAllDeletedMemberIds } from '@/lib/demoStore';
 
 interface AuthContextValue {
   userProfile: Profile | null;
@@ -50,7 +51,7 @@ function clearCachedProfile(): void {
   } catch (e) {}
 }
 
-import { getCleanFallbackAvatar, getGoogleAvatarUrl, removeDeletedMemberId, clearAllDeletedMemberIds } from '@/lib/demoStore';
+
 
 function buildProfileFromSupabaseUser(user: any): Profile {
   const email = user.email || user.user_metadata?.email || '';
