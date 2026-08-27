@@ -53,6 +53,26 @@ const MomentsContext = createContext<MomentsContextValue>({
 });
 
 const LOCAL_MOMENTS_KEY = 'locket_local_moments_v1';
+const LOCAL_PROFILES_KEY = 'locket_all_profiles_v1';
+
+function readLocalProfiles(): any[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(LOCAL_PROFILES_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {}
+  return [];
+}
+
+function saveLocalProfiles(profs: any[]): void {
+  if (typeof window === 'undefined' || !Array.isArray(profs)) return;
+  try {
+    localStorage.setItem(LOCAL_PROFILES_KEY, JSON.stringify(profs));
+  } catch (e) {}
+}
 
 function readLocalMoments(): Moment[] {
   if (typeof window === 'undefined') return [];
@@ -142,9 +162,9 @@ function removeLocalMomentsByMember(memberId: string): string[] {
 export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { userProfile, signOut } = useAuth();
   const [moments, setMoments] = useState<Moment[]>(() => readLocalMoments());
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(() => readLocalMoments().length === 0);
   const [selectedFriendFilter, setSelectedFriendFilter] = useState<string>('all');
-  const [allProfiles, setAllProfiles] = useState<any[]>([]);
+  const [allProfiles, setAllProfiles] = useState<any[]>(() => readLocalProfiles());
 
   const currentUser = userProfile || {
     id: 'guest_user',
@@ -198,7 +218,9 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       fetchGlobalCloudProfiles().then((profs) => {
         if (profs && Array.isArray(profs)) {
-          setAllProfiles(profs.filter((p) => p && p.id && !deletedMembers.has(p.id)));
+          const valid = profs.filter((p) => p && p.id && !deletedMembers.has(p.id));
+          setAllProfiles(valid);
+          saveLocalProfiles(valid);
         }
       }).catch(() => {});
 

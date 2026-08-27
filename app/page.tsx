@@ -291,8 +291,25 @@ function HomePage() {
               </div>
 
               {momentsLoading ? (
-                <div className="w-[310px] h-[310px] my-auto rounded-[2.8rem] bg-black/40 flex items-center justify-center animate-pulse border border-white/10">
-                  <div className="w-10 h-10 rounded-full border-4 border-[#D9266E] border-t-transparent animate-spin" />
+                <div className="w-[320px] h-[320px] sm:w-[340px] sm:h-[340px] my-auto rounded-[2.8rem] bg-[#140a12]/80 backdrop-blur-2xl border border-white/15 flex flex-col items-center justify-center p-6 text-center relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+                  {/* Shimmer gradient background overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
+
+                  {/* Glowing Locket Ring Spinner */}
+                  <div className="relative w-16 h-16 mb-4 flex items-center justify-center">
+                    <div className="absolute inset-0 rounded-full border-[3px] border-[#D9266E]/20 animate-ping" />
+                    <div className="w-14 h-14 rounded-full border-[3.5px] border-t-[#D9266E] border-r-[#D9266E]/40 border-b-transparent border-l-transparent animate-spin" />
+                    <div className="absolute w-8 h-8 rounded-full bg-[#D9266E]/20 flex items-center justify-center text-[#D9266E]">
+                      <Camera className="w-4 h-4" />
+                    </div>
+                  </div>
+
+                  <span className="text-white font-extrabold text-xs tracking-wide z-10">
+                    Đang kết nối Locket...
+                  </span>
+                  <span className="text-zinc-500 text-[10px] mt-1 font-medium z-10">
+                    Đang đồng bộ khoảnh khắc trực tiếp
+                  </span>
                 </div>
               ) : roomMoments.length > 0 && currentMoment ? (
                 <LocketFeedCard
