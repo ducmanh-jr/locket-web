@@ -103,11 +103,16 @@ function saveLocalMessages(msgs: ChatMessage[]): void {
   } catch (e) {}
 }
 
+import { killGlobalAudio } from '@/lib/audioPlayer';
+
 export const LocketChatSheet: React.FC<LocketChatSheetProps> = ({
   currentUser,
   friends,
   onClose,
 }) => {
+  useEffect(() => {
+    killGlobalAudio();
+  }, []);
   const [activeView, setActiveView] = useState<'inbox' | 'thread'>('inbox');
   const [selectedFriendId, setSelectedFriendId] = useState<string>('');
   const [messages, setMessages] = useState<ChatMessage[]>(() => readLocalMessages());

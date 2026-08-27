@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LocketErrorBoundary } from '@/components/LocketErrorBoundary';
 import { MusicTrack } from '@/lib/types';
+import { killGlobalAudio } from '@/lib/audioPlayer';
 
 function HomePage() {
   const router = useRouter();
@@ -70,7 +71,12 @@ function HomePage() {
     }
   }, []);
 
-  // Mobile edge swipe-back gesture & popstate backstack listener
+  useEffect(() => {
+    if (showChatSheet || showCamera) {
+      killGlobalAudio();
+    }
+  }, [showChatSheet, showCamera]);
+
   useEffect(() => {
     if (!userProfile) return;
 
