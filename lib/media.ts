@@ -42,8 +42,23 @@ export function hasLocalOnlyMediaUrl(url?: string): boolean {
   return !url || url.startsWith('blob:');
 }
 
+export function isDeletedMoment(moment: any): boolean {
+  if (!moment || !moment.id) return true;
+  const id = String(moment.id);
+  const caption = String(moment.caption || '');
+  const mediaUrl = String(moment.media_url || '');
+
+  return (
+    caption === '__DELETED_MOMENT__' ||
+    id.startsWith('del_moment_') ||
+    mediaUrl.includes('deleted.invalid') ||
+    mediaUrl.includes('https://deleted.invalid')
+  );
+}
+
 export function hasRenderableMedia(moment: Moment): boolean {
   if (!moment?.id || !moment.media_url) return false;
+  if (isDeletedMoment(moment)) return false;
   const url = moment.media_url;
 
   return (
@@ -56,7 +71,9 @@ export function hasRenderableMedia(moment: Moment): boolean {
 }
 
 export function sanitizeMoments(moments: Moment[]): Moment[] {
-  const filtered = moments.filter(hasRenderableMedia);
+  const filtered = (moments || [])
+    .filter((m) => m && m.id && !isDeletedMoment(m))
+    .filter(hasRenderableMedia);
   return sortMoments(filtered) as Moment[];
 }
 

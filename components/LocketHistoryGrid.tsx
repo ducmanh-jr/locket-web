@@ -19,6 +19,17 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
   onSelectMoment,
   onOpenCamera,
 }) => {
+  const validMoments = React.useMemo(() => {
+    return (moments || []).filter(
+      (m) =>
+        m &&
+        m.id &&
+        m.caption !== '__DELETED_MOMENT__' &&
+        !String(m.id).startsWith('del_moment_') &&
+        !String(m.media_url || '').includes('deleted.invalid')
+    );
+  }, [moments]);
+
   return (
     <div className="w-full h-full bg-[#10091D]/90 backdrop-blur-2xl text-white flex flex-col justify-between p-4 pt-3 pb-24 overflow-y-auto custom-scrollbar select-none">
       {/* Top Header Bar */}
@@ -28,7 +39,7 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
           <h1 className="text-white text-xs font-black tracking-wider uppercase flex items-center gap-1.5">
             Lịch sử khoảnh khắc
             <span className="text-[10px] bg-[#D9266E] text-white px-2 py-0.5 rounded-full font-bold">
-              {moments.length}
+              {validMoments.length}
             </span>
           </h1>
         </div>
@@ -41,7 +52,7 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
 
       {/* Grid Content Area */}
       <div className="flex-1 my-3">
-        {moments.length === 0 ? (
+        {validMoments.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-16 h-16 rounded-full bg-black/40 border border-white/10 text-zinc-500 flex items-center justify-center mb-3 shadow-xl">
               <Grid className="w-7 h-7" />
@@ -51,7 +62,7 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-2.5 transform-gpu">
-            {moments.map((moment, idx) => {
+            {validMoments.map((moment, idx) => {
               const isVideo =
                 moment.media_type === 'video' ||
                 moment.id?.includes('video') ||
