@@ -108,8 +108,8 @@ export const CameraView: React.FC<CameraViewProps> = ({
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
               facingMode: facingMode,
-              width: { ideal: 1080 },
-              height: { ideal: 1080 },
+              width: { ideal: 1920 },
+              height: { ideal: 1920 },
             },
             audio: true,
           });
@@ -117,8 +117,8 @@ export const CameraView: React.FC<CameraViewProps> = ({
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
               facingMode: facingMode,
-              width: { ideal: 1080 },
-              height: { ideal: 1080 },
+              width: { ideal: 1920 },
+              height: { ideal: 1920 },
             },
             audio: false,
           });

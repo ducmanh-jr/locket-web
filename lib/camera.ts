@@ -15,13 +15,13 @@ export interface CapturedMedia {
 }
 
 /**
- * Converts a Video Element snapshot into a compressed 1:1 HD square image Blob & DataURL.
+ * Converts a Video Element snapshot into a compressed 1:1 Ultra-HD square image Blob & DataURL.
  * Supports isFrontCamera mirroring fix so captured photos match camera preview!
  */
 export async function captureSquarePhoto(
   videoElement: HTMLVideoElement,
-  quality: number = 0.92,
-  maxDimension: number = 1080,
+  quality: number = 0.95,
+  maxDimension: number = 1440,
   isFrontCamera: boolean = true
 ): Promise<CapturedMedia> {
   const canvas = document.createElement('canvas');
@@ -33,7 +33,7 @@ export async function captureSquarePhoto(
   const startX = (videoWidth - minDimension) / 2;
   const startY = (videoHeight - minDimension) / 2;
 
-  // Output target size (crisp 1080x1080 HD)
+  // Output target size (crisp 1440x1440 Ultra-HD)
   const targetSize = Math.min(minDimension, maxDimension);
   canvas.width = targetSize;
   canvas.height = targetSize;
@@ -85,7 +85,7 @@ export async function captureSquarePhoto(
 
 /**
  * High-performance MediaRecorder helper for 5-second HD video clip capture.
- * Configured with 3.5 Mbps HD bitrate and crystal clear audio.
+ * Configured with 5 Mbps Ultra-HD bitrate and crystal clear audio.
  */
 export function createVideoRecorder(stream: MediaStream): {
   start: () => void;
@@ -113,8 +113,8 @@ export function createVideoRecorder(stream: MediaStream): {
   }
 
   const options: MediaRecorderOptions = {
-    videoBitsPerSecond: 3500000, // 3.5 Mbps HD crisp video quality
-    audioBitsPerSecond: 128000,  // 128 kbps crystal clear audio
+    videoBitsPerSecond: 5000000, // 5 Mbps Ultra-HD crisp video quality
+    audioBitsPerSecond: 192000,  // 192 kbps crystal clear audio
   };
   if (selectedType) options.mimeType = selectedType;
 
@@ -200,7 +200,7 @@ export function captureVideoThumbnail(videoDataUrl: string): Promise<string> {
       const generateSnap = () => {
         try {
           const canvas = document.createElement('canvas');
-          const size = 720;
+          const size = 1080;
           canvas.width = size;
           canvas.height = size;
           const ctx = canvas.getContext('2d');
@@ -209,7 +209,7 @@ export function captureVideoThumbnail(videoDataUrl: string): Promise<string> {
             ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(video, 0, 0, size, size);
             clearTimeout(timer);
-            safeResolve(canvas.toDataURL('image/jpeg', 0.88));
+            safeResolve(canvas.toDataURL('image/jpeg', 0.92));
           } else {
             clearTimeout(timer);
             safeResolve('');

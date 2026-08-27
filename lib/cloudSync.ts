@@ -189,7 +189,7 @@ export function compressImageForCloudSync(dataUrl: string): Promise<string> {
     img.onload = () => {
       try {
         const canvas = document.createElement('canvas');
-        const targetSize = 1080;
+        const targetSize = 1440;
         canvas.width = targetSize;
         canvas.height = targetSize;
         const ctx = canvas.getContext('2d');
@@ -212,7 +212,7 @@ export function compressImageForCloudSync(dataUrl: string): Promise<string> {
               }
             },
             'image/jpeg',
-            0.90
+            0.95
           );
         } else {
           resolve(dataUrl);

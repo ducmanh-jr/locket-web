@@ -222,7 +222,7 @@ export const LocketVideoTrimmerModal: React.FC<LocketVideoTrimmerModalProps> = (
 
       const recorder = new MediaRecorder(stream, {
         mimeType: selectedMime,
-        videoBitsPerSecond: 3500000,
+        videoBitsPerSecond: 5000000,
       });
 
       const chunks: Blob[] = [];
