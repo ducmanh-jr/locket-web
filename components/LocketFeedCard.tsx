@@ -77,19 +77,19 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [hasVideoError, setHasVideoError] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const currentMomentIdRef = useRef<string>(moment.id);
+  const currentMomentIdRef = useRef<string>(moment?.id || '');
 
-  const safeMediaUrl = React.useMemo(() => getSafeMediaUrl(moment.media_url), [moment.media_url]);
-  const safePosterUrl = React.useMemo(() => getSafeMediaUrl(moment.thumbnail_url), [moment.thumbnail_url]);
+  const safeMediaUrl = React.useMemo(() => getSafeMediaUrl(moment?.media_url), [moment?.media_url]);
+  const safePosterUrl = React.useMemo(() => getSafeMediaUrl(moment?.thumbnail_url), [moment?.thumbnail_url]);
 
   const isVideo =
-    moment.media_type === 'video' ||
-    moment.id?.includes('video') ||
-    moment.media_url?.startsWith('data:video/') ||
-    moment.media_url?.endsWith('.mp4') ||
-    moment.media_url?.endsWith('.webm');
+    moment?.media_type === 'video' ||
+    moment?.id?.includes('video') ||
+    moment?.media_url?.startsWith('data:video/') ||
+    moment?.media_url?.endsWith('.mp4') ||
+    moment?.media_url?.endsWith('.webm');
 
-  currentMomentIdRef.current = moment.id;
+  currentMomentIdRef.current = moment?.id || '';
 
   // Background Preloader for Next and Previous Moments to eliminate swipe video lag
   useEffect(() => {
@@ -130,7 +130,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       } catch (e) {}
       videoRef.current.play().catch(() => {});
     }
-  }, [moment.id, moment.media_url]);
+  }, [moment?.id, moment?.media_url]);
 
   const toggleVideoMute = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -141,10 +141,10 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     killGlobalAudio();
     setIsPlayingAudio(false);
 
-    if (moment.music?.preview_url) {
+    if (moment?.music?.preview_url) {
       setIsPlayingAudio(true);
       playGlobalAudio(moment.music.preview_url, () => {
-        if (currentMomentIdRef.current === moment.id) {
+        if (currentMomentIdRef.current === moment?.id) {
           setIsPlayingAudio(false);
         }
       });
@@ -154,7 +154,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
       killGlobalAudio();
       setIsPlayingAudio(false);
     };
-  }, [moment.id]);
+  }, [moment?.id, moment?.music?.preview_url]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -178,15 +178,15 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     if (isPlayingAudio) {
       killGlobalAudio();
       setIsPlayingAudio(false);
-    } else if (moment.music?.preview_url) {
+    } else if (moment?.music?.preview_url) {
       setIsPlayingAudio(true);
       playGlobalAudio(moment.music.preview_url, () => {
-        if (currentMomentIdRef.current === moment.id) {
+        if (currentMomentIdRef.current === moment?.id) {
           setIsPlayingAudio(false);
         }
       });
     }
-  }, [isGuest, isPlayingAudio, moment.id, moment.music?.preview_url, router]);
+  }, [isGuest, isPlayingAudio, moment?.id, moment?.music?.preview_url, router]);
 
   useEffect(() => {
     if (activeReaction?.emoji) {
@@ -239,7 +239,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [hasNext, hasPrev, onNext, onPrev]);
 
-  const sender = moment.sender || {
+  const sender = moment?.sender || {
     id: 'unknown',
     username: 'ban_be',
     display_name: 'Bạn bè',
