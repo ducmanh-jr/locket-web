@@ -70,11 +70,16 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
                 moment.media_url?.endsWith('.mp4') ||
                 moment.media_url?.endsWith('.webm');
 
-              const displayUrl = getSafeMediaUrl(
-                isVideo
-                  ? moment.thumbnail_url || moment.media_url
-                  : moment.media_url
-              );
+              const hasValidImageThumbnail =
+                Boolean(moment.thumbnail_url) &&
+                (moment.thumbnail_url!.startsWith('http://') ||
+                 moment.thumbnail_url!.startsWith('https://') ||
+                 moment.thumbnail_url!.startsWith('data:image/'));
+
+              const safeMediaUrl = getSafeMediaUrl(moment.media_url);
+              const videoSrcWithFrame = safeMediaUrl.includes('#t=')
+                ? safeMediaUrl
+                : `${safeMediaUrl}#t=0.001`;
 
               return (
                 <motion.div
@@ -90,22 +95,29 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
                   onClick={() => onSelectMoment(moment)}
                   className="relative aspect-square rounded-2xl overflow-hidden bg-[#180b15] border border-white/10 cursor-pointer group transform-gpu shadow-lg hover:border-[#D9266E]/50 transition-colors"
                 >
-                  {isVideo && !moment.thumbnail_url ? (
+                  {isVideo && !hasValidImageThumbnail ? (
                     <video
-                      src={getSafeMediaUrl(moment.media_url)}
+                      src={videoSrcWithFrame}
                       muted
                       playsInline
-                      preload="metadata"
+                      preload="auto"
                       onLoadedMetadata={(e) => {
                         try {
-                          (e.target as HTMLVideoElement).currentTime = 0.05;
+                          e.currentTarget.currentTime = 0.1;
+                        } catch (err) {}
+                      }}
+                      onLoadedData={(e) => {
+                        try {
+                          if (e.currentTarget.currentTime === 0) {
+                            e.currentTarget.currentTime = 0.1;
+                          }
                         } catch (err) {}
                       }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
                     />
                   ) : (
                     <img
-                      src={displayUrl}
+                      src={hasValidImageThumbnail ? getSafeMediaUrl(moment.thumbnail_url) : safeMediaUrl}
                       alt={moment.caption || 'Khoảnh khắc Locket'}
                       loading="lazy"
                       decoding="async"
