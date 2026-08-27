@@ -64,16 +64,7 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
     setIsMounted(true);
   }, []);
 
-  // Return null if moment is deleted or tombstone marker to prevent __DELETED_MOMENT__ flash
-  if (
-    !moment ||
-    !moment.id ||
-    moment.caption === '__DELETED_MOMENT__' ||
-    moment.id.startsWith('del_moment_') ||
-    moment.media_url?.includes('deleted.invalid')
-  ) {
-    return null;
-  }
+
 
   useEffect(() => {
     if (showOptionsModal) {
@@ -469,6 +460,16 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
 
   const liveScale = dragYOffset !== 0 ? Math.max(0.93, 1 - Math.abs(dragYOffset) / 3000) : 1;
   const previewScale = dragYOffset !== 0 ? Math.min(1, 0.94 + Math.abs(dragYOffset) / 3000) : 0.94;
+
+  if (
+    !moment ||
+    !moment.id ||
+    moment.caption === '__DELETED_MOMENT__' ||
+    String(moment.id).startsWith('del_moment_') ||
+    String(moment.media_url || '').includes('deleted.invalid')
+  ) {
+    return null;
+  }
 
   return (
     <div
