@@ -15,9 +15,10 @@ import { Camera, LogOut } from 'lucide-react';
 import { CapturedMedia } from '@/lib/camera';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { LocketErrorBoundary } from '@/components/LocketErrorBoundary';
 import { MusicTrack } from '@/lib/types';
 
-export default function HomePage() {
+function HomePage() {
   const router = useRouter();
   const { userProfile, loading: authLoading } = useAuth();
   const {
@@ -436,5 +437,13 @@ export default function HomePage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function HomePageWithBoundary() {
+  return (
+    <LocketErrorBoundary>
+      <HomePage />
+    </LocketErrorBoundary>
   );
 }
