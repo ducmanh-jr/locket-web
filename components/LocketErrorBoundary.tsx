@@ -30,8 +30,11 @@ export class LocketErrorBoundary extends Component<Props, State> {
     if (typeof window !== 'undefined') {
       try {
         localStorage.removeItem('locket_moments_shared_cache_v9');
+        localStorage.removeItem('locket_local_moments_v1');
+        localStorage.removeItem('locket_deleted_moments_v1');
+        localStorage.removeItem('locket_deleted_members_v1');
       } catch (e) {}
-      window.location.reload();
+      window.location.href = '/';
     }
   };
 

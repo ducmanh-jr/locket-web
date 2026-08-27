@@ -121,14 +121,24 @@ function HomePage() {
     return <LoadingScreen message="Đang kết nối khoảnh khắc..." />;
   }
 
-  const roomMoments = filteredMoments;
+  const roomMoments = React.useMemo(() => {
+    return (filteredMoments || []).filter(
+      (m) =>
+        m &&
+        m.id &&
+        m.media_url &&
+        m.caption !== '__DELETED_MOMENT__' &&
+        !String(m.id).startsWith('del_moment_') &&
+        !String(m.media_url || '').includes('deleted.invalid')
+    );
+  }, [filteredMoments]);
 
   const currentMoment = selectedMomentId
-    ? roomMoments.find((m) => m.id === selectedMomentId) || roomMoments[0]
+    ? roomMoments.find((m) => m?.id === selectedMomentId) || roomMoments[0]
     : roomMoments[0];
 
   const currentIndex = currentMoment
-    ? roomMoments.findIndex((m) => m.id === currentMoment.id)
+    ? roomMoments.findIndex((m) => m?.id === currentMoment.id)
     : 0;
 
   const safeIndex = currentIndex >= 0 ? currentIndex : 0;
