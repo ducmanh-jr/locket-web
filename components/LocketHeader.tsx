@@ -45,8 +45,9 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
       ? currentUser.avatar_url
       : `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username || 'guest'}`;
 
-  const friendCount = members.filter((m) => m.id !== 'all').length;
-  const currentFilterMember = members.find((m) => m.id === selectedFilterId);
+  const safeMembers = members || [];
+  const friendCount = safeMembers.filter((m) => m && m.id !== 'all').length;
+  const currentFilterMember = safeMembers.find((m) => m && m.id === selectedFilterId);
   const pillLabel =
     selectedFilterId === 'all' || !currentFilterMember
       ? `${friendCount} người bạn`
