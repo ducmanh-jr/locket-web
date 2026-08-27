@@ -144,6 +144,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [moments, setMoments] = useState<Moment[]>(() => readLocalMoments());
   const [loading, setLoading] = useState(true);
   const [selectedFriendFilter, setSelectedFriendFilter] = useState<string>('all');
+  const [allProfiles, setAllProfiles] = useState<any[]>([]);
 
   const currentUser = userProfile || {
     id: 'guest_user',
@@ -548,7 +549,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
     [currentUser, userProfile]
   );
 
-  const [allProfiles, setAllProfiles] = useState<any[]>([]);
+
 
   useEffect(() => {
     fetchGlobalCloudProfiles().then((profs) => {
