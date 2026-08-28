@@ -34,10 +34,32 @@
     --locket-rose-dark: #BE185D;
     --theme-primary: #D9266E;
     --theme-accent: #FF2A85;
-    --theme-bg-gradient: linear-gradient(180deg, #180e2d 0%, #10091D 50%, #0b0515 100%);
+    --theme-bg-gradient: linear-gradient(180deg, #1f0e2d 0%, #10091D 40%, #0b0515 100%);
     --theme-glow: 0 0 24px rgba(217, 38, 110, 0.4);
     --theme-border: rgba(217, 38, 110, 0.3);
     --theme-card-bg: rgba(24, 14, 45, 0.6);
+  }
+
+  [data-locket-theme="indigo"] {
+    --locket-rose: #818CF8;
+    --locket-rose-dark: #6366F1;
+    --theme-primary: #818CF8;
+    --theme-accent: #A5B4FC;
+    --theme-bg-gradient: linear-gradient(180deg, #1e1145 0%, #0f0a2a 40%, #080620 100%);
+    --theme-glow: 0 0 24px rgba(129, 140, 248, 0.35);
+    --theme-border: rgba(129, 140, 248, 0.3);
+    --theme-card-bg: rgba(30, 17, 69, 0.5);
+  }
+
+  [data-locket-theme="ocean"] {
+    --locket-rose: #38BDF8;
+    --locket-rose-dark: #0EA5E9;
+    --theme-primary: #38BDF8;
+    --theme-accent: #7DD3FC;
+    --theme-bg-gradient: linear-gradient(180deg, #0c1929 0%, #071422 40%, #04101a 100%);
+    --theme-glow: 0 0 24px rgba(56, 189, 248, 0.35);
+    --theme-border: rgba(56, 189, 248, 0.3);
+    --theme-card-bg: rgba(12, 25, 41, 0.5);
   }
 
   [data-locket-theme="gold"] {
@@ -45,21 +67,32 @@
     --locket-rose-dark: #C69C3A;
     --theme-primary: #E5C158;
     --theme-accent: #F3D477;
-    --theme-bg-gradient: linear-gradient(180deg, #221a0f 0%, #161009 50%, #0d0905 100%);
+    --theme-bg-gradient: linear-gradient(180deg, #1d180e 0%, #141009 40%, #0d0905 100%);
     --theme-glow: 0 0 24px rgba(229, 193, 88, 0.35);
     --theme-border: rgba(229, 193, 88, 0.3);
     --theme-card-bg: rgba(22, 16, 9, 0.6);
   }
 
+  [data-locket-theme="emerald"] {
+    --locket-rose: #34D399;
+    --locket-rose-dark: #10B981;
+    --theme-primary: #34D399;
+    --theme-accent: #6EE7B7;
+    --theme-bg-gradient: linear-gradient(180deg, #0b1e17 0%, #071510 40%, #04100b 100%);
+    --theme-glow: 0 0 24px rgba(52, 211, 153, 0.35);
+    --theme-border: rgba(52, 211, 153, 0.3);
+    --theme-card-bg: rgba(11, 30, 23, 0.5);
+  }
+
   [data-locket-theme="midnight"] {
-    --locket-rose: #E2E8F0;
-    --locket-rose-dark: #94A3B8;
-    --theme-primary: #E2E8F0;
-    --theme-accent: #FFFFFF;
-    --theme-bg-gradient: linear-gradient(180deg, #18181b 0%, #09090B 50%, #000000 100%);
-    --theme-glow: 0 0 20px rgba(226, 232, 240, 0.25);
-    --theme-border: rgba(226, 232, 240, 0.25);
-    --theme-card-bg: rgba(24, 24, 27, 0.6);
+    --locket-rose: #A1A1AA;
+    --locket-rose-dark: #71717A;
+    --theme-primary: #A1A1AA;
+    --theme-accent: #D4D4D8;
+    --theme-bg-gradient: linear-gradient(180deg, #141414 0%, #0a0a0a 40%, #000000 100%);
+    --theme-glow: 0 0 20px rgba(161, 161, 170, 0.2);
+    --theme-border: rgba(161, 161, 170, 0.2);
+    --theme-card-bg: rgba(20, 20, 20, 0.6);
   }
 }
 

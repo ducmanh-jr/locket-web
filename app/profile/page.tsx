@@ -403,7 +403,7 @@ export default function ProfilePage() {
                 <h4 className="text-white text-xs font-bold flex items-center space-x-1.5">
                   <span>Chủ Đề Giao Diện</span>
                 </h4>
-                <p className="text-zinc-400 text-[11px] mt-0.5">Rose Velvet • Champagne Gold • Obsidian</p>
+                <p className="text-zinc-400 text-[11px] mt-0.5">6 chủ đề nền cao cấp chuẩn Locket</p>
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-zinc-400" />
