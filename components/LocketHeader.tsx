@@ -103,7 +103,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
 
           {outboxCount > 0 && (
             <div
-              className="flex items-center space-x-1 bg-amber-500/90 text-black px-2.5 py-1 rounded-full text-[11px] font-black shadow-lg animate-pulse"
+              className="flex items-center space-x-1 bg-amber-500/90 text-black px-2.5 py-1 rounded-full text-[11px] font-black shadow-md"
               title="Đang chờ mạng để đăng khoảnh khắc..."
             >
               <span>⏳</span>

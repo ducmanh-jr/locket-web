@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Palette,
   Sparkles,
+  Zap,
 } from 'lucide-react';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/lib/providers/AuthProvider';
@@ -424,20 +425,25 @@ export default function ProfilePage() {
             <ChevronRight className="w-4 h-4 text-zinc-500" />
           </button>
 
-          {/* Network Diagnostics & Offline Cache Status Card */}
-          <div className="w-full bg-[#160b13] border border-white/10 rounded-2xl p-4 space-y-2 text-left">
+          {/* Network & Offline Cache Card — Apple Settings Style */}
+          <div className="w-full bg-[#160b13] border border-white/10 rounded-2xl p-4 transition-all">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-                <span className="text-white text-xs font-black">Tối Ưu Hóa Mạng Kém & Offline</span>
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-emerald-400 flex items-center justify-center shadow-inner">
+                  <Zap className="w-5 h-5 stroke-[2.2]" />
+                </div>
+                <div className="text-left">
+                  <h4 className="text-white text-xs font-bold flex items-center space-x-2">
+                    <span>Tốc Độ & Lưu Trữ Ngoại Tuyến</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]" />
+                  </h4>
+                  <p className="text-zinc-400 text-[11px] mt-0.5">Tự động nén ảnh 0ms & cache bộ nhớ mượt mà</p>
+                </div>
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#D9266E]/20 text-[#FF2A85] border border-[#D9266E]/30">
-                IndexedDB Active
+              <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/5 text-zinc-300 border border-white/10">
+                Đã bật
               </span>
             </div>
-            <p className="text-zinc-400 text-[11px] leading-relaxed">
-              Dữ liệu được nén mờ 0ms và tự động cache vào Service Worker / IndexedDB để duyệt mượt trên mạng yếu.
-            </p>
           </div>
 
           <PWAInstallBanner forceDisplay={true} />
