@@ -14,6 +14,17 @@ export interface LocketTheme {
 
 export const LOCKET_THEMES: LocketTheme[] = [
   {
+    id: 'wine',
+    name: 'Wine Mulberry',
+    emoji: '🍇',
+    primaryColor: '#A33757',
+    accentColor: '#C74B72',
+    bgGradient: 'linear-gradient(180deg, #4C1D3D 0%, #35132B 30%, #220B1B 60%, #12040E 100%)',
+    glowColor: 'rgba(163, 55, 87, 0.4)',
+    previewGradient: 'linear-gradient(135deg, #A33757 0%, #852E4E 50%, #4C1D3D 100%)',
+    description: 'Tông mận rượu vang quyến rũ (#4C1D3D)',
+  },
+  {
     id: 'rose',
     name: 'Rose Velvet',
     emoji: '🌸',
@@ -22,7 +33,7 @@ export const LOCKET_THEMES: LocketTheme[] = [
     bgGradient: 'linear-gradient(180deg, #1f1035 0%, #18102a 30%, #130d22 60%, #0e0919 100%)',
     glowColor: 'rgba(217, 38, 110, 0.35)',
     previewGradient: 'linear-gradient(135deg, #FF2A85 0%, #D9266E 100%)',
-    description: 'Tông hồng nhung kính mờ nguyên bản Locket',
+    description: 'Tông hồng nhung kính mờ Locket',
   },
   {
     id: 'indigo',
@@ -33,7 +44,7 @@ export const LOCKET_THEMES: LocketTheme[] = [
     bgGradient: 'linear-gradient(180deg, #201548 0%, #19103a 30%, #130d30 60%, #0d0924 100%)',
     glowColor: 'rgba(129, 140, 248, 0.3)',
     previewGradient: 'linear-gradient(135deg, #A5B4FC 0%, #818CF8 50%, #6366F1 100%)',
-    description: 'Tím hoàng hôn sâu chuẩn Locket nguyên bản',
+    description: 'Tím hoàng hôn sâu chuẩn Locket',
   },
   {
     id: 'ocean',

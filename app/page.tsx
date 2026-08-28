@@ -224,7 +224,10 @@ function HomePage() {
   }
 
   return (
-    <div className="h-full flex flex-col justify-between bg-gradient-to-b from-[#180e2d] via-[#10091D] to-[#0b0515] selection:bg-[#D9266E] selection:text-white overflow-hidden relative">
+    <div
+      className="h-full flex flex-col justify-between selection:bg-[#D9266E] selection:text-white overflow-hidden relative transition-all duration-500"
+      style={{ background: 'var(--theme-bg-gradient)' }}
+    >
       {/* Shared Room Header */}
       <LocketHeader
         currentUser={currentUser}

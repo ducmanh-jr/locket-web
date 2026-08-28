@@ -40,6 +40,17 @@
     --theme-card-bg: rgba(24, 14, 45, 0.6);
   }
 
+  [data-locket-theme="wine"] {
+    --locket-rose: #A33757;
+    --locket-rose-dark: #852E4E;
+    --theme-primary: #A33757;
+    --theme-accent: #C74B72;
+    --theme-bg-gradient: linear-gradient(180deg, #4C1D3D 0%, #35132B 30%, #220B1B 60%, #12040E 100%);
+    --theme-glow: 0 0 24px rgba(163, 55, 87, 0.45);
+    --theme-border: rgba(163, 55, 87, 0.35);
+    --theme-card-bg: rgba(76, 29, 61, 0.5);
+  }
+
   [data-locket-theme="indigo"] {
     --locket-rose: #818CF8;
     --locket-rose-dark: #6366F1;
