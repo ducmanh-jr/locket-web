@@ -14,6 +14,7 @@ import {
   Loader2,
   AlertCircle,
   Palette,
+  Sparkles,
 } from 'lucide-react';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/lib/providers/AuthProvider';
@@ -388,21 +389,23 @@ export default function ProfilePage() {
 
           <button
             onClick={() => setShowThemePicker(true)}
-            className="w-full bg-gradient-to-r from-[#160b13] via-[#22121d] to-[#160b13] border border-amber-500/30 rounded-2xl p-4 flex items-center justify-between transition-all active:scale-98 shadow-md group"
+            className="w-full bg-[#160b13] hover:bg-[#22121d] border border-white/10 rounded-2xl p-4 flex items-center justify-between transition-all active:scale-98 shadow-sm group"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-rose-600 text-white flex items-center justify-center border border-amber-400/50 shadow-lg group-hover:scale-105 transition-transform">
-                <Palette className="w-5 h-5 stroke-[2.2]" />
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center border border-white/10 shadow-md group-hover:scale-105 transition-transform"
+                style={{ background: 'var(--theme-primary)', color: '#FFFFFF' }}
+              >
+                <Sparkles className="w-5 h-5 stroke-[2.2]" />
               </div>
               <div className="text-left">
-                <h4 className="text-white text-xs font-black flex items-center space-x-1">
-                  <span>Chủ Đề Giao Diện Locket Gold</span>
-                  <span className="text-[10px] bg-amber-500 text-black font-black px-1.5 py-0.5 rounded-full ml-1">GOLD</span>
+                <h4 className="text-white text-xs font-bold flex items-center space-x-1.5">
+                  <span>Chủ Đề Giao Diện</span>
                 </h4>
-                <p className="text-zinc-400 text-[11px] mt-0.5">Đổi màu Dark Rose, Gold Hoàng Gia, Neon...</p>
+                <p className="text-zinc-400 text-[11px] mt-0.5">Rose Velvet • Champagne Gold • Obsidian</p>
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-amber-400" />
+            <ChevronRight className="w-4 h-4 text-zinc-400" />
           </button>
 
           <button

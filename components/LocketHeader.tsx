@@ -66,34 +66,23 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
     <>
       <div className="absolute top-0 left-0 right-0 z-40 px-4 pt-3 sm:pt-4 pb-2 flex items-center justify-between bg-transparent pointer-events-none">
 
-        {/* Left: Speaker & Theme Picker Icon Buttons */}
-        <div className="flex items-center space-x-1 pointer-events-auto">
-          <motion.button
-            whileTap={{ scale: 0.88 }}
-            onClick={() => {
-              if (isGuest) {
-                router.push('/login');
-                return;
-              }
-              if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-                try { navigator.vibrate(20); } catch (e) { }
-              }
-            }}
-            className="w-9 h-9 flex items-center justify-center text-white/70 hover:text-white transition-colors rounded-full hover:bg-white/5"
-            title={isGuest ? 'Đăng nhập để xem thông báo' : 'Thông báo Locket'}
-          >
-            <Megaphone className="w-5 h-5 stroke-[2]" />
-          </motion.button>
-
-          <motion.button
-            whileTap={{ scale: 0.88 }}
-            onClick={() => setShowThemePickerModal(true)}
-            className="w-9 h-9 flex items-center justify-center text-amber-400 hover:text-amber-300 transition-colors rounded-full bg-white/5 hover:bg-white/10 border border-white/10 shadow-md"
-            title="Đổi giao diện Locket Gold"
-          >
-            <Palette className="w-4.5 h-4.5 stroke-[2.4]" />
-          </motion.button>
-        </div>
+        {/* Left: Speaker / Announcement Icon Button */}
+        <motion.button
+          whileTap={{ scale: 0.88 }}
+          onClick={() => {
+            if (isGuest) {
+              router.push('/login');
+              return;
+            }
+            if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+              try { navigator.vibrate(20); } catch (e) { }
+            }
+          }}
+          className="w-9 h-9 flex items-center justify-center text-white/70 hover:text-white transition-colors rounded-full hover:bg-white/5 pointer-events-auto"
+          title={isGuest ? 'Đăng nhập để xem thông báo' : 'Thông báo Locket'}
+        >
+          <Megaphone className="w-5 h-5 stroke-[2]" />
+        </motion.button>
 
         {/* Center: "👥 18 người bạn" Black Pill Button */}
         <div className="flex items-center space-x-1.5 pointer-events-auto">
