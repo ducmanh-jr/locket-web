@@ -28,19 +28,66 @@
     min-height: 100dvh;
   }
 
-  /* ===== LOCKET DARK ROSE VELVET THEME ===== */
-  :root {
+  /* ===== LOCKET DYNAMIC THEME SYSTEM ===== */
+  :root, [data-locket-theme="rose"] {
     --locket-rose: #D9266E;
     --locket-rose-dark: #BE185D;
-    --locket-rose-deep: #9F1239;
-    --locket-rose-glow: 0 0 20px rgba(217, 38, 110, 0.5), 0 0 40px rgba(190, 24, 93, 0.3);
-    --locket-rose-border: 2.5px solid #D9266E;
+    --theme-primary: #D9266E;
+    --theme-accent: #FF2A85;
+    --theme-bg-gradient: linear-gradient(180deg, #180e2d 0%, #10091D 50%, #0b0515 100%);
+    --theme-glow: 0 0 20px rgba(217, 38, 110, 0.5), 0 0 40px rgba(190, 24, 93, 0.3);
+    --theme-border: rgba(217, 38, 110, 0.4);
+    --theme-card-bg: rgba(24, 14, 45, 0.6);
+  }
+
+  [data-locket-theme="gold"] {
+    --locket-rose: #F59E0B;
+    --locket-rose-dark: #D97706;
+    --theme-primary: #F59E0B;
+    --theme-accent: #FBBF24;
+    --theme-bg-gradient: linear-gradient(180deg, #241705 0%, #170F03 50%, #0d0801 100%);
+    --theme-glow: 0 0 20px rgba(245, 158, 11, 0.6), 0 0 40px rgba(217, 119, 6, 0.4);
+    --theme-border: rgba(245, 158, 11, 0.4);
+    --theme-card-bg: rgba(36, 23, 5, 0.6);
+  }
+
+  [data-locket-theme="neon"] {
+    --locket-rose: #06B6D4;
+    --locket-rose-dark: #0891B2;
+    --theme-primary: #06B6D4;
+    --theme-accent: #38BDF8;
+    --theme-bg-gradient: linear-gradient(180deg, #0e1726 0%, #090D16 50%, #05070d 100%);
+    --theme-glow: 0 0 20px rgba(6, 182, 212, 0.6), 0 0 40px rgba(139, 92, 246, 0.4);
+    --theme-border: rgba(6, 182, 212, 0.4);
+    --theme-card-bg: rgba(14, 23, 38, 0.6);
+  }
+
+  [data-locket-theme="emerald"] {
+    --locket-rose: #10B981;
+    --locket-rose-dark: #059669;
+    --theme-primary: #10B981;
+    --theme-accent: #34D399;
+    --theme-bg-gradient: linear-gradient(180deg, #0b2219 0%, #061510 50%, #030b08 100%);
+    --theme-glow: 0 0 20px rgba(16, 185, 129, 0.6), 0 0 40px rgba(5, 150, 105, 0.4);
+    --theme-border: rgba(16, 185, 129, 0.4);
+    --theme-card-bg: rgba(11, 34, 25, 0.6);
+  }
+
+  [data-locket-theme="midnight"] {
+    --locket-rose: #E2E8F0;
+    --locket-rose-dark: #94A3B8;
+    --theme-primary: #E2E8F0;
+    --theme-accent: #FFFFFF;
+    --theme-bg-gradient: linear-gradient(180deg, #18181b 0%, #09090B 50%, #000000 100%);
+    --theme-glow: 0 0 20px rgba(226, 232, 240, 0.4), 0 0 40px rgba(148, 163, 184, 0.3);
+    --theme-border: rgba(226, 232, 240, 0.3);
+    --theme-card-bg: rgba(24, 24, 27, 0.6);
   }
 }
 
 /* Background utility */
 .bg-locket-purple {
-  background: linear-gradient(180deg, #180e2d 0%, #10091D 50%, #0b0515 100%);
+  background: var(--theme-bg-gradient);
 }
 
 /* Custom sleek scrollbar */
@@ -55,47 +102,47 @@
   border-radius: 9999px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #D9266E;
+  background: var(--theme-primary);
 }
 
-/* ===== LOCKET DARK ROSE UTILITIES ===== */
+/* ===== LOCKET DYNAMIC THEME UTILITIES ===== */
 
-.rose-text, .gold-text, .pink-text {
-  color: #D9266E;
+.rose-text, .gold-text, .pink-text, .theme-text {
+  color: var(--theme-primary) !important;
 }
 
-.rose-bg, .gold-bg, .pink-bg {
-  background-color: #D9266E;
+.rose-bg, .gold-bg, .pink-bg, .theme-bg {
+  background-color: var(--theme-primary) !important;
 }
 
-.pink-glow, .gold-glow, .rose-glow {
-  box-shadow: var(--locket-rose-glow);
+.pink-glow, .gold-glow, .rose-glow, .theme-glow {
+  box-shadow: var(--theme-glow) !important;
 }
 
-.pink-card-border, .gold-card-border, .rose-card-border {
-  border: 2.5px solid #D9266E;
-  box-shadow: 0 0 22px rgba(217, 38, 110, 0.5), inset 0 0 10px rgba(0,0,0,0.5);
+.pink-card-border, .gold-card-border, .rose-card-border, .theme-card-border {
+  border: 2.5px solid var(--theme-primary) !important;
+  box-shadow: 0 0 22px var(--theme-primary), inset 0 0 10px rgba(0,0,0,0.5) !important;
 }
 
 /* Ring pulse animation */
 @keyframes roseRingPulseAnim {
-  0%, 100% { box-shadow: 0 0 0 2px #D9266E, 0 0 12px rgba(217, 38, 110, 0.4); }
-  50%       { box-shadow: 0 0 0 3.5px #BE185D, 0 0 22px rgba(217, 38, 110, 0.7); }
+  0%, 100% { box-shadow: 0 0 0 2px var(--theme-primary), 0 0 12px var(--theme-primary); }
+  50%       { box-shadow: 0 0 0 3.5px var(--theme-accent), 0 0 22px var(--theme-primary); }
 }
-.pink-ring-pulse, .gold-ring-pulse, .rose-ring-pulse {
+.pink-ring-pulse, .gold-ring-pulse, .rose-ring-pulse, .theme-ring-pulse {
   animation: roseRingPulseAnim 2s ease-in-out infinite;
 }
 
 /* Shimmer overlay */
-.pink-shimmer-overlay, .gold-shimmer-overlay, .rose-shimmer-overlay {
+.pink-shimmer-overlay, .gold-shimmer-overlay, .rose-shimmer-overlay, .theme-shimmer-overlay {
   position: relative;
   overflow: hidden;
 }
-.pink-shimmer-overlay::after, .gold-shimmer-overlay::after, .rose-shimmer-overlay::after {
+.pink-shimmer-overlay::after, .gold-shimmer-overlay::after, .rose-shimmer-overlay::after, .theme-shimmer-overlay::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(217, 38, 110, 0.25) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, var(--theme-primary) 50%, transparent 100%);
   background-size: 200% 100%;
   animation: roseShimmerAnim 2.5s ease-in-out infinite;
   pointer-events: none;

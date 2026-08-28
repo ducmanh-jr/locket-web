@@ -38,6 +38,7 @@ export interface Moment {
   reactions?: Reaction[];
   music?: MusicTrack;
   thumbnail_url?: string;
+  blur_placeholder?: string;
 }
 
 export interface MomentRecipient {

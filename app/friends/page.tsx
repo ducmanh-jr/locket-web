@@ -110,7 +110,8 @@ export default function FriendsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm kiếm thành viên theo tên..."
-            className="w-full bg-[#18181C] border border-zinc-800 text-white text-xs font-semibold rounded-2xl pl-10 pr-4 py-3 placeholder-zinc-500 focus:outline-none focus:border-[#FF2A85]"
+            className="w-full bg-[#18181C] border border-zinc-800 text-white text-xs font-semibold rounded-2xl pl-10 pr-4 py-3 placeholder-zinc-500 focus:outline-none"
+            style={{ borderColor: 'var(--theme-border)' }}
           />
           <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" />
         </div>
@@ -119,12 +120,18 @@ export default function FriendsPage() {
         {userProfile && (
           <div className="mb-4">
             <div className="flex items-center space-x-1.5 text-xs font-extrabold text-zinc-400 uppercase tracking-wider px-1 mb-2">
-              <Users className="w-3.5 h-3.5 text-[#FF2A85]" />
+              <Users className="w-3.5 h-3.5" style={{ color: 'var(--theme-primary)' }} />
               <span>Tài khoản của bạn</span>
             </div>
-            <div className="w-full bg-[#18181C] border border-[#FF2A85]/30 rounded-2xl p-3.5 flex items-center justify-between">
+            <div
+              className="w-full bg-[#18181C] border rounded-2xl p-3.5 flex items-center justify-between shadow-md"
+              style={{ borderColor: 'var(--theme-border)' }}
+            >
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#FF2A85] bg-zinc-800 flex-shrink-0">
+                <div
+                  className="w-10 h-10 rounded-full overflow-hidden border-2 bg-zinc-800 flex-shrink-0"
+                  style={{ borderColor: 'var(--theme-primary)' }}
+                >
                   <img
                     src={userProfile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.username}`}
                     alt={userProfile.display_name}
@@ -136,7 +143,10 @@ export default function FriendsPage() {
                   <p className="text-zinc-500 text-[11px]">@{userProfile.username}</p>
                 </div>
               </div>
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#FF2A85]/20 text-[#FF2A85] border border-[#FF2A85]/30">
+              <span
+                className="text-[10px] font-bold px-2.5 py-1 rounded-full border text-white"
+                style={{ background: 'var(--theme-border)', borderColor: 'var(--theme-primary)' }}
+              >
                 {userProfile.isAdmin ? 'Admin' : 'Bạn'}
               </span>
             </div>
@@ -147,7 +157,7 @@ export default function FriendsPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center space-x-1.5 text-xs font-extrabold text-zinc-400 uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-[#FF2A85]" />
+              <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--theme-primary)' }} />
               <span>Thành viên khác ({filteredMembers.length})</span>
             </div>
             {isAdmin && (

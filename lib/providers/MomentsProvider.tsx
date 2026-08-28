@@ -17,6 +17,7 @@ import {
 import { CapturedMedia, captureVideoThumbnail } from '@/lib/camera';
 import { sanitizeMoments, sortMoments } from '@/lib/media';
 import { MemberFilterOption } from '@/components/LocketHeader';
+import { saveMomentsToIDB, getMomentsFromIDB } from '@/lib/storage/indexedDb';
 
 interface MomentsContextValue {
   moments: Moment[];
@@ -303,7 +304,9 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
           );
 
         const sorted = sortMoments(merged) as Moment[];
-        return sorted.filter((m, i, self) => i === self.findIndex((x) => x.id === m.id));
+        const uniqueMoments = sorted.filter((m, i, self) => i === self.findIndex((x) => x.id === m.id));
+        saveMomentsToIDB(uniqueMoments).catch(() => {});
+        return uniqueMoments;
       });
     } catch (e) {
       console.error('Error fetching room moments:', e);
@@ -313,6 +316,16 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [currentUser, signOut, userProfile?.id]);
 
   useEffect(() => {
+    // Hydrate from IndexedDB for deep offline caching
+    getMomentsFromIDB().then((idbMoments) => {
+      if (idbMoments && idbMoments.length > 0) {
+        setMoments((prev) => {
+          if (prev.length === 0) return sortMoments(idbMoments) as Moment[];
+          return prev;
+        });
+      }
+    }).catch(() => {});
+
     loadMoments();
 
     // Instant Cross-Tab Broadcast Channel Sync
@@ -420,6 +433,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
         sender: currentUser,
         media_url: localMediaUrl,
         thumbnail_url: initialThumbUrl,
+        blur_placeholder: media.blurPlaceholder,
         media_type: media.type,
         audio_option: audioOption || (media.type === 'video' ? 'original' : undefined),
         caption: caption,
@@ -489,6 +503,7 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
           ...optimisticMoment,
           media_url: finalMediaUrl,
           thumbnail_url: thumbnailUrl,
+          blur_placeholder: media.blurPlaceholder,
         };
 
         // Save durable moment to localStorage & local state

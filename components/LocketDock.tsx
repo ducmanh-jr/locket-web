@@ -36,10 +36,10 @@ export const LocketDock: React.FC<LocketDockProps> = ({
     <div className="absolute bottom-2.5 sm:bottom-4 left-0 right-0 z-40 px-4 pb-[env(safe-area-inset-bottom,0px)] flex flex-col items-center bg-transparent pointer-events-none">
       {/* Translucent Compact Glassmorphism Pill Dock */}
       <div
-        className="w-[88%] max-w-[320px] rounded-full py-1.5 px-4 sm:py-2 sm:px-5 flex items-center justify-between backdrop-blur-2xl pointer-events-auto"
+        className="w-[88%] max-w-[320px] rounded-full py-1.5 px-4 sm:py-2 sm:px-5 flex items-center justify-between backdrop-blur-2xl pointer-events-auto transition-all"
         style={{
           background: 'rgba(20, 10, 18, 0.88)',
-          border: '1px solid rgba(217, 38, 110, 0.30)',
+          border: '1px solid var(--theme-border)',
           boxShadow: '0 12px 35px 0 rgba(0, 0, 0, 0.75), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)',
         }}
       >
@@ -51,8 +51,9 @@ export const LocketDock: React.FC<LocketDockProps> = ({
             onToggleView(currentView === 'grid' ? 'feed' : 'grid');
           }}
           className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors flex-shrink-0 ${
-            currentView === 'grid' ? 'text-[#D9266E] bg-[#D9266E]/15' : 'text-white/60 hover:text-white'
+            currentView === 'grid' ? 'text-white bg-white/20' : 'text-white/60 hover:text-white'
           }`}
+          style={currentView === 'grid' ? { color: 'var(--theme-primary)' } : {}}
           title="Lưới khoảnh khắc"
         >
           <Grid3x3 className="w-5 h-5 stroke-[2]" />
@@ -66,7 +67,8 @@ export const LocketDock: React.FC<LocketDockProps> = ({
             triggerHaptic();
             onOpenCamera();
           }}
-          className="w-[50px] h-[50px] rounded-full border-[3.5px] border-white p-[3.5px] flex items-center justify-center cursor-pointer transition-all flex-shrink-0 bg-transparent"
+          className="w-[50px] h-[50px] rounded-full border-[3.5px] border-white p-[3.5px] flex items-center justify-center cursor-pointer transition-all flex-shrink-0 bg-transparent theme-glow"
+          style={{ borderColor: 'var(--theme-accent)' }}
           title="Chụp khoảnh khắc mới"
         >
           {/* Inner Solid White Shutter Circle */}
@@ -85,7 +87,10 @@ export const LocketDock: React.FC<LocketDockProps> = ({
         >
           <MessageCircle className="w-5 h-5 stroke-[2]" />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#D9266E] text-white text-[9px] font-black flex items-center justify-center shadow-md">
+            <span
+              className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-white text-[9px] font-black flex items-center justify-center shadow-md"
+              style={{ background: 'var(--theme-primary)' }}
+            >
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}

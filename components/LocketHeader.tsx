@@ -6,6 +6,8 @@ import { Users, ChevronDown, Check, X, Megaphone, LogIn } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
+import { subscribeOutboxStatus } from '@/lib/services/outboxQueue';
+
 const springSheet = { type: 'spring' as const, stiffness: 340, damping: 30, mass: 0.85 };
 
 export interface MemberFilterOption {
@@ -39,6 +41,11 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
 }) => {
   const router = useRouter();
   const [showFilterModal, setShowFilterModal] = useState<boolean>(false);
+  const [outboxCount, setOutboxCount] = useState<number>(0);
+
+  React.useEffect(() => {
+    return subscribeOutboxStatus((count) => setOutboxCount(count));
+  }, []);
 
   const avatarSrc =
     currentUser.avatar_url && currentUser.avatar_url.trim() !== ''
@@ -76,20 +83,32 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
         </motion.button>
 
         {/* Center: "👥 18 người bạn" Black Pill Button */}
-        <motion.button
-          whileTap={{ scale: 0.93 }}
-          onClick={() => setShowFilterModal(true)}
-          className="flex items-center space-x-2 backdrop-blur-xl text-white font-extrabold px-4 py-1.5 rounded-full shadow-lg cursor-pointer border border-white/10 pointer-events-auto"
-          style={{
-            background: 'rgba(20, 10, 18, 0.78)',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
-          }}
-          title="Bấm để xem danh sách bạn bè"
-        >
-          <Users className="w-4 h-4 text-[#D9266E] stroke-[2.4]" />
-          <span className="text-xs font-black text-white tracking-tight truncate max-w-[140px]">{pillLabel}</span>
-          <ChevronDown className="w-3.5 h-3.5 text-zinc-400 stroke-[2.2]" />
-        </motion.button>
+        <div className="flex items-center space-x-1.5 pointer-events-auto">
+          <motion.button
+            whileTap={{ scale: 0.93 }}
+            onClick={() => setShowFilterModal(true)}
+            className="flex items-center space-x-2 backdrop-blur-xl text-white font-extrabold px-4 py-1.5 rounded-full shadow-lg cursor-pointer border border-white/10"
+            style={{
+              background: 'rgba(20, 10, 18, 0.78)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+            }}
+            title="Bấm để xem danh sách bạn bè"
+          >
+            <Users className="w-4 h-4 stroke-[2.4]" style={{ color: 'var(--theme-primary)' }} />
+            <span className="text-xs font-black text-white tracking-tight truncate max-w-[140px]">{pillLabel}</span>
+            <ChevronDown className="w-3.5 h-3.5 text-zinc-400 stroke-[2.2]" />
+          </motion.button>
+
+          {outboxCount > 0 && (
+            <div
+              className="flex items-center space-x-1 bg-amber-500/90 text-black px-2.5 py-1 rounded-full text-[11px] font-black shadow-lg animate-pulse"
+              title="Đang chờ mạng để đăng khoảnh khắc..."
+            >
+              <span>⏳</span>
+              <span>{outboxCount}</span>
+            </div>
+          )}
+        </div>
 
         {/* Right: Circular User Avatar or Pill Login Button */}
         {isGuest ? (
@@ -97,10 +116,10 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
             whileTap={{ scale: 0.92 }}
             whileHover={{ scale: 1.05 }}
             onClick={onOpenProfile}
-            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full font-black text-xs text-white shadow-xl cursor-pointer border border-[#D9266E]/60 pointer-events-auto transition-all transform-gpu"
+            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full font-black text-xs text-white shadow-xl cursor-pointer border border-white/20 pointer-events-auto transition-all transform-gpu"
             style={{
-              background: 'linear-gradient(135deg, #D9266E 0%, #BE185D 100%)',
-              boxShadow: '0 4px 18px rgba(217, 38, 110, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+              background: 'linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-accent) 100%)',
+              boxShadow: 'var(--theme-glow)',
             }}
             title="Đăng nhập để trải nghiệm đầy đủ tính năng"
           >
@@ -113,7 +132,10 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
             className="relative flex-shrink-0 active:scale-95 transition-transform pointer-events-auto"
             title="Trang cá nhân của bạn"
           >
-            <div className="w-9 h-9 rounded-full border-2 border-[#D9266E] p-0.5 bg-zinc-900 shadow-md">
+            <div
+              className="w-9 h-9 rounded-full border-2 p-0.5 bg-zinc-900 shadow-md transition-colors"
+              style={{ borderColor: 'var(--theme-primary)' }}
+            >
               <div className="w-full h-full rounded-full overflow-hidden">
                 <img
                   src={avatarSrc}

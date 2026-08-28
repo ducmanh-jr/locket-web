@@ -9,6 +9,9 @@ import { killGlobalAudio, playGlobalAudio } from '@/lib/audioPlayer';
 import { getSafeMediaUrl } from '@/lib/media';
 import { useRouter } from 'next/navigation';
 
+import { Play } from 'lucide-react';
+import { subscribeNetworkStatus, NetworkStatus } from '@/lib/network/connection';
+
 interface LocketFeedCardProps {
   moment: Moment;
   currentUser: Profile;
@@ -61,12 +64,18 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
   const [showOptionsModal, setShowOptionsModal] = useState<boolean>(false);
   const [showShareToast, setShowShareToast] = useState<boolean>(false);
   const [isMounted, setIsMounted] = useState<boolean>(false);
+  const [netStatus, setNetStatus] = useState<NetworkStatus>({
+    isOnline: true,
+    saveData: false,
+    effectiveType: '4g',
+    isSlowConnection: false,
+  });
+  const [userWantsVideoPlay, setUserWantsVideoPlay] = useState<boolean>(false);
 
   useEffect(() => {
     setIsMounted(true);
+    return subscribeNetworkStatus((st) => setNetStatus(st));
   }, []);
-
-
 
   useEffect(() => {
     if (showOptionsModal) {
@@ -590,42 +599,75 @@ export const LocketFeedCard: React.FC<LocketFeedCardProps> = ({
               className="w-full aspect-square bg-black/40 flex-shrink-0 relative overflow-hidden rounded-[2.2rem] cursor-pointer border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.7)] transform-gpu"
             >
               <div className="w-full h-full absolute inset-0 overflow-hidden rounded-[2.2rem]">
-                {isVideo && !hasVideoError ? (
-                <div className="relative w-full h-full">
-                  <video
-                    ref={videoRef}
-                    src={safeMediaUrl}
-                    poster={safePosterUrl}
-                    autoPlay
-                    loop
-                    playsInline
-                    muted={true}
-                    controls={false}
-                    preload="auto"
-                    onCanPlay={() => {
-                      if (videoRef.current) {
-                        videoRef.current.play().catch(() => {});
-                      }
-                    }}
-                    onLoadedData={() => {
-                      if (videoRef.current) {
-                        videoRef.current.play().catch(() => {});
-                      }
-                    }}
-                    onError={() => {
-                      console.warn('[LocketFeedCard] Video playback error for moment', moment.id, '- switching to poster thumbnail fallback');
-                      setHasVideoError(true);
-                    }}
-                    className="w-full h-full object-cover rounded-[2.2rem] select-none pointer-events-none"
+                {/* 0ms Instant Blurred Placeholder Fallback */}
+                {(moment.blur_placeholder || moment.thumbnail_url) && (
+                  <img
+                    src={moment.blur_placeholder || moment.thumbnail_url}
+                    alt=""
+                    className="w-full h-full object-cover rounded-[2.2rem] select-none pointer-events-none absolute inset-0 filter blur-xl scale-110 opacity-90 transition-opacity duration-500 z-0"
                   />
-                </div>
-              ) : (
-                <img
-                  src={safeMediaUrl || moment.media_url}
-                  alt={moment.caption || 'Khoảnh khắc Locket'}
-                  className="w-full h-full object-cover rounded-[2.2rem] select-none pointer-events-none"
-                />
-              )}
+                )}
+
+                {isVideo && !hasVideoError ? (
+                  netStatus.isSlowConnection && !userWantsVideoPlay && (safePosterUrl || moment.thumbnail_url || moment.blur_placeholder) ? (
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUserWantsVideoPlay(true);
+                      }}
+                      className="relative w-full h-full z-10 cursor-pointer group"
+                    >
+                      <img
+                        src={safePosterUrl || moment.thumbnail_url || moment.blur_placeholder}
+                        alt="Video Thumbnail"
+                        className="w-full h-full object-cover rounded-[2.2rem]"
+                      />
+                      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center space-y-2 group-hover:bg-black/20 transition-all">
+                        <div className="w-14 h-14 rounded-full bg-[#D9266E] text-white flex items-center justify-center shadow-xl transform group-hover:scale-110 transition-transform">
+                          <Play className="w-6 h-6 fill-current ml-1" />
+                        </div>
+                        <span className="text-white text-xs font-bold bg-black/60 px-3 py-1 rounded-full border border-white/10">
+                          Bấm để xem video (Mạng 3G/Lưu dữ liệu)
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative w-full h-full z-10">
+                      <video
+                        ref={videoRef}
+                        src={safeMediaUrl}
+                        poster={safePosterUrl || moment.blur_placeholder}
+                        autoPlay
+                        loop
+                        playsInline
+                        muted={true}
+                        controls={false}
+                        preload={netStatus.isSlowConnection ? 'metadata' : 'auto'}
+                        onCanPlay={() => {
+                          if (videoRef.current) {
+                            videoRef.current.play().catch(() => {});
+                          }
+                        }}
+                        onLoadedData={() => {
+                          if (videoRef.current) {
+                            videoRef.current.play().catch(() => {});
+                          }
+                        }}
+                        onError={() => {
+                          console.warn('[LocketFeedCard] Video playback error for moment', moment.id, '- switching to poster thumbnail fallback');
+                          setHasVideoError(true);
+                        }}
+                        className="w-full h-full object-cover rounded-[2.2rem] select-none pointer-events-none"
+                      />
+                    </div>
+                  )
+                ) : (
+                  <img
+                    src={safeMediaUrl || moment.media_url}
+                    alt={moment.caption || 'Khoảnh khắc Locket'}
+                    className="w-full h-full object-cover rounded-[2.2rem] select-none pointer-events-none relative z-10"
+                  />
+                )}
 
               {/* Floating 3D Emoji Particle Burst */}
               {floatingEmojis.map((item) => (

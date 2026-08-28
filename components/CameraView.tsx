@@ -597,14 +597,14 @@ export const CameraView: React.FC<CameraViewProps> = ({
                     />
                     <circle
                       cx="40" cy="40" r="36"
-                      stroke="#D9266E"
+                      stroke="var(--theme-primary)"
                       strokeWidth="2.2"
                       fill="transparent"
                       strokeLinecap="round"
                       strokeDasharray={226}
                       strokeDashoffset={226 - (226 * recordingProgress) / 100}
                       className="transition-all duration-75 ease-linear"
-                      style={{ filter: 'drop-shadow(0 0 5px #D9266E)' }}
+                      style={{ filter: 'drop-shadow(0 0 5px var(--theme-primary))' }}
                     />
                   </svg>
                 )}
@@ -614,15 +614,16 @@ export const CameraView: React.FC<CameraViewProps> = ({
                   onMouseUp={handleShutterUp}
                   onTouchStart={handleShutterDown}
                   onTouchEnd={handleShutterUp}
-                  className={`w-20 h-20 rounded-full border-2 border-white/80 p-1.5 flex items-center justify-center transition-all active:scale-90 shadow-[0_0_20px_rgba(217,38,110,0.35)] ${
-                    isRecording ? 'scale-105 border-[#D9266E] shadow-[0_0_25px_rgba(217,38,110,0.7)]' : ''
+                  className={`w-20 h-20 rounded-full border-2 border-white/80 p-1.5 flex items-center justify-center transition-all active:scale-90 shadow-lg ${
+                    isRecording ? 'scale-105 shadow-[0_0_25px_var(--theme-primary)]' : ''
                   }`}
+                  style={isRecording ? { borderColor: 'var(--theme-primary)' } : {}}
                   title="Nhấn để chụp ảnh • Nhấn giữ để quay video (max 5s)"
                 >
                   <div
                     className="w-full h-full transition-all duration-200"
                     style={isRecording ? {
-                      background: '#D9266E',
+                      background: 'var(--theme-primary)',
                       borderRadius: '30%',
                       transform: 'scale(0.72)',
                     } : {
@@ -651,16 +652,19 @@ export const CameraView: React.FC<CameraViewProps> = ({
                   <span className="text-white/20">•</span>
                   <span>Giữ quay (5s)</span>
                   <span className="text-white/20">•</span>
-                  <span className="inline-flex items-center space-x-1 text-[#D9266E] font-semibold">
+                  <span className="inline-flex items-center space-x-1 text-[var(--theme-primary)] font-semibold">
                     <RotateCcw className="w-3 h-3 animate-spin-slow" />
                     <span>Nhấn đúp đổi cam</span>
                   </span>
                 </div>
               </div>
             ) : (
-              <span className="text-[11px] font-semibold text-[#D9266E] text-center block pt-2 animate-pulse">
-                ⏺ Đang quay… {(recordingProgress * 0.05).toFixed(1)}s / 5s
-              </span>
+              <div className="flex items-center justify-center pt-2.5">
+                <div className="inline-flex items-center space-x-2 bg-black/50 backdrop-blur-xl border border-white/10 px-4 py-1.5 rounded-full shadow-lg text-xs font-bold text-white">
+                  <span className="w-2 h-2 rounded-full animate-ping" style={{ background: 'var(--theme-primary)' }} />
+                  <span>Đang quay video 5s... {Math.round((recordingProgress / 100) * 5)}s</span>
+                </div>
+              </div>
             )}
           </div>
         ) : (
@@ -678,7 +682,11 @@ export const CameraView: React.FC<CameraViewProps> = ({
               <button
                 onClick={handleSend}
                 disabled={isSending}
-                className="flex-1 py-3.5 bg-gradient-to-r from-[#D9266E] via-[#BE185D] to-[#9F1239] text-white font-extrabold text-xs rounded-full flex items-center justify-center space-x-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_22px_rgba(217,38,110,0.6)]"
+                className="flex-1 py-3.5 text-white font-extrabold text-xs rounded-full flex items-center justify-center space-x-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl"
+                style={{
+                  background: 'linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-accent) 100%)',
+                  boxShadow: 'var(--theme-glow)',
+                }}
               >
                 {isSending ? (
                   <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />

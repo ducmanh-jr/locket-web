@@ -12,6 +12,36 @@ export interface CapturedMedia {
   type: 'photo' | 'video';
   dataUrl: string;
   blob: Blob;
+  blurPlaceholder?: string;
+}
+
+/**
+ * Creates a 32x32 blurred JPEG data URL placeholder (~300 bytes) for 0ms network loading fallback.
+ */
+export function createBlurPlaceholder(srcDataUrl: string): Promise<string> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || !srcDataUrl) return resolve('');
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 32;
+        canvas.height = 32;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, 32, 32);
+          resolve(canvas.toDataURL('image/jpeg', 0.4));
+        } else {
+          resolve('');
+        }
+      } catch (e) {
+        resolve('');
+      }
+    };
+    img.onerror = () => resolve('');
+    img.src = srcDataUrl;
+  });
 }
 
 /**
@@ -68,11 +98,24 @@ export async function captureSquarePhoto(
 
   const dataUrl = canvas.toDataURL('image/jpeg', quality);
 
+  // Generate 32x32 blurred placeholder
+  let blurPlaceholder = '';
+  try {
+    const blurCanvas = document.createElement('canvas');
+    blurCanvas.width = 32;
+    blurCanvas.height = 32;
+    const blurCtx = blurCanvas.getContext('2d');
+    if (blurCtx) {
+      blurCtx.drawImage(canvas, 0, 0, 32, 32);
+      blurPlaceholder = blurCanvas.toDataURL('image/jpeg', 0.4);
+    }
+  } catch (e) {}
+
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
         if (blob) {
-          resolve({ type: 'photo', dataUrl, blob });
+          resolve({ type: 'photo', dataUrl, blob, blurPlaceholder });
         } else {
           reject(new Error('Failed to compress image canvas to blob'));
         }

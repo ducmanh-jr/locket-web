@@ -13,11 +13,13 @@ import {
   Camera,
   Loader2,
   AlertCircle,
+  Palette,
 } from 'lucide-react';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/lib/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
+import { LocketThemePickerModal } from '@/components/LocketThemePickerModal';
 import { uploadBlobToPublicUrl } from '@/lib/cloudSync';
 
 export default function ProfilePage() {
@@ -32,6 +34,7 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
+  const [showThemePicker, setShowThemePicker] = useState<boolean>(false);
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
@@ -384,6 +387,25 @@ export default function ProfilePage() {
           </button>
 
           <button
+            onClick={() => setShowThemePicker(true)}
+            className="w-full bg-gradient-to-r from-[#160b13] via-[#22121d] to-[#160b13] border border-amber-500/30 rounded-2xl p-4 flex items-center justify-between transition-all active:scale-98 shadow-md group"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-rose-600 text-white flex items-center justify-center border border-amber-400/50 shadow-lg group-hover:scale-105 transition-transform">
+                <Palette className="w-5 h-5 stroke-[2.2]" />
+              </div>
+              <div className="text-left">
+                <h4 className="text-white text-xs font-black flex items-center space-x-1">
+                  <span>Chủ Đề Giao Diện Locket Gold</span>
+                  <span className="text-[10px] bg-amber-500 text-black font-black px-1.5 py-0.5 rounded-full ml-1">GOLD</span>
+                </h4>
+                <p className="text-zinc-400 text-[11px] mt-0.5">Đổi màu Dark Rose, Gold Hoàng Gia, Neon...</p>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-amber-400" />
+          </button>
+
+          <button
             onClick={() => router.push('/history')}
             className="w-full bg-[#160b13] hover:bg-[#22121d] border border-zinc-800/80 rounded-2xl p-4 flex items-center justify-between transition-all active:scale-98 shadow-sm"
           >
@@ -399,6 +421,22 @@ export default function ProfilePage() {
             <ChevronRight className="w-4 h-4 text-zinc-500" />
           </button>
 
+          {/* Network Diagnostics & Offline Cache Status Card */}
+          <div className="w-full bg-[#160b13] border border-white/10 rounded-2xl p-4 space-y-2 text-left">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                <span className="text-white text-xs font-black">Tối Ưu Hóa Mạng Kém & Offline</span>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#D9266E]/20 text-[#FF2A85] border border-[#D9266E]/30">
+                IndexedDB Active
+              </span>
+            </div>
+            <p className="text-zinc-400 text-[11px] leading-relaxed">
+              Dữ liệu được nén mờ 0ms và tự động cache vào Service Worker / IndexedDB để duyệt mượt trên mạng yếu.
+            </p>
+          </div>
+
           <PWAInstallBanner forceDisplay={true} />
         </div>
       </div>
@@ -410,6 +448,11 @@ export default function ProfilePage() {
         <LogOut className="w-4 h-4" />
         <span>Đăng xuất tài khoản</span>
       </button>
+
+      <LocketThemePickerModal
+        isOpen={showThemePicker}
+        onClose={() => setShowThemePicker(false)}
+      />
     </div>
   );
 }
