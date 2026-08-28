@@ -8,10 +8,12 @@ import { DesktopPhoneFrame } from '@/components/DesktopPhoneFrame';
 import { processOutboxQueue } from '@/lib/services/outboxQueue';
 
 import { getStoredTheme, applyThemeToDocument } from '@/lib/theme';
+import { getStoredCanvasTheme, applyCanvasThemeToDocument } from '@/lib/canvasTheme';
 
 export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   React.useEffect(() => {
     applyThemeToDocument(getStoredTheme());
+    applyCanvasThemeToDocument(getStoredCanvasTheme());
 
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker

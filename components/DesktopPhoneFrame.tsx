@@ -8,11 +8,14 @@ interface DesktopPhoneFrameProps {
 
 export const DesktopPhoneFrame: React.FC<DesktopPhoneFrameProps> = ({ children }) => {
   return (
-    <div className="fixed inset-0 w-full h-full bg-[#000000] text-zinc-100 flex items-center justify-center p-0 lg:p-3 font-sans overflow-hidden">
+    <div
+      className="fixed inset-0 w-full h-full text-zinc-100 flex items-center justify-center p-0 lg:p-3 font-sans overflow-hidden transition-all duration-500"
+      style={{ background: 'var(--canvas-bg-gradient, #12040E)' }}
+    >
       {/* Ambient Theme Glow in Background */}
       <div
-        className="hidden lg:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[160px] pointer-events-none z-0 transition-all duration-500"
-        style={{ background: 'var(--theme-primary)', opacity: 0.15 }}
+        className="hidden lg:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full blur-[180px] pointer-events-none z-0 transition-all duration-700"
+        style={{ background: 'var(--canvas-glow-color, var(--theme-primary))', opacity: 0.35 }}
       />
 
       {/* Centered Phone Frame — Xiaomi 17 Ultra Responsive Fit */}
