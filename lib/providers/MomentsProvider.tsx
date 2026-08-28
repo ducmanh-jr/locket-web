@@ -243,12 +243,6 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
       } catch (e) {}
 
-      // Auto-save Cloud public URLs to localStorage so uploader's cache is updated with working HTTPS URLs
-      sanitized.forEach((cloudM) => {
-        if (cloudM.media_url?.startsWith('http://') || cloudM.media_url?.startsWith('https://')) {
-          saveLocalMoment(cloudM);
-        }
-      });
       const deletedMomentsSet = new Set(getDeletedMomentIds());
       const localMoments = readLocalMoments();
 
@@ -305,6 +299,13 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
         const sorted = sortMoments(merged) as Moment[];
         const uniqueMoments = sorted.filter((m, i, self) => i === self.findIndex((x) => x.id === m.id));
+
+        // Flush sorted final list to localStorage in one shot so next reload starts with correct order
+        try {
+          const toCache = uniqueMoments.slice(0, 40).map(sanitizeMomentForLocalStorage);
+          localStorage.setItem(LOCAL_MOMENTS_KEY, JSON.stringify(toCache));
+        } catch (e) {}
+
         saveMomentsToIDB(uniqueMoments).catch(() => {});
         return uniqueMoments;
       });
