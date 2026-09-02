@@ -155,7 +155,7 @@ export async function getActiveFeed(limit: number = 300): Promise<DataStoreFeedR
       const { data: dbProfiles } = await supabase.from('profiles').select('*').limit(200);
       const { data: rawMoments } = await supabase
         .from('moments')
-        .select('id, sender_id, caption, media_type, created_at, thumbnail_url')
+        .select('id, sender_id, caption, media_url, media_type, created_at, thumbnail_url')
         .order('created_at', { ascending: false })
         .limit(limit);
 
@@ -177,7 +177,7 @@ export async function getActiveFeed(limit: number = 300): Promise<DataStoreFeedR
         )
         .map((m: any) => ({
           ...m,
-          media_url: m.thumbnail_url || 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800&auto=format&fit=crop&q=80',
+          media_url: m.media_url || m.thumbnail_url || 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800&auto=format&fit=crop&q=80',
           sender: m.sender || profilesMap.get(m.sender_id) || {
             id: m.sender_id,
             username: `user_${String(m.sender_id).substring(0, 6)}`,
