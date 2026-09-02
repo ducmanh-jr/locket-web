@@ -280,7 +280,15 @@ export async function fetchGlobalCloudProfiles(): Promise<CloudProfile[]> {
     try {
       const { data: profs } = await supabase.from('profiles').select('*').limit(100);
       if (profs && profs.length > 0) {
-        return (profs as CloudProfile[]).filter((p) => p && p.id && !deletedSet.has(p.id));
+        return (profs as CloudProfile[]).filter(
+          (p) =>
+            p &&
+            p.id &&
+            !p.id.startsWith('del_marker_') &&
+            p.display_name !== '__DELETED_MEMBER__' &&
+            p.display_name !== '__DELETED__' &&
+            !deletedSet.has(p.id)
+        );
       }
     } catch (e) {}
   }
@@ -429,7 +437,7 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
 
       const { data: rawMoments } = await supabase
         .from('moments')
-        .select('*')
+        .select('id, sender_id, caption, media_type, created_at, thumbnail_url')
         .order('created_at', { ascending: false })
         .limit(200);
 
@@ -441,6 +449,7 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
             const senderProfile = profilesMap.get(m.sender_id);
             return {
               ...m,
+              media_url: m.thumbnail_url || 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800&auto=format&fit=crop&q=80',
               sender: senderProfile || {
                 id: m.sender_id || 'unknown',
                 username: m.sender_id ? `user_${m.sender_id.substring(0, 6)}` : 'locket_user',

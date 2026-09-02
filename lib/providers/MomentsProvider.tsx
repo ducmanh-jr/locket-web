@@ -75,97 +75,48 @@ function saveLocalProfiles(profs: any[]): void {
   } catch (e) {}
 }
 
-function readLocalMoments(): Moment[] {
-  if (typeof window === 'undefined') return [];
+// Pure Server-Driven Real-Time Sync (Zero LocalStorage Moment Cache)
+function clearLegacyBrowserCaches(): void {
+  if (typeof window === 'undefined') return;
   try {
-    const deletedMembers = new Set(getDeletedMemberIds());
-    const stored = localStorage.getItem(LOCAL_MOMENTS_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed)) {
-        return sanitizeMoments(
-          parsed.filter(
-            (m) =>
-              m &&
-              m.id &&
-              !deletedMembers.has(m.sender_id) &&
-              !deletedMembers.has(m.sender?.id)
-          )
-        );
-      }
-    }
+    const legacyKeys = [
+      LOCAL_MOMENTS_KEY,
+      'locket_moments_shared_cache_v9',
+      'locket_moments_v1',
+    ];
+    legacyKeys.forEach((key) => {
+      try { localStorage.removeItem(key); } catch (e) {}
+    });
   } catch (e) {}
+}
+
+function readLocalMoments(): Moment[] {
   return [];
 }
 
-function sanitizeMomentForLocalStorage(m: Moment): Moment {
-  if (!m || !m.id) return m;
-  // Always preserve public HTTP/HTTPS URLs intact
-  if (m.media_url?.startsWith('http://') || m.media_url?.startsWith('https://')) {
-    return m;
-  }
-  // Strip huge base64 video payloads (>50KB) ONLY IF we have a valid fallback thumbnail_url
-  if (m.media_url && m.media_url.startsWith('data:video/') && m.media_url.length > 50000) {
-    if (m.thumbnail_url && m.thumbnail_url.length > 0) {
-      return {
-        ...m,
-        media_url: m.thumbnail_url,
-      };
-    }
-  }
-  return m;
-}
-
-function saveLocalMoment(moment: Moment): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const existing = readLocalMoments();
-    const cleanCurrent = sanitizeMomentForLocalStorage(moment);
-    const updated = [cleanCurrent, ...existing.filter((m) => m.id !== moment.id)]
-      .slice(0, 40)
-      .map(sanitizeMomentForLocalStorage);
-    localStorage.setItem(LOCAL_MOMENTS_KEY, JSON.stringify(updated));
-  } catch (e) {
-    console.warn('[MomentsProvider] localStorage save skipped or quota exceeded:', e);
-  }
-}
+function saveLocalMoment(_moment: Moment): void {}
 
 function removeLocalMoment(momentId: string): void {
   if (typeof window === 'undefined' || !momentId) return;
   addDeletedMomentId(momentId);
-  try {
-    const existing = readLocalMoments();
-    const updated = existing.filter((m) => m.id !== momentId);
-    localStorage.setItem(LOCAL_MOMENTS_KEY, JSON.stringify(updated));
-  } catch (e) {}
 }
 
 function removeLocalMomentsByMember(memberId: string): string[] {
   if (typeof window === 'undefined' || !memberId) return [];
-  const removedIds: string[] = [];
-  try {
-    const existing = readLocalMoments();
-    const toRemove = existing.filter(
-      (m) => m.sender_id === memberId || m.sender?.id === memberId
-    );
-    toRemove.forEach((m) => {
-      addDeletedMomentId(m.id);
-      removedIds.push(m.id);
-    });
-    const updated = existing.filter(
-      (m) => m.sender_id !== memberId && m.sender?.id !== memberId
-    );
-    localStorage.setItem(LOCAL_MOMENTS_KEY, JSON.stringify(updated));
-  } catch (e) {}
-  return removedIds;
+  addDeletedMemberId(memberId);
+  return [];
 }
 
 export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { userProfile, signOut } = useAuth();
-  const [moments, setMoments] = useState<Moment[]>(() => readLocalMoments());
-  const [loading, setLoading] = useState<boolean>(() => readLocalMoments().length === 0);
+  const [moments, setMoments] = useState<Moment[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [selectedFriendFilter, setSelectedFriendFilter] = useState<string>('all');
   const [allProfiles, setAllProfiles] = useState<any[]>(() => readLocalProfiles());
+
+  useEffect(() => {
+    clearLegacyBrowserCaches();
+  }, []);
 
   const currentUser = userProfile || {
     id: 'guest_user',
@@ -300,13 +251,6 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const sorted = sortMoments(merged) as Moment[];
         const uniqueMoments = sorted.filter((m, i, self) => i === self.findIndex((x) => x.id === m.id));
 
-        // Flush sorted final list to localStorage in one shot so next reload starts with correct order
-        try {
-          const toCache = uniqueMoments.slice(0, 40).map(sanitizeMomentForLocalStorage);
-          localStorage.setItem(LOCAL_MOMENTS_KEY, JSON.stringify(toCache));
-        } catch (e) {}
-
-        saveMomentsToIDB(uniqueMoments).catch(() => {});
         return uniqueMoments;
       });
     } catch (e) {

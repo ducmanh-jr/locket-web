@@ -59,7 +59,7 @@ export const LocketHeader: React.FC<LocketHeaderProps> = ({
   const currentFilterMember = safeMembers.find((m) => m && m.id === selectedFilterId);
   const pillLabel =
     selectedFilterId === 'all' || !currentFilterMember
-      ? `${friendCount} người bạn`
+      ? `Tất cả (${friendCount} người bạn)`
       : currentFilterMember.name;
 
   return (

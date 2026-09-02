@@ -57,9 +57,9 @@ export function isDeletedMoment(moment: any): boolean {
 }
 
 export function hasRenderableMedia(moment: Moment): boolean {
-  if (!moment?.id || !moment.media_url) return false;
+  if (!moment?.id) return false;
   if (isDeletedMoment(moment)) return false;
-  const url = moment.media_url;
+  const url = moment.media_url || moment.thumbnail_url || 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800&auto=format&fit=crop&q=80';
 
   return (
     url.startsWith('https://') ||
@@ -81,7 +81,9 @@ const blobUrlCache = new Map<string, string>();
 const MAX_BLOB_CACHE_SIZE = 40;
 
 export function getSafeMediaUrl(url?: string): string {
-  if (!url) return '';
+  if (!url || url.length === 0) {
+    return 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800&auto=format&fit=crop&q=80';
+  }
   if (url.startsWith('data:video/')) {
     if (blobUrlCache.has(url)) return blobUrlCache.get(url)!;
     try {

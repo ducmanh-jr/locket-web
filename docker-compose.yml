@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: locket_app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgres://locket_admin:SuperSecretPass123@postgres:5432/locket_db
+      - REDIS_URL=redis://:RedisSecretPass123@redis:6379
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    depends_on:
+      - postgres
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: locket_redis
+    command: redis-server --appendonly yes --requirepass RedisSecretPass123
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: locket_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: locket_admin
+      POSTGRES_PASSWORD: SuperSecretPass123
+      POSTGRES_DB: locket_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./supabase/schema_v2.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  redis_data:
+  postgres_data:
