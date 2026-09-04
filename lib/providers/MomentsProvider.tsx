@@ -264,8 +264,9 @@ export const MomentsProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // Hydrate from IndexedDB for deep offline caching
     getMomentsFromIDB().then((idbMoments) => {
       if (idbMoments && idbMoments.length > 0) {
+        const sanitizedIDB = sanitizeMoments(idbMoments);
         setMoments((prev) => {
-          if (prev.length === 0) return sortMoments(idbMoments) as Moment[];
+          if (prev.length === 0) return sanitizedIDB;
           return prev;
         });
       }

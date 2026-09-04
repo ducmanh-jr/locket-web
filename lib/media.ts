@@ -83,7 +83,7 @@ const MAX_BLOB_CACHE_SIZE = 40;
 
 export function getSafeMediaUrl(url?: string): string {
   if (!url || url.length === 0) {
-    return 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800&auto=format&fit=crop&q=80';
+    return '';
   }
   if (url.startsWith('data:video/')) {
     if (blobUrlCache.has(url)) return blobUrlCache.get(url)!;
