@@ -59,7 +59,8 @@ export function isDeletedMoment(moment: any): boolean {
 export function hasRenderableMedia(moment: Moment): boolean {
   if (!moment?.id) return false;
   if (isDeletedMoment(moment)) return false;
-  const url = moment.media_url || moment.thumbnail_url || 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800&auto=format&fit=crop&q=80';
+  const url = moment.media_url || moment.thumbnail_url;
+  if (!url || typeof url !== 'string' || url.trim().length === 0) return false;
 
   return (
     url.startsWith('https://') ||

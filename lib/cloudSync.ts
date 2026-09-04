@@ -444,12 +444,12 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
       if (rawMoments && rawMoments.length > 0) {
         const localDeletedMoments = new Set(getDeletedMomentIds());
         const enriched = rawMoments
-          .filter((m: any) => !localDeletedMoments.has(m.id) && !String(m.id).startsWith('del_moment_') && m.caption !== '__DELETED_MOMENT__')
+          .filter((m: any) => m && m.id && Boolean(m.media_url || m.thumbnail_url) && !localDeletedMoments.has(m.id) && !String(m.id).startsWith('del_moment_') && m.caption !== '__DELETED_MOMENT__')
           .map((m: any) => {
             const senderProfile = profilesMap.get(m.sender_id);
             return {
               ...m,
-              media_url: m.media_url || m.thumbnail_url || 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800&auto=format&fit=crop&q=80',
+              media_url: m.media_url || m.thumbnail_url,
               sender: senderProfile || {
                 id: m.sender_id || 'unknown',
                 username: m.sender_id ? `user_${m.sender_id.substring(0, 6)}` : 'locket_user',

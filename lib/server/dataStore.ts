@@ -171,13 +171,14 @@ export async function getActiveFeed(limit: number = 300): Promise<DataStoreFeedR
           (m: any) =>
             m &&
             m.id &&
+            Boolean(m.media_url || m.thumbnail_url) &&
             !localDeletedMomentIds.has(m.id) &&
             !localDeletedMemberIds.has(m.sender_id) &&
             m.caption !== '__DELETED_MOMENT__'
         )
         .map((m: any) => ({
           ...m,
-          media_url: m.media_url || m.thumbnail_url || 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800&auto=format&fit=crop&q=80',
+          media_url: m.media_url || m.thumbnail_url,
           sender: m.sender || profilesMap.get(m.sender_id) || {
             id: m.sender_id,
             username: `user_${String(m.sender_id).substring(0, 6)}`,
