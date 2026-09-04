@@ -120,7 +120,7 @@ export async function getActiveFeed(limit: number = 300): Promise<DataStoreFeedR
         );
 
         const moments = momentsRes.rows.filter(
-          (m: any) => m && m.id && !deletedMoments.has(m.id) && !deletedMembers.has(m.sender_id)
+          (m: any) => m && m.id && Boolean(m.media_url || m.thumbnail_url) && !deletedMoments.has(m.id) && !deletedMembers.has(m.sender_id)
         );
 
         // Warm Redis Cache
