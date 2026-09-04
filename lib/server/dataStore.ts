@@ -27,8 +27,15 @@ async function getRedis() {
       const Redis = dynamicRequire('ioredis');
       if (!Redis) return null;
       const RedisClass = Redis.default || Redis;
-      redisClient = new RedisClass(process.env.REDIS_URL, { maxRetriesPerRequest: 1, lazyConnect: true });
-      await redisClient.connect();
+      redisClient = new RedisClass(process.env.REDIS_URL, {
+        maxRetriesPerRequest: 1,
+        lazyConnect: true,
+        connectTimeout: 3000,
+      });
+      await Promise.race([
+        redisClient.connect(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis connection timeout')), 3000)),
+      ]);
     } catch (e) {
       console.warn('[DataStore] Redis connection failed, falling back to database/memory:', e);
       redisClient = null;
@@ -46,8 +53,9 @@ async function getPgPool() {
       const { Pool } = pgModule;
       pgPoolClient = new Pool({
         connectionString: process.env.DATABASE_URL,
-        max: 10,
-        idleTimeoutMillis: 30000,
+        max: 5,
+        idleTimeoutMillis: 10000,
+        connectionTimeoutMillis: 3000,
       });
     } catch (e) {
       console.warn('[DataStore] PostgreSQL connection failed, falling back to Supabase/memory:', e);

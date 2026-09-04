@@ -388,9 +388,13 @@ export async function pushMomentToGlobalCloud(moment: Moment): Promise<boolean> 
 }
 
 export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
-  // 1. Primary: Try the API route
+  // 1. Primary: Try the API route with 4s timeout
   try {
-    const res = await fetch('/api/sync', { cache: 'no-store' });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const res = await fetch('/api/sync', { cache: 'no-store', signal: controller.signal });
+    clearTimeout(timeoutId);
+
     if (res.ok) {
       const contentType = res.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {
@@ -426,7 +430,7 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
       console.warn('[CloudSync] API route failed with status', res.status, '. Falling back to direct Supabase.');
     }
   } catch (apiErr) {
-    console.warn('[CloudSync] API route fetch error:', apiErr, '. Falling back to direct Supabase.');
+    console.warn('[CloudSync] API route fetch error or timeout:', apiErr, '. Falling back to direct Supabase.');
   }
 
   // 2. Fallback: Query Supabase directly from browser (bypasses Vercel Deployment Protection)
