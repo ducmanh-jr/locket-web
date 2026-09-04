@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import { AuthProvider } from '@/lib/providers/AuthProvider';
 import { MomentsProvider } from '@/lib/providers/MomentsProvider';
 import { DesktopPhoneFrame } from '@/components/DesktopPhoneFrame';
@@ -11,6 +12,9 @@ import { getStoredTheme, applyThemeToDocument } from '@/lib/theme';
 import { getStoredCanvasTheme, applyCanvasThemeToDocument } from '@/lib/canvasTheme';
 
 export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const pathname = usePathname();
+  const isDebugPage = pathname?.startsWith('/debug');
+
   React.useEffect(() => {
     applyThemeToDocument(getStoredTheme());
     applyCanvasThemeToDocument(getStoredCanvasTheme());
@@ -35,9 +39,10 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthProvider>
       <MomentsProvider>
-        <DesktopPhoneFrame>{children}</DesktopPhoneFrame>
+        {isDebugPage ? children : <DesktopPhoneFrame>{children}</DesktopPhoneFrame>}
       </MomentsProvider>
     </AuthProvider>
   );
 };
+
 
