@@ -25,6 +25,8 @@ export const LocketHistoryGrid: React.FC<LocketHistoryGridProps> = ({
         m &&
         m.id &&
         Boolean(m.media_url || m.thumbnail_url) &&
+        !String(m.media_url || '').includes('1518609878373-06d740f60d8b') &&
+        !String(m.thumbnail_url || '').includes('1518609878373-06d740f60d8b') &&
         m.caption !== '__DELETED_MOMENT__' &&
         !String(m.id).startsWith('del_moment_') &&
         !String(m.media_url || '').includes('deleted.invalid')

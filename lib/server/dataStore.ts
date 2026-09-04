@@ -120,7 +120,13 @@ export async function getActiveFeed(limit: number = 300): Promise<DataStoreFeedR
         );
 
         const moments = momentsRes.rows.filter(
-          (m: any) => m && m.id && Boolean(m.media_url || m.thumbnail_url) && !deletedMoments.has(m.id) && !deletedMembers.has(m.sender_id)
+          (m: any) =>
+            m &&
+            m.id &&
+            Boolean(m.media_url || m.thumbnail_url) &&
+            !String(m.media_url || '').includes('1518609878373-06d740f60d8b') &&
+            !deletedMoments.has(m.id) &&
+            !deletedMembers.has(m.sender_id)
         );
 
         // Warm Redis Cache
@@ -172,6 +178,7 @@ export async function getActiveFeed(limit: number = 300): Promise<DataStoreFeedR
             m &&
             m.id &&
             Boolean(m.media_url || m.thumbnail_url) &&
+            !String(m.media_url || '').includes('1518609878373-06d740f60d8b') &&
             !localDeletedMomentIds.has(m.id) &&
             !localDeletedMemberIds.has(m.sender_id) &&
             m.caption !== '__DELETED_MOMENT__'

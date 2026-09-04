@@ -62,6 +62,10 @@ export function hasRenderableMedia(moment: Moment): boolean {
   const url = moment.media_url || moment.thumbnail_url;
   if (!url || typeof url !== 'string' || url.trim().length === 0) return false;
 
+  if (url.includes('1518609878373-06d740f60d8b') || url.includes('photo-1518609878373')) {
+    return false;
+  }
+
   return (
     url.startsWith('https://') ||
     url.startsWith('http://') ||

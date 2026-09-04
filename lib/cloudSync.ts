@@ -444,7 +444,16 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
       if (rawMoments && rawMoments.length > 0) {
         const localDeletedMoments = new Set(getDeletedMomentIds());
         const enriched = rawMoments
-          .filter((m: any) => m && m.id && Boolean(m.media_url || m.thumbnail_url) && !localDeletedMoments.has(m.id) && !String(m.id).startsWith('del_moment_') && m.caption !== '__DELETED_MOMENT__')
+          .filter(
+            (m: any) =>
+              m &&
+              m.id &&
+              Boolean(m.media_url || m.thumbnail_url) &&
+              !String(m.media_url || '').includes('1518609878373-06d740f60d8b') &&
+              !localDeletedMoments.has(m.id) &&
+              !String(m.id).startsWith('del_moment_') &&
+              m.caption !== '__DELETED_MOMENT__'
+          )
           .map((m: any) => {
             const senderProfile = profilesMap.get(m.sender_id);
             return {
