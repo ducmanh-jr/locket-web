@@ -259,7 +259,10 @@ export async function pushProfileToGlobalCloud(profile: CloudProfile, isFreshLog
 export async function fetchGlobalCloudProfiles(): Promise<CloudProfile[]> {
   const deletedSet = new Set(getDeletedMemberIds());
   try {
-    const res = await fetch('/api/sync', { cache: 'no-store' });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch('/api/sync', { cache: 'no-store', signal: controller.signal });
+    clearTimeout(timeoutId);
     if (res.ok) {
       const contentType = res.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {

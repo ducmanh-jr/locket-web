@@ -154,7 +154,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           // CHECK: Is this user deleted by admin? If yes, force sign out immediately.
           try {
-            const syncRes = await fetch('/api/sync', { cache: 'no-store' });
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            const syncRes = await fetch('/api/sync', { cache: 'no-store', signal: controller.signal });
+            clearTimeout(timeoutId);
             if (syncRes.ok) {
               const syncData = await syncRes.json();
               if (Array.isArray(syncData.deleted_member_ids)) {
