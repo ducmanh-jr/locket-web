@@ -506,13 +506,6 @@ export async function deleteMomentFromGlobalCloud(momentId: string): Promise<boo
   if (isSupabaseConfigured()) {
     try {
       await supabase.from('moments').delete().eq('id', momentId);
-      await supabase.from('moments').upsert({
-        id: `del_moment_${momentId}`,
-        sender_id: 'deleted',
-        caption: '__DELETED_MOMENT__',
-        media_url: 'https://deleted.invalid/placeholder.png',
-        created_at: new Date().toISOString(),
-      });
       return true;
     } catch (e) {
       return false;

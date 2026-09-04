@@ -443,13 +443,6 @@ export async function deleteMomentFromStore(momentId: string): Promise<boolean> 
   if (isSupabaseConfigured()) {
     try {
       await supabase.from('moments').delete().eq('id', momentId);
-      await supabase.from('moments').upsert({
-        id: `del_moment_${momentId}`,
-        sender_id: 'deleted',
-        caption: '__DELETED_MOMENT__',
-        media_url: 'https://deleted.invalid/placeholder.png',
-        created_at: new Date().toISOString(),
-      });
       if (redis) {
         try { await redis.del('locket:feed'); } catch (e) {}
       }
