@@ -432,14 +432,14 @@ export async function fetchGlobalCloudMoments(): Promise<Moment[]> {
   // 2. Fallback: Query Supabase directly from browser (bypasses Vercel Deployment Protection)
   if (isSupabaseConfigured()) {
     try {
-      const { data: dbProfiles } = await supabase.from('profiles').select('*').limit(100);
+      const { data: dbProfiles } = await supabase.from('profiles').select('*').limit(300);
       const profilesMap = new Map((dbProfiles || []).map((p: any) => [p.id, p]));
 
       const { data: rawMoments } = await supabase
         .from('moments')
         .select('id, sender_id, caption, media_url, media_type, created_at, thumbnail_url')
         .order('created_at', { ascending: false })
-        .limit(200);
+        .limit(300);
 
       if (rawMoments && rawMoments.length > 0) {
         const localDeletedMoments = new Set(getDeletedMomentIds());

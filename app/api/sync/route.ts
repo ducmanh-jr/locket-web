@@ -61,7 +61,7 @@ export async function POST(request: Request) {
           { status: 403 }
         );
       }
-      const feed = await getActiveFeed(10);
+      const feed = await getActiveFeed(300);
       return NextResponse.json({ success: true, deleted_member_ids: feed.deleted_member_ids });
     }
 
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
 
     if (action === 'delete_moment' && moment_id) {
       await deleteMomentFromStore(moment_id);
-      const feed = await getActiveFeed(10);
+      const feed = await getActiveFeed(300);
       return NextResponse.json({ success: true, deleted_moment_ids: feed.deleted_moment_ids });
     }
 
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
 
       const targetId = body.member_id || body.profile_id;
       await deleteMemberFromStore(targetId);
-      const feed = await getActiveFeed(10);
+      const feed = await getActiveFeed(300);
       return NextResponse.json({ success: true, deleted_member_ids: feed.deleted_member_ids });
     }
 

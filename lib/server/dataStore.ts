@@ -373,11 +373,18 @@ export async function pushMomentToStore(moment: any): Promise<boolean> {
         music: moment.music || null,
         created_at: moment.created_at || new Date().toISOString(),
       });
+
+      if (redis) {
+        try { await redis.del('locket:feed'); } catch (e) {}
+      }
       return true;
     } catch (e) {}
   }
 
   localMemoryMoments = [moment, ...localMemoryMoments.filter((m) => m.id !== moment.id)];
+  if (redis) {
+    try { await redis.del('locket:feed'); } catch (e) {}
+  }
   return true;
 }
 
@@ -404,6 +411,7 @@ export async function deleteMomentFromStore(momentId: string): Promise<boolean> 
       if (redis) {
         try {
           await redis.sadd('locket:deleted_moments', momentId);
+          await redis.del('locket:feed');
           await redis.publish('locket:events', JSON.stringify({ type: 'MOMENT_DELETED', payload: { id: momentId } }));
         } catch (e) {}
       }
@@ -426,10 +434,16 @@ export async function deleteMomentFromStore(momentId: string): Promise<boolean> 
         media_url: 'https://deleted.invalid/placeholder.png',
         created_at: new Date().toISOString(),
       });
+      if (redis) {
+        try { await redis.del('locket:feed'); } catch (e) {}
+      }
     } catch (e) {}
   }
 
   localMemoryMoments = localMemoryMoments.filter((m) => m.id !== momentId);
+  if (redis) {
+    try { await redis.del('locket:feed'); } catch (e) {}
+  }
   return true;
 }
 
